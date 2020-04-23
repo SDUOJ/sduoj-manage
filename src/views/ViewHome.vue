@@ -1,9 +1,5 @@
 <template>
-  <div class="home">
-    <!-- <template> -->
-    <el-input v-model="search" placeholder="输入关键字搜索" />
-    <!-- </template> -->
-  </div>
+  <div class="home">这是首页</div>
 </template>
 
 <script>
