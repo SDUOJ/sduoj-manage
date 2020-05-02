@@ -37,12 +37,12 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item label="题目描述 (Markdown)" prop="problemMarkdown">
+      <el-form-item label="题目描述 (Markdown)" prop="markdown">
         <el-input
           type="textarea"
           :autosize="{ minRows: 20, maxRows: 100 }"
           autocomplete="off"
-          v-model="createProblemForm.problemMarkdown"
+          v-model="createProblemForm.markdown"
         ></el-input>
       </el-form-item>
       <el-form-item prop="isPublic">
@@ -67,7 +67,7 @@ export default {
         problemTitle: "",
         timeLimit: 1000,
         memoryLimit: 128 * 1024,
-        problemMarkdown: "",
+        markdown: "",
         isPublic: true
       },
       problemProfileRules: {
@@ -82,7 +82,7 @@ export default {
           { required: true, message: "请输入空间限制", trigger: "blur" },
           { type: "number", message: "空间限制是数字", trigger: "change" }
         ],
-        problemMarkdown: [
+        markdown: [
           { required: true, message: "请输入题目描述", trigger: "blur" }
         ]
       },
@@ -104,15 +104,15 @@ export default {
       this.onSubmitting = true;
       try {
         // 往后端发post
-        let ret = await post("/api/manage/problem/create", {
+        let ret = await post("/manage/problem/create", {
           problemTitle: String(this.createProblemForm.problemTitle),
           timeLimit: parseInt(this.createProblemForm.timeLimit),
           memoryLimit: parseInt(this.createProblemForm.memoryLimit),
-          problemMarkdown: String(this.createProblemForm.problemMarkdown),
+          markdown: String(this.createProblemForm.markdown),
           isPublic: this.createProblemForm.isPublic ? 1 : 0
         });
         this.$message({
-          message: "题目 " + ret.problemId + " 添加成功",
+          message: "题目 " + ret + " 添加成功",
           type: "success"
         });
         this.createFormVisible = false;

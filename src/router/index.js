@@ -14,11 +14,15 @@ const routes = [
       },
       {
         path: 'problem',
-        component: () => import('@/views/problem/ViewProblem.vue')
+        component: () => import('@/views/problem/ViewProblem.vue'),
       },
       {
         path: 'problem/add',
         component: () => import('@/views/problem/AddProblem.vue')
+      },
+      {
+        path: 'problem/:pid/checkpoint',
+        component: () => import('@/views/problem/ViewCheckpoint.vue')
       },
       {
         path: 'problem/:pid',

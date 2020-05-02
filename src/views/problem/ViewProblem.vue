@@ -37,14 +37,16 @@
         highlight-current-row
         style="width: 100%"
       >
-        <el-table-column prop="problem_id" label="题号" align="center" width="160"></el-table-column>
+        <el-table-column prop="problemId" label="题号" align="center" width="160"></el-table-column>
         <el-table-column label="题目" width="auto">
           <router-link
             class="link_a"
-            :to="'/problem/' + scope.row.problem_id"
+            :to="'/problem/' + scope.row.problemId"
             slot-scope="scope"
-          >{{ scope.row.problem_title }}</router-link>
+          >{{ scope.row.problemTitle }}</router-link>
         </el-table-column>
+        <el-table-column prop="isPublic" label="是否公开" width="50" align="center"></el-table-column>
+        <el-table-column prop="userId" label="创建者" witdh="50" align="center"></el-table-column>
         <el-table-column label="操作" width="200" align="center">
           <template slot-scope="scope">
             <template>
@@ -57,7 +59,7 @@
                 confirmButtonType="danger"
                 icon="el-icon-info"
                 iconColor="red"
-                :title="'删除' + scope.row.problem_id + '?'"
+                :title="'删除' + scope.row.problemId + '?'"
                 style="margin-left: 10px;"
                 @onConfirm="handleDelete(scope.$index, scope.row)"
               >
@@ -73,7 +75,7 @@
           layout="prev, pager, next"
           :page-size="this.page_size"
           :page-count="this.page_count"
-          :hide-on-single-page="true"
+          :hide-on-single-page="false"
         />
       </div>
     </div>
@@ -81,30 +83,36 @@
 </template>
 
 <script>
+import { post } from "@/api.js";
 export default {
   data() {
     return {
       page_now: 1,
-      page_size: 50,
+      page_size: 20,
       page_count: 1,
       tableData: [],
       search: ""
     };
   },
   methods: {
-    fetchProblemList() {
+    async fetchProblemList() {
       // 找后端要题目列表
-      this.tableData.push({
-        problem_id: 1001,
-        problem_title: "A+B Problem"
+      let ret = await post("/manage/problem/list", {
+        pageNow: this.page_now,
+        pageSize: this.page_size
       });
+      this.page_count = ret.totalPage;
+      this.tableData = [];
+      for (var i = 0; i < ret.rows.length; ++i) {
+        this.tableData.push({ ...ret.rows[i] });
+      }
       console.log("fetchProblemList");
     },
     handleAdd() {
       this.$router.push("/problem/add");
     },
     handleEdit(index, row) {
-      this.$router.push("/problem/" + row.problem_id);
+      this.$router.push("/problem/" + row.problemId);
     },
     handleDelete(index, row) {
       console.log(index, row);
@@ -132,5 +140,9 @@ export default {
 }
 .fenye {
   margin-top: 10px;
+}
+.pagination_div {
+  margin: 7px auto auto auto;
+  text-align: center;
 }
 </style>

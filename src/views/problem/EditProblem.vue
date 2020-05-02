@@ -1,6 +1,6 @@
 <template>
   <div style="padding: 20px;">
-    <el-page-header @back="goBack" :content="'编辑题目 ' + problem_id"></el-page-header>
+    <el-page-header @back="goBack" :content="'编辑题目 ' + problemId"></el-page-header>
     <!-- 表单 -->
     <el-form
       :model="problemProfile"
@@ -37,27 +37,30 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item label="题目描述 (Markdown)" prop="problemMarkdown">
+      <el-form-item label="题目描述 (Markdown)" prop="markdown">
         <el-input
           type="textarea"
           :autosize="{ minRows: 20, maxRows: 100 }"
           autocomplete="off"
-          v-model="problemProfile.problemMarkdown"
+          v-model="problemProfile.markdown"
         ></el-input>
       </el-form-item>
       <el-form-item prop="isPublic">
-        <el-switch active-text="公开" inactive-text="不公开" v-model="problemProfile.isPublic"></el-switch>
+        <el-switch
+          active-text="公开"
+          inactive-text="不公开"
+          v-model="problemProfile.isPublic"
+        >{{problemProfile.isPublic + "2333333333333"}}</el-switch>
       </el-form-item>
     </el-form>
     <!--  -->
     <!-- 底部 -->
     <div slot="footer" class="dialog-footer">
+      <el-button @click="checkpoint">查看检查点</el-button>
       <el-button type="primary" @click="onSubmit" :loading="submitting">确 定</el-button>
     </div>
   </div>
 </template>
-
-
 
 <script>
 import { post } from "@/api.js";
@@ -77,7 +80,7 @@ export default {
           { required: true, message: "请输入空间限制", trigger: "blur" },
           { type: "number", message: "空间限制是数字", trigger: "change" }
         ],
-        problemMarkdown: [
+        markdown: [
           { required: true, message: "请输入题目描述", trigger: "blur" }
         ]
       },
@@ -85,17 +88,17 @@ export default {
         problemTitle: "",
         timeLimit: 0,
         memoryLimit: 0,
-        problemMarkdown: "",
+        markdown: "",
         isPublic: true
       },
       tmp: {
         problemTitle: "",
         timeLimit: 0,
         memoryLimit: 0,
-        problemMarkdown: "",
+        markdown: "",
         isPublic: true
       },
-      problem_id: "",
+      problemId: "",
       submitting: false
     };
   },
@@ -103,15 +106,18 @@ export default {
     goBack() {
       this.$router.go(-1);
     },
-    fetchProblemProfile() {
+    checkpoint() {
+      this.$router.push(this.problem_id + "/checkpoint");
+    },
+    async fetchProblemProfile() {
       // 找后端要这个题的信息
-      this.tmp.problemTitle = "A+B Problem";
-      this.tmp.timeLimit = 1000;
-      this.tmp.memoryLimit = 128 * 1024;
-      this.tmp.problemMarkdown = "233333";
-      this.tmp.isPublic = true;
-
+      let ret = await post("/manage/problem/query", {
+        problemId: parseInt(this.problemId)
+      });
+      this.tmp = ret;
+      this.tmp.isPublic = ret.isPublic === 1;
       this.problemProfile = Object.assign({}, this.tmp);
+      console.log(this.problemProfile);
     },
     async onSubmit() {
       // 检查有没有变化
@@ -128,7 +134,8 @@ export default {
       this.submitting = true;
       try {
         // 往后端发post
-        let ret = await post("/api/manage/problem/update", this.problemProfile);
+        this.problemProfile.isPublic = this.problemProfile.isPublic ? 1 : 0;
+        let ret = await post("/manage/problem/update", this.problemProfile);
         this.$message({
           message: ret.state,
           type: "info"
@@ -142,7 +149,7 @@ export default {
     }
   },
   mounted() {
-    this.problem_id = this.$route.params.pid;
+    this.problemId = this.$route.params.pid;
     this.fetchProblemProfile();
   }
 };

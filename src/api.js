@@ -2,9 +2,8 @@ import axios from "axios";
 import Vue from "vue";
 
 Vue.prototype.$http = axios;
-// axios.defaults.baseURL = "//api.oj.xrvitd.com:8080/api";
-axios.defaults.baseURL =
-  "https://mockapi.eolinker.com/URYRdGK6f6afa5576ac65e68c78c7e587f9a5c85de59a90";
+axios.defaults.baseURL = "//api.oj.xrvitd.com:8080/api";
+// axios.defaults.baseURL = "https://mockapi.eolinker.com/URYRdGK6f6afa5576ac65e68c78c7e587f9a5c85de59a90";
 axios.defaults.withCredentials = true; // 开启 cookie
 
 export function post(url, data) {
