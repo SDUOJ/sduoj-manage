@@ -11,21 +11,21 @@ Vue.use(ElementUI);
 
 Vue.config.productionTip = false;
 
-Vue.prototype.$error = (msg) => {
-  Vue.prototype.$message({ 'message': msg, 'type': 'error' })
-}
+Vue.prototype.$error = msg => {
+  Vue.prototype.$message({ message: msg, type: 'error' });
+};
 
-Vue.prototype.$warning = (msg) => {
-  Vue.prototype.$message({ 'message': msg, 'type': 'warning' })
-}
+Vue.prototype.$warning = msg => {
+  Vue.prototype.$message({ message: msg, type: 'warning' });
+};
 
-Vue.prototype.$success = (msg) => {
+Vue.prototype.$success = msg => {
   if (!msg) {
-    Vue.prototype.$message({ 'message': 'Succeeded', 'type': 'success' })
+    Vue.prototype.$message({ message: 'Succeeded', type: 'success' });
   } else {
-    Vue.prototype.$message({ 'message': msg, 'type': 'success' })
+    Vue.prototype.$message({ message: msg, type: 'success' });
   }
-}
+};
 
 new Vue({
   router,
