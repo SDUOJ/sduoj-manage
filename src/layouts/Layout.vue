@@ -1,44 +1,39 @@
 <template>
   <div class="container">
     <!-- <Tab /> -->
-    <Header />
+    <Header/>
     <transition name="fade-transform" mode="out-in">
       <main class="main_div">
-        <router-view />
+        <router-view/>
       </main>
     </transition>
-    <Footer />
+    <Footer/>
   </div>
 </template>
 
 <script>
-import Header from "@/layouts/Header.vue";
-import Footer from "@/layouts/Footer.vue";
+  import Header from "@/layouts/Header.vue";
+  import Footer from "@/layouts/Footer.vue";
 
-export default {
-  components: {
-    Header,
-    Footer
-  }
-};
+  export default {
+    components: {
+      Header,
+      Footer
+    }
+  };
 </script>
 
 <style scoped>
-.container {
-  z-index: 0;
-  background-color: rgb(248, 248, 245);
-}
+  .main_div {
+    width: 67%;
+    min-width: 800px;
+    min-height: 720px;
+    margin: 43px auto 0 auto;
+  }
 
-.fade-transform-leave-active,
-.fade-transform-enter-active {
-  transition: all 0.23s;
-}
-.fade-transform-enter {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-.fade-transform-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
+  .container {
+    z-index: 0;
+    background-color: rgb(248, 248, 245);
+  }
+
 </style>

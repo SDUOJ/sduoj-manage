@@ -22,6 +22,7 @@ const routes = [
       },
       {
         path: 'problem/:pid/checkpoint',
+        name: 'checkpoint',
         component: () => import('@/views/problem/ViewCheckpoint.vue')
       },
       {
