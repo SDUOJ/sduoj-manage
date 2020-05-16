@@ -53,8 +53,8 @@
         fileList: [],
         fileData: [],
         singleCheckpoint: {
-          inputContent: "",
-          outputContent: ""
+          input: "",
+          output: ""
         },
         onSubmitting: false
       };
