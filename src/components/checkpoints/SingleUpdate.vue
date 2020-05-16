@@ -1,12 +1,12 @@
 <template>
   <div>
-    <el-form :model="formData">
+    <el-form>
       <el-form-item label="标准输入">
         <el-input
             :rows="8"
             autocomplete="off"
             type="textarea"
-            v-model="formData.input"
+            v-model="checkpoint.input"
         ></el-input>
       </el-form-item>
       <el-form-item label="标准输出">
@@ -14,7 +14,7 @@
             :rows="8"
             autocomplete="off"
             type="textarea"
-            v-model="formData.output"
+            v-model="checkpoint.output"
         ></el-input>
       </el-form-item>
     </el-form>
@@ -27,12 +27,16 @@
   import Vue from "vue";
 
   export default {
+    props: {
+      checkpoint: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
+    },
     data() {
       return {
-        formData: {
-          input: "",
-          output: ""
-        },
         onSubmitting: false
       }
     },
@@ -40,14 +44,17 @@
       async handleSubmit() {
         this.onSubmitting = true;
         try {
-          let ret = await post("/manage/checkpoint/upload", this.formData);
-          this.$emit("upload", [ret]);
-          Vue.prototype.$success("创建成功: " + ret.checkpointId);
+          let ret = await post("/manage/checkpoint/upload", {
+            input: this.checkpoint.input,
+            output: this.checkpoint.output
+          });
+          this.$emit("update", this.checkpoint.checkpointId, ret);
+          Vue.prototype.$success("Update: " + ret.checkpointId);
         } catch (err) {
           Vue.prototype.$error(err);
         }
         this.onSubmitting = false;
       }
-    }
+    },
   };
 </script>

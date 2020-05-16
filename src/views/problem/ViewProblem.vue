@@ -31,15 +31,14 @@
               !search ||
               data.problemTitle.toLowerCase().includes(search.toLowerCase()) ||
               data.problemId.toString().includes(search.toLowerCase())
-          )
-        "
+          )"
         class="list_div"
         stripe
         fit
         highlight-current-row
     >
-      <el-table-column align="center" label="题号" min-width="20%" prop="problemId"></el-table-column>
-      <el-table-column label="题目" min-width="auto">
+      <el-table-column prop="problemId" width="80"></el-table-column>
+      <el-table-column label="题目">
         <template slot-scope="scope">
           <router-link
               :to="'/problem/' + scope.row.problemId"
@@ -58,26 +57,20 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="创建者" min-witdh="10%" prop="userId"></el-table-column>
-      <el-table-column align="center" label="操作" min-width="80%">
+      <el-table-column label="创建者" prop="userId"></el-table-column>
+      <el-table-column label="操作">
         <template slot-scope="scope">
-          <template>
-            <el-button @click="handleEdit(scope.$index, scope.row)" size="mini">编 辑</el-button>
-          </template>
-          <template>
-            <el-popconfirm
-                confirmButtonText="是"
-                cancelButtonText="否"
-                confirmButtonType="danger"
-                icon="el-icon-info"
-                iconColor="red"
-                :title="'删除' + scope.row.problemId + '?'"
-                style="margin-left: 5px;"
-                @onConfirm="handleDelete(scope.$index, scope.row)"
-            >
-              <el-button size="mini" slot="reference" type="danger">删除</el-button>
-            </el-popconfirm>
-          </template>
+          <el-button @click="handleEdit(scope.$index, scope.row)" size="mini">编 辑</el-button>
+          <el-popconfirm
+              :title="'删除 ' + scope.row.problemId + '?'"
+              @onConfirm="handleDelete(scope.$index, scope.row)"
+              confirmButtonType="text"
+              icon="el-icon-info"
+              iconColor="red"
+              style="margin-left: 5px;"
+          >
+            <el-button size="mini" slot="reference" type="danger">删除</el-button>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>

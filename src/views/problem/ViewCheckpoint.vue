@@ -13,18 +13,10 @@
       </div>
       <div style="float: right;">
         <el-button
-            @click="batchUploadDialogVisible=true"
+            @click="uploadDialogVisible=true"
             icon="el-icon-upload2"
             style="margin-left: 10px;"
-        >批量上传
-        </el-button>
-      </div>
-      <div style="float: right;">
-        <el-button
-            @click="SingleUploadDialogVisible=true"
-            icon="el-icon-upload2"
-            style="margin-left: 10px;"
-        >单组上传
+        >上传
         </el-button>
       </div>
       <div style="float: right;">
@@ -35,23 +27,31 @@
         />
       </div>
     </div>
-    <!-- 批量上传 -->
-    <el-dialog :visible.sync="batchUploadDialogVisible" title="批量上传" width="30%">
-      <BatchUpload @upload="handleUpload"/>
+    <!-- 上传 -->
+    <el-dialog
+        :visible.sync="uploadDialogVisible"
+        destroy-on-close
+        title="批量上传"
+        width="30%"
+    >
+      <CheckpointUpload @upload="handleUpload"/>
       <span slot="footer">
-        <el-button @click="batchUploadDialogVisible = false">返 回</el-button>
+        <el-button @click="uploadDialogVisible = false">返 回</el-button>
       </span>
     </el-dialog>
     <!--  -->
 
-    <!-- 单文件上传 -->
-    <el-dialog :visible.sync="SingleUploadDialogVisible" title="单点上传" width="30%">
-      <SingleUpload @upload="handleUpload"/>
+    <el-dialog
+        :visible.sync="previewVisible"
+        title="查看检查点"
+        v-loading="loading"
+        witdh="30%"
+    >
+      <SingleUpdate :checkpoint="checkpointQuery" @update="handleUpdate"/>
       <span slot="footer">
-        <el-button @click="SingleUploadDialogVisible = false">返 回</el-button>
+        <el-button @click="previewVisible = false">返 回</el-button>
       </span>
     </el-dialog>
-    <!--  -->
 
     <el-table
         :data="
@@ -64,48 +64,55 @@
               data.outputFileName.toLowerCase().includes(search.toLowerCase()) ||
               data.outputDescription.toLowerCase().includes(search.toLowerCase())
          )"
+        ref="table"
         class="list_div"
         fit
         highlight-current-row
         stripe
     >
-      <el-table-column align="center" label="ID" min-width="15%" prop="checkpointId"></el-table-column>
-      <el-table-column align="center" label="标准输入" min-width="40%">
+      <el-table-column
+          align="center"
+          type="index"
+          width="80"
+      >
+      </el-table-column>
+      <el-table-column label="ID" min-width="80%">
         <template slot-scope="scope">
           <el-tooltip
-              :content="scope.row.inputDescription + ' [' + scope.row.inputSize + ' B]'"
-              class="item"
               effect="dark"
               placement="right"
               style="cursor: pointer;"
           >
-            <span>{{ scope.row.inputFileName === null ? "null" : scope.row.inputFileName }}</span>
+            <div slot="content">
+              input: {{ scope.row.inputSize }} Bytes<br/>
+              {{ scope.row.inputDescription }}<br/>
+              output: {{ scope.row.outputSize }} Bytes<br/>
+              {{ scope.row.outputDescription }}
+            </div>
+            <span @click="handlePreview(scope.row.checkpointId)">{{ scope.row.checkpointId }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="标准输出" min-width="40%">
+      <el-table-column label="标准输入" min-width="20%">
         <template slot-scope="scope">
-          <el-tooltip
-              :content="scope.row.outputDescription + ' [' + scope.row.outputSize + ' B]'"
-              class="item"
-              effect="dark"
-              placement="right"
-              style="cursor: pointer;"
-          >
-            <span>{{ scope.row.outputFileName === null ? "null" : scope.row.outputFileName }}</span>
-          </el-tooltip>
+          <span>{{ scope.row.inputFileName === null ? "null" : scope.row.inputFileName }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="操作" min-width="20%">
+      <el-table-column label="标准输出" min-width="20%">
         <template slot-scope="scope">
+          <span>{{ scope.row.outputFileName === null ? "null" : scope.row.outputFileName }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" min-width="20%">
+        <template slot-scope="scope">
+          <el-button :loading="loading" @click="handleDownload(scope.row.checkpointId)" size="mini">下载</el-button>
           <el-popconfirm
-              :title="'删除' + scope.row.checkpointId + '?'"
-              @onConfirm="tableData.splice(scope.$index, 1)"
-              cancelButtonText="否"
-              confirmButtonText="是"
-              confirmButtonType="danger"
+              :title="'删除 ' + scope.row.problemId + '?'"
               icon="el-icon-info"
               iconColor="red"
+              @onConfirm="tableData.splice(scope.$index, 1)"
+              confirmButtonType="text"
+              style="margin-left: 5px;"
           >
             <el-button size="mini" slot="reference" type="danger">删除</el-button>
           </el-popconfirm>
@@ -117,21 +124,25 @@
 </template>
 
 <script>
-  import BatchUpload from "@/components/checkpoints/BatchUpload.vue";
-  import SingleUpload from "@/components/checkpoints/SingleUpload.vue";
+  import CheckpointUpload from "@/components/checkpoints/CheckpointUpload.vue";
+  import SingleUpdate from "@/components/checkpoints/SingleUpdate.vue";
   import {post} from "@/api.js";
   import Vue from "vue";
   import Sortable from "sortablejs";
+  import axios from "axios";
 
   export default {
-    components: {BatchUpload, SingleUpload},
+    components: {CheckpointUpload, SingleUpdate},
     data: function () {
       return {
         problemId: "",
         search: "",
-        batchUploadDialogVisible: false,
-        SingleUploadDialogVisible: false,
+        uploadDialogVisible: false,
+        previewVisible: false,
+        originalTableData: [],
         tableData: [],
+        checkpointQuery: {},
+        loading: false
       };
     },
     methods: {
@@ -146,6 +157,7 @@
             that.tableData = [];
             that.$nextTick(function () {
               that.tableData = newArray;
+              that.$refs.table.doLayout();
             });
           },
         });
@@ -157,50 +169,95 @@
       handleUpload(uploadCheckpoints) {
         this.tableData = this.tableData.concat(uploadCheckpoints)
       },
-      // TODO: 下载数据点
-      handleDownload(checkpointid) {
-
+      handleDownload(checkpointId) {
+        this.loading = true;
+        axios({
+          method: "post",
+          url: "/manage/checkpoint/download",
+          data: {checkpointId},
+          responseType: "blob"
+        }).then(res => {
+          this.loading = false;
+          let blob = new Blob([res.data], {type: res.headers["content-type"]});
+          let url = window.URL.createObjectURL(blob);
+          let link = document.createElement("a"); // 创建a标签
+          link.href = url;
+          const contentDisposition = res.headers['content-disposition'];
+          let fileName = checkpointId;
+          if (contentDisposition) {
+            const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+            if (fileNameMatch.length === 2)
+              fileName = fileNameMatch[1];
+          }
+          link.download = fileName;
+          link.click();
+          URL.revokeObjectURL(url); // 释放内存
+        }).catch(err => {
+          this.loading = false;
+          Vue.prototype.$error(err);
+        });
       },
-      async fetchProblemCheckpoints() {
+      handleUpdate(oldCheckpointId, newCheckpoint) {
+        for (let i = 0; i < this.tableData.length; ++i) {
+          if (this.tableData[i].checkpointId === oldCheckpointId) {
+            this.tableData[i] = newCheckpoint;
+            return;
+          }
+        }
+        throw new Error("No such checkpoint: " + oldCheckpointId);
+      },
+      async handlePreview(checkpointId) {
+        this.loading = true;
         try {
-          this.tableData = await post("/manage/checkpoint/list", {problemId: this.problemId});
+          this.checkpointQuery = await post("/manage/checkpoint/query", {checkpointId});
+          this.previewVisible = true;
         } catch (err) {
           Vue.prototype.$error(err);
         }
-        this.tableData = [{
-          "checkpointId": 35041302416474110,
-          "inputDescription": "111111111111121212121321321321",
-          "outputDescription": "111111111111121212121321321321",
-          "inputSize": 30,
-          "outputSize": 30,
-          "inputFileName": "1.in",
-          "outputFileName": "1.out"
-        }, {
-          "checkpointId": 35041302445834240,
-          "inputDescription": "111111111111121212121321321321",
-          "outputDescription": "111111111111121212121321321321",
-          "inputSize": 30,
-          "outputSize": 30,
-          "inputFileName": "2.in",
-          "outputFileName": "2.out"
-        }, {
-          "checkpointId": 35041302475194370,
-          "inputDescription": "111111111111121212121321321321",
-          "outputDescription": "111111111111121212121321321321",
-          "inputSize": 30,
-          "outputSize": 30,
-          "inputFileName": "3.in",
-          "outputFileName": "3.out"
-        }];
+        this.loading = false;
       },
+    },
+    computed: {
+      checkpointHasChanged: function () {
+        return this.tableData !== this.originalTableData
+      }
     },
     mounted() {
       Vue.prototype.$warning("编辑以后请注意保存");
       this.problemId = this.$route.params.pid;
-      this.fetchProblemCheckpoints();
+
+      post("/manage/checkpoint/list", {problemId: this.problemId}).then(ret => {
+        this.originalTableData = ret;
+        this.tableData = this.originalTableData;
+      }).catch(err => {
+        Vue.prototype.$error(err);
+      })
+
       this.initTable();
     }
-  };
+    ,
+    beforeRouteLeave(to, from, next) {
+      console.log(this);
+      if (this.checkpointHasChanged) {
+        // debugger
+        next(false);
+        this.$confirm('是否保存？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          // 选择确定
+          this.handleSave();
+          next()
+        }).catch(() => {
+          next();
+        })
+      } else {
+        next();
+      }
+    }
+  }
+  ;
 </script>
 
 <style scoped>

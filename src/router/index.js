@@ -23,7 +23,7 @@ const routes = [
       {
         path: 'problem/:pid/checkpoint',
         name: 'checkpoint',
-        component: () => import('@/views/problem/ViewCheckpoint.vue')
+        component: () => import('@/views/problem/ViewCheckpoint.vue'),
       },
       {
         path: 'problem/:pid',
@@ -54,6 +54,7 @@ const routes = [
 ];
 
 const router = new VueRouter({
+  mode: 'history',
   routes
 });
 

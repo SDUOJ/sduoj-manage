@@ -15,10 +15,8 @@ export function post(url, data) {
         console.log(res.data);
         if (res.data.code !== 0) {
           if (typeof res.data.message == "undefined") {
-            Vue.prototype.$error(res.data);
             reject(res.data);
           } else {
-            Vue.prototype.$error(res.data.message);
             reject(res.data.message);
           }
         } else {
