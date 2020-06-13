@@ -16,7 +16,7 @@
         <i class="el-icon-document-copy" />
         <span>题目管理</span>
       </el-menu-item>
-      <el-menu-item index="/contest">
+      <!-- <el-menu-item index="/contest">
         <i class="el-icon-s-data" />
         <span>比赛管理</span>
       </el-menu-item>
@@ -27,7 +27,7 @@
       <el-menu-item index="/system">
         <i class="el-icon-info" />
         <span>系统状态</span>
-      </el-menu-item>
+      </el-menu-item>-->
     </el-menu>
   </div>
 </template>
