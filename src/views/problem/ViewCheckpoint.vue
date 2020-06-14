@@ -89,7 +89,7 @@
             size="mini"
           >下载</el-button>
           <el-popconfirm
-            :title="'删除 ' + scope.row.problemId + '?'"
+            :title="'删除 ' + scope.row.checkpointId + '?'"
             icon="el-icon-info"
             iconColor="red"
             @onConfirm="tableData.splice(scope.$index, 1)"
@@ -171,7 +171,7 @@ export default {
       axios({
         method: "post",
         url: "/manage/checkpoint/download",
-        data: { checkpointId },
+        data: [checkpointId],
         responseType: "blob"
       })
         .then(res => {
