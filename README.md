@@ -1,4 +1,4 @@
-# sduoj-manage
+# Shandong University Online Judge
 
 ## Project setup
 ```
