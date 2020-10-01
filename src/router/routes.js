@@ -11,8 +11,6 @@ import SubmissionView from '@/views/submission/SubmissionView';
 import SubmissionDetailView from '@/views/submission/SubmissionDetailView';
 
 // user
-import LoginView from '@/views/user/Login';
-import RegisterView from '@/views/user/Register';
 import ResetPassView from '@/views/user/ResetPass';
 import UserHomeView from '@/views/user/UserHome'
 
@@ -20,14 +18,6 @@ const routes = [
   {
     path: '/',
     redirect: '/home'
-  },
-  {
-    path: '/login',
-    component: LoginView
-  },
-  {
-    path: '/register',
-    component: RegisterView
   },
   {
     path: '/resetpass',

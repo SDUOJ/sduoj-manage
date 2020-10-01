@@ -7,7 +7,7 @@
         </div>
         <!-- <div class="navbar"> -->
           <MenuItem name="/home" to="/home">
-            <Icon type="ios-navigate"></Icon>首页
+            <Icon type="ios-navigate"></Icon>用户
           </MenuItem>
           <MenuItem name="/problem" to="/problem">
             <Icon type="ios-navigate"></Icon>题库
@@ -23,23 +23,13 @@
           </MenuItem>
         <!-- </div> -->
         <div class="navbar-user">
-          <template v-if="isLogin">
-            <Avatar :src="avatar" />
-            <Dropdown @on-click="onClick">
-              <div class="navbar-username">
-                {{username}}
-                <Icon type="ios-arrow-down"></Icon>
-              </div>
-              <DropdownMenu slot="list">
-                <DropdownItem name="home">主页</DropdownItem>
-                <DropdownItem name="logout" divided>登出</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </template>
-          <template v-else>
-            <Button type="text" @click="toLogin">登录</Button>
-            <Button type="text" @click="toRegist">注册</Button>
-          </template>
+          <!-- :src="avatar" -->
+          <Avatar :src="avatar" />
+          <Button type="text" @click="toUserPage">
+            Gene_Liu
+            <!-- {{ username }} -->
+            <Icon type="ios-arrow-forward" />
+          </Button>
         </div>
       </Menu>
     </div>
@@ -49,12 +39,17 @@
 <script>
 import api from '@/utils/api';
 import { mapGetters } from 'vuex';
+import avaImg from '@/assets/gene.png'
 
 export default {
-  // components: { Gravatar },
+  data: function() {
+    return {
+      avatar: avaImg
+    };
+  },
   methods: {
-    toLogin: function() {
-      this.$router.push('/login');
+    toUserPage: function() {
+      this.$router.push('/home');
     },
     toRegist: function() {
       this.$router.push('/register');
@@ -74,7 +69,8 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('user', ['isLogin', 'username', 'avatar'])
+    ...mapGetters('user', ['username', 'avatar']),
+    avaImg: () => avaImg
   },
   mounted: function() {
     api.getProfile().then(ret => this.$store.dispatch('user/setProfile', ret), _ => _); 
@@ -135,11 +131,13 @@ export default {
     margin: auto 8px;
     font-size: 16px;
   }
-  :hover {
-    cursor: pointer;
+  .ivu-btn-text:hover {
+    cursor: pointer; 
+    color: #717D7E;
   }
-  .ivu-btn:hover {
-    background: rgba(0, 0, 0, .05);
+  .ivu-btn-text:focus {
+    background: rgba(0, 0, 0, 0);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
 </style>
