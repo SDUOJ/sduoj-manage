@@ -1,6 +1,8 @@
 // general
-import HomeView from '@/views/HomeView';
 import NotFoundView from '@/views/404View';
+
+// user
+import UserView from '@/views/user/UserView';
 
 // problem
 import ProblemView from '@/views/problem/ProblemView';
@@ -10,47 +12,35 @@ import ProblemDetailView from '@/views/problem/ProblemDetailView';
 import SubmissionView from '@/views/submission/SubmissionView';
 import SubmissionDetailView from '@/views/submission/SubmissionDetailView';
 
-// user
-import ResetPassView from '@/views/user/ResetPass';
-import UserHomeView from '@/views/user/UserHome'
-
 const routes = [
   {
     path: '/',
-    redirect: '/home'
-  },
-  {
-    path: '/resetpass',
-    component: ResetPassView
-  },
-  {
-    path: '/home',
-    name: 'home',
-    component: HomeView,
-    meta: { title: '首页' }
-  },
-  {
-    path: '/problem',
-    name: 'problem',
-    component: ProblemView,
-    meta: { title: '题库' }
-  },
-  {
-    path: '/problem/:id',
-    component: ProblemDetailView
+    redirect: '/user'
   },
   {
     path: '/user',
-    component: UserHomeView
+    name: 'user',
+    component: UserView,
+    meta: { title: '用户' }
   },
-  {
-    path: '/submission',
-    component: SubmissionView
-  },
-  {
-    path: '/submission/:submissionId',
-    component: SubmissionDetailView
-  },
+  // {
+  //   path: '/problem',
+  //   name: 'problem',
+  //   component: ProblemView,
+  //   meta: { title: '题库' }
+  // },
+  // {
+  //   path: '/problem/:id',
+  //   component: ProblemDetailView
+  // },
+  // {
+  //   path: '/submission',
+  //   component: SubmissionView
+  // },
+  // {
+  //   path: '/submission/:submissionId',
+  //   component: SubmissionDetailView
+  // },
   {
     path: '*',
     component: NotFoundView
