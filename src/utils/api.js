@@ -2,7 +2,6 @@ import Vue from 'vue';
 import axios from 'axios';
 
 const ver1 = '/api';
-// axios.defaults.baseURL = 'http://api.oj.xrvitd.com:8080' + ver1;
 axios.defaults.baseURL = 'http://api.oj.sdu.edu.cn:8080' + ver1;
 axios.defaults.withCredentials = true;
 
@@ -42,9 +41,6 @@ function get(url, params) {
 }
 
 export default {
-  login: function(data) {
-    return post('/user/login', data);
-  },
   logout: function() {
     return get('/user/logout');
   },
