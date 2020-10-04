@@ -70,11 +70,11 @@
               </FormItem>
 
             <FormItem label="新密码" prop="passWord">
-              <Input type="password" v-model="userInfo.passWord"></Input>
+              <Input type="password" v-model="userInfo.passWord" placeholder="输入密码"></Input>
             </FormItem>
 
             <FormItem label="确认密码" prop="passWordCheck">
-                <Input type="password" v-model="userInfo.passWordCheck"></Input>
+                <Input type="password" v-model="userInfo.passWordCheck" placeholder="确认密码"></Input>
             </FormItem>
           </Form>
         </Modal>
@@ -138,14 +138,13 @@
             </FormItem>
 
             <FormItem label="新密码" prop="passWord">
-              <Input type="password" v-model="userInfo.passWord"></Input>
+              <Input type="password" v-model="userInfo.passWord" placeholder="输入密码"></Input>
             </FormItem>
 
             <FormItem label="确认密码" prop="passWordCheck">
-                <Input type="password" v-model="userInfo.passWordCheck"></Input>
+                <Input type="password" v-model="userInfo.passWordCheck" placeholder="确认密码"></Input>
             </FormItem>
           </Form>
-        </Modal>
     </Modal>
     <!-- 添加用户模态框 -->
 
@@ -445,15 +444,6 @@ export default {
   .user-set-content-button {
     float: left;
     margin-right: 5px;
-  }
-}
-// 模态框
-.modalLine {
-  margin-bottom: 10px;
-  .modalItem {
-    float: right;
-    margin-right: 20px;
-    line-height: 30px;
   }
 }
 </style>

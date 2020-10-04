@@ -23,12 +23,12 @@ const routes = [
     component: UserView,
     meta: { title: '用户' }
   },
-  // {
-  //   path: '/problem',
-  //   name: 'problem',
-  //   component: ProblemView,
-  //   meta: { title: '题库' }
-  // },
+  {
+    path: '/problem',
+    name: 'problem',
+    component: ProblemView,
+    meta: { title: '题库' }
+  },
   // {
   //   path: '/problem/:id',
   //   component: ProblemDetailView
