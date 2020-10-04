@@ -11,6 +11,7 @@
           :columns="problemTableColumns" 
           :data="problemTableData" 
           class="problem-set-content-table"
+          @on-cell-click="handleProblemClick"
           @on-sort-change="handleProblemSort">
         </Table>
 
@@ -51,6 +52,10 @@
                   <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
                 </OptionGroup>
               </Select>
+            </FormItem>
+
+            <FormItem label="题目来源" prop="problemSource">
+              <Input v-model="problemInfo.problemSource" :placeholder="problemInfo.problemSource"></Input>
             </FormItem>
           </Form>
         </Modal>
@@ -109,6 +114,10 @@
               </OptionGroup>
             </Select>
           </FormItem>
+
+          <FormItem label="题目来源" prop="problemSource">
+              <Input v-model="problemInfo.problemSource" placeholder="输入题目来源"></Input>
+            </FormItem>
         </Form>
     </Modal>
     <!-- 添加用户模态框 -->
@@ -187,7 +196,14 @@ export default {
         },
         {
           title: '题目标题',
-          key: 'problemTitle'
+          key: 'problemTitle',
+          render: (h, params) => {
+            return h('div', {
+              style: {
+                cursor: 'pointer'
+              }
+            }, params.row.problemTitle)
+          }
         },
         {
           title: '时间限制 (ms)',
@@ -246,6 +262,7 @@ export default {
                     this.problemInfo.spaceLimit = params.row.spaceLimit;
                     this.problemInfo.problemTags = params.row.problemTags;
                     this.problemInfo.languages = params.row.languages;
+                    this.problemInfo.problemSource = params.row.problemSource;
                   }
                 }
               })
@@ -261,6 +278,7 @@ export default {
           spaceLimit: '1024',
           acceptNum: '530',
           submitNum: '2030',
+          problemSource: '北京大学在线评测系统',
           problemTags: ['线段树', '动态规划'],
           languages: ['c++11', 'c++14', 'python2', 'java8']
         }
@@ -284,6 +302,7 @@ export default {
         spaceLimit: '',
         submitNum: '',
         acceptNum: '',
+        problemSource: '',
         problemTags: [],
         languages: []
       },
@@ -300,6 +319,9 @@ export default {
         ],
         spaceLimit: [
           { required: true, message: '空间限制不能为空', trigger: 'blur' }
+        ],
+        problemSource: [
+          { required: false, trigger: 'change' }
         ],
         languages: [
           { required: false, trigger: 'change' }
@@ -392,7 +414,7 @@ export default {
                 }
               }, [
                 h('Button', {
-                  props: Object.assign({}, this.buttonProps, {
+                  props: Object.assign({}, this.treeButtonProps, {
                     icon: 'ios-add',
                     type: 'primary'
                   }),
@@ -454,7 +476,7 @@ export default {
           ]
         }
       ],
-      buttonProps: {
+      treeButtonProps: {
         type: 'default',
         size: 'small'
       }
@@ -495,6 +517,7 @@ export default {
       this.problemInfo.languages = [];
       this.problemInfo.timeLimit = '';
       this.problemInfo.spaceLimit = '';
+      this.problemInfo.problemSource = '';
     },
     // 添加用户模态框确认
     commitAddProblem () {
@@ -543,7 +566,7 @@ export default {
           }
         }, [
           h('Button', {
-            props: Object.assign({}, this.buttonProps, {
+            props: Object.assign({}, this.treeButtonProps, {
               icon: 'ios-add'
             }),
             style: {
@@ -554,7 +577,7 @@ export default {
             }
           }),
           h('Button', {
-            props: Object.assign({}, this.buttonProps, {
+            props: Object.assign({}, this.treeButtonProps, {
               icon: 'ios-remove'
             }),
             on: {
@@ -577,6 +600,18 @@ export default {
       const parent = root.find(el => el.nodeKey === parentKey).node;
       const index = parent.children.indexOf(data);
       parent.children.splice(index, 1);
+    },
+    handleProblemClick: function(row, col) {
+      if (col.key === 'problemTitle') {
+        console.log(row.problemCode);
+        console.log(this.$router)
+        this.$router.push({
+          name: 'problem-detail',
+          params: {
+            problemCode: row.problemCode
+          }
+        });
+      }
     }
   }
 }

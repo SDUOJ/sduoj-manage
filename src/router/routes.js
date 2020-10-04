@@ -29,10 +29,11 @@ const routes = [
     component: ProblemView,
     meta: { title: '题库' }
   },
-  // {
-  //   path: '/problem/:id',
-  //   component: ProblemDetailView
-  // },
+  {
+    path: '/problem/:problemCode',
+    name: 'problem-detail',
+    component: ProblemDetailView
+  },
   // {
   //   path: '/submission',
   //   component: SubmissionView
