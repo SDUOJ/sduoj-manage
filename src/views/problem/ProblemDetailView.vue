@@ -5,7 +5,7 @@
           <Row>
             <h2 class="problemTitleBox">{{ problemInfo.problemCode }}. &nbsp; {{ problemInfo.problemTitle }} &nbsp; / &nbsp; {{ currentProblemDescription.title }}</h2>
             <Dropdown class="problemDescriptionButton" style="width: 150px" @on-click="handleProblemDescriptionSwitch">
-              <Button type="primary" style="width: 150px">
+              <Button type="primary" style="width: 150px" ghost>
                 题面切换
                 <Icon type="ios-arrow-down"></Icon>
               </Button>
@@ -20,8 +20,18 @@
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
-            <Button type="error" class="problemDescriptionButton" ghost @click="problemDescriptionCreateButton">创建</Button>
-            <Button type="primary" class="problemDescriptionButton" ghost @click="problemDescriptionSaveButton">保存</Button>
+
+            <Dropdown class="problemDescriptionButton" style="width: 70px" @on-click="handleProblemDescriptionSwitch">
+              <Button type="error" style="width: 70px" ghost>
+                操作
+                <Icon type="ios-arrow-down"></Icon>
+              </Button>
+              <DropdownMenu slot="list" style="width: 70px">
+                <DropdownItem style="width: 70px" name="problemDescriptionSave">保存</DropdownItem>
+                <DropdownItem style="width: 70px" name="problemDescriptionCreate">创建</DropdownItem>
+                <DropdownItem style="width: 70px" name="problemDescriptionDelete">删除</DropdownItem>                
+              </DropdownMenu>
+            </Dropdown>
           </Row>
           <Row class="problemDatileMarkdown">
             <Col span="12" class="problemDatileMarkdownBox">
@@ -36,11 +46,11 @@
 
         <!-- 保存题面模态框 -->
         <Modal
-            v-model="problemDescriptionModal"
-            title="题面保存"
+            v-model="problemDescriptionSaveModal"
+            title="保存当前题面"
             @on-ok="problemDescriptionModalSave">
-            <Form :model="currentProblemDescriptionForm" :label-width="80">
-              <FormItem label="题面名称">
+            <Form :model="currentProblemDescriptionForm" :rules="currentProblemDescriptionFormRule" :label-width="80">
+              <FormItem label="题面名称" prop="title">
                 <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"></Input>
               </FormItem>
               <FormItem label="默认题面">
@@ -59,9 +69,47 @@
         </Modal>
         <!-- 保存题面模态框 -->
 
+        <!-- 创建题面模态框 -->
+        <Modal
+            v-model="problemDescriptionCreateModal"
+            title="创建新题面"
+            @on-ok="problemDescriptionModalCreate">
+            <Form :model="currentProblemDescriptionForm" :rules="currentProblemDescriptionFormRule" :label-width="80">
+              <FormItem label="题面名称" prop="title">
+                <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"></Input>
+              </FormItem>
+              <FormItem label="默认题面">
+                <RadioGroup v-model="currentProblemDescriptionForm.isDefault">
+                  <Radio :label='1'>是</Radio>
+                  <Radio :label='0'>否</Radio>
+                </RadioGroup>
+              </FormItem>
+              <FormItem label="是否公开">
+                <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
+                  <Radio :label='1'>是</Radio>
+                  <Radio :label='0'>否</Radio>
+                </RadioGroup>
+              </FormItem>
+            </Form>
+        </Modal>
+        <!-- 创建题面模态框 -->
+
+        <!-- 删除题面模态框 -->
+        <Modal
+            v-model="problemDescriptionDeleteModal"
+            title="删除当前题面"
+            @on-ok="problemDescriptionModalDelete">
+            <Form :model="currentProblemDescriptionForm" :label-width="80">
+              <FormItem label="题面名称" prop="title">
+                <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title" disabled></Input>
+              </FormItem>
+            </Form>
+        </Modal>
+        <!-- 删除题面模态框 -->
+
         <!-- 数据管理 -->
         <TabPane label="数据管理" icon="ios-build-outline" name="problemDetailData">
-          标签二的内容
+          交给瑞瑞了！瑞瑞最棒！瑞瑞最强！
         </TabPane>
         <!-- 数据管理 -->
     </Tabs>
@@ -77,7 +125,9 @@ export default {
   },
   data () {
     return {
-      problemDescriptionModal: false,
+      problemDescriptionSaveModal: false,
+      problemDescriptionCreateModal: false,
+      problemDescriptionDeleteModal: false,
       currentProblemDescription: {
         id: '1',
         title: '中文题面',
@@ -115,40 +165,69 @@ export default {
             isPublic: 1
           }
         ]
+      },
+      currentProblemDescriptionFormRule: {
+        title: [
+          { required: true, message: '题面名称不能为空', trigger: 'blur' },
+          { type: 'string', trigger: 'blur' }
+        ]
       }
     }
   },
   methods: {
     // 题面保存按钮 - 弹出模态框
     problemDescriptionSaveButton: function () {
-      this.problemDescriptionModal = true;
+      this.problemDescriptionSaveModal = true;
       this.currentProblemDescriptionForm.id = this.currentProblemDescription.id;
       this.currentProblemDescriptionForm.title = this.currentProblemDescription.title;
       this.currentProblemDescriptionForm.isDefault = this.currentProblemDescription.id === this.problemInfo.defaultDescriptionId ? 1 : 0;
       this.currentProblemDescriptionForm.isPublic = this.currentProblemDescription.isPublic;
     },
-    // 题面保存模态框中的确认按钮
-    problemDescriptionModalSave: function () {
-
+    // 创建新题面按钮 - 弹出模态框
+    problemDescriptionCreateButton: function () {
+      this.problemDescriptionCreateModal = true;
+      this.currentProblemDescriptionForm.id = 1000;
+      this.currentProblemDescriptionForm.title = '新建题面';
+      this.currentProblemDescriptionForm.isDefault = 0;
+      this.currentProblemDescriptionForm.isPublic = 1;
+    },
+    // 删除题面按钮 - 弹出模态框
+    problemDescriptionDeleteButton: function () {
+      this.problemDescriptionDeleteModal = true;
+      this.currentProblemDescriptionForm.id = this.currentProblemDescription.id;
+      this.currentProblemDescriptionForm.title = this.currentProblemDescription.title;
     },
     // 题面切换下拉框的切换按钮
     handleProblemDescriptionSwitch: function (id) {
-      for (let i = 0; i < this.problemInfo.problemDescriptionDTO.length; i++) {
-        var item = this.problemInfo.problemDescriptionDTO[i];
-        if (item.id === id) {
-          this.currentProblemDescription = item;
-          break;
+      if (id === 'problemDescriptionSave') this.problemDescriptionSaveButton();
+      else if (id === 'problemDescriptionCreate') this.problemDescriptionCreateButton();
+      else if (id === 'problemDescriptionDelete') this.problemDescriptionDeleteButton();
+      else {
+        for (let i = 0; i < this.problemInfo.problemDescriptionDTO.length; i++) {
+          var item = this.problemInfo.problemDescriptionDTO[i];
+          if (item.id === id) {
+            this.currentProblemDescription = item;
+            break;
+          }
         }
       }
     },
-    // 创建新题面按钮
-    problemDescriptionCreateButton: function (id) {
-      var item = this.currentProblemDescription;
-      item.id = String(this.problemInfo.problemDescriptionDTO.length + 1);
-      item.title = '空题面';
-      item.content = '### 公式示例 \n `$x_1$`';
-      item.isPublic = 0;
-      this.problemInfo.problemDescriptionDTO.push(item);
+    // 保存题面 - 模态框内
+    problemDescriptionModalSave: function () {
+
+    },
+    // 创建新题面 - 模态框内
+    problemDescriptionModalCreate: function () {
+      // var item = this.currentProblemDescription;
+      // item.id = String(this.problemInfo.problemDescriptionDTO.length + 1);
+      // item.title = '空题面';
+      // item.content = '### 公式示例 \n `$x_1$`';
+      // item.isPublic = 0;
+      // this.problemInfo.problemDescriptionDTO.push(item);
+    },
+    // 删除题面 - 模态框内
+    problemDescriptionModalDelete: function () {
+
     }
   }
 }
@@ -194,5 +273,9 @@ export default {
     right: 0px;
     float: right;
   }
+}
+
+.dropDownItemBox {
+  height: 50px;
 }
 </style>
