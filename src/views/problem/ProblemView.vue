@@ -603,8 +603,8 @@ export default {
     },
     handleProblemClick: function(row, col) {
       if (col.key === 'problemTitle') {
-        console.log(row.problemCode);
-        console.log(this.$router)
+        // console.log(row.problemCode);
+        // console.log(this.$router)
         this.$router.push({
           name: 'problem-detail',
           params: {

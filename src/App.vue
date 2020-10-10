@@ -9,7 +9,7 @@
                   <div class="navbar-user">
                     <Avatar :src="avatar" />
                     <Button type="text" @click="toUserPage">
-                      Gene_Liu
+                      {{ username }}
                       <Icon type="ios-arrow-forward" />
                     </Button>
                   </div>
@@ -25,31 +25,32 @@
 
 <script>
 import NavBar from '@/components/NavBar';
-import api from '@/utils/api';
 import { mapGetters, mapState } from 'vuex';
-import avaImg from '@/assets/gene.png'
 
 export default {
   data: function() {
     return {
-      avatar: avaImg,
       isCollapsed: false
     };
   },
   methods: {
     toUserPage: function() {
-      this.$router.push('/user');
+      window.location = 'http://oj.sdu.edu.cn:8081/#/home';
     }
   },
   components: { NavBar },
   computed: {
     ...mapState(['footerInfo']),
+    ...mapGetters('user', ['username', 'avatar']),
     menuitemClasses: function () {
       return [
         'menu-item',
         this.isCollapsed ? 'collapsed-menu' : ''
       ]
     }
+  },
+  mounted: function () {
+    console.log(this.username);
   }
 };
 </script>

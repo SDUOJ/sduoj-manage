@@ -1,5 +1,5 @@
 // general
-import NotFoundView from '@/views/404View';
+import NotFoundView from '@/views/404/404View';
 
 // user
 import UserView from '@/views/user/UserView';
@@ -7,10 +7,6 @@ import UserView from '@/views/user/UserView';
 // problem
 import ProblemView from '@/views/problem/ProblemView';
 import ProblemDetailView from '@/views/problem/ProblemDetailView';
-
-// submission
-import SubmissionView from '@/views/submission/SubmissionView';
-import SubmissionDetailView from '@/views/submission/SubmissionDetailView';
 
 const routes = [
   {
