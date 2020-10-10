@@ -1,20 +1,20 @@
 <template>
     <div class="layout">
         <Layout :style="{minHeight: '100vh'}">
-            <Sider collapsible :collapsed-width="78" v-model="isCollapsed">
+            <Sider collapsible :collapsed-width="78" v-model="isCollapsed" class="layoutSider">
                 <NavBar></NavBar>
             </Sider>
             <Layout>
-                <Header :style="{background: '#fff', boxShadow: '0 2px 3px 2px rgba(0,0,0,.1)'}">
+                <Header :style="{background: '#fff', boxShadow: '0 2px 3px 2px rgba(0,0,0,.1)'}" class="layoutHeader">
                   <div class="navbar-user">
                     <Avatar :src="avatar" />
                     <Button type="text" @click="toUserPage">
-                      Gene_Liu
+                      {{ username }}
                       <Icon type="ios-arrow-forward" />
                     </Button>
                   </div>
                 </Header>
-                <Content :style="{padding: '16px 16px 16px'}">
+                <Content :style="{padding: '16px 16px 16px'}" class="layoutContent">
                   <router-view></router-view>
                   <div class="footer" v-once v-html='footerInfo'></div>
                 </Content>
@@ -25,31 +25,32 @@
 
 <script>
 import NavBar from '@/components/NavBar';
-import api from '@/utils/api';
 import { mapGetters, mapState } from 'vuex';
-import avaImg from '@/assets/gene.png'
 
 export default {
   data: function() {
     return {
-      avatar: avaImg,
       isCollapsed: false
     };
   },
   methods: {
     toUserPage: function() {
-      this.$router.push('/user');
+      window.location = 'http://oj.sdu.edu.cn:8081/#/home';
     }
   },
   components: { NavBar },
   computed: {
     ...mapState(['footerInfo']),
+    ...mapGetters('user', ['username', 'avatar']),
     menuitemClasses: function () {
       return [
         'menu-item',
         this.isCollapsed ? 'collapsed-menu' : ''
       ]
     }
+  },
+  mounted: function () {
+    console.log(this.username);
   }
 };
 </script>
@@ -83,10 +84,28 @@ export default {
 }
 
 .ivu-layout-sider .ivu-icon-ios-arrow-back:before {
+  // position: fixed !important;
   content: none !important;
 }
 
 .ivu-layout-header {
   box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 1px 1px !important;
+}
+.layoutSider {
+  position: fixed !important;
+  height: 100% !important;
+  z-index: 201;
+}
+
+.layoutContent {
+  margin-left: 200px;
+  margin-top: 64px;
+}
+
+.layoutHeader {
+  position: fixed !important;
+  height: 64px;
+  width: 100%;
+  z-index: 101;
 }
 </style>

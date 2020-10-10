@@ -3,6 +3,7 @@
 ## Project setup
 ```
 npm install
+npm install markdown-it-vue
 ```
 
 ### Compiles and hot-reloads for development

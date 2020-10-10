@@ -11,28 +11,36 @@
           :columns="userTableColumns" 
           :data="userTableData" 
           class="user-set-content-table"
+          @on-selection-change="selectChange"
           @on-sort-change="handleUserSort">
         </Table>
 
+        <div style="display: none;">
+          <Table 
+            :columns="exportUserData" 
+            :data="userTableData"
+            ref="userTable">
+          </Table>
+        </div>
         <!-- 用户信息修改框 -->
         <Modal
           v-model="userInfoModal"
           title="用户基本信息"
           @on-ok="commitUserInfo">
-          <Form :model="userInfo" :rules="userInfoRule" :label-width="80">
-            <FormItem label="用户名" prop="userName">
-              <Input v-model="userInfo.userName" :placeholder="userInfo.userName" disabled></Input>
+          <Form :model="userInfo" :rules="userInfoRule" ref="userInfoModal" :label-width="80">
+            <FormItem label="用户名" prop="username">
+              <Input v-model="userInfo.username" :placeholder="userInfo.username" disabled></Input>
             </FormItem>
 
-            <FormItem label="昵称" prop="nickName">
-              <Input v-model="userInfo.nickName" :placeholder="userInfo.nickName"></Input>
+            <FormItem label="昵称" prop="nickname">
+              <Input v-model="userInfo.nickname" :placeholder="userInfo.nickname"></Input>
             </FormItem>
 
             <FormItem label="性别" prop="gender">
               <RadioGroup v-model="userInfo.gender">
-                <Radio label="男">男</Radio>
-                <Radio label="女">女</Radio>
-                <Radio label="?">?</Radio>
+                <Radio :label='1'>男</Radio>
+                <Radio :label='0'>女</Radio>
+                <Radio :label='2'>?</Radio>
               </RadioGroup>
             </FormItem>
 
@@ -64,17 +72,17 @@
           v-model="userPasswordModal"
           title="密码设置"
           @on-ok="commitUserPassword">
-          <Form ref="passWordForm" :model="userInfo" :rules="userInfoRule" :label-width="80">
-            <FormItem label="用户名" prop="userName">
-                <Input v-model="userInfo.userName" :placeholder="userInfo.userName" disabled></Input>
+          <Form ref="passwdForm" :model="userInfo" :rules="userInfoRule" :label-width="80">
+            <FormItem label="用户名" prop="username">
+                <Input v-model="userInfo.username" :placeholder="userInfo.username" disabled></Input>
               </FormItem>
 
-            <FormItem label="新密码" prop="passWord">
-              <Input type="password" v-model="userInfo.passWord"></Input>
+            <FormItem label="新密码" prop="password">
+              <Input type="password" v-model="userInfo.password" placeholder="输入密码"></Input>
             </FormItem>
 
-            <FormItem label="确认密码" prop="passWordCheck">
-                <Input type="password" v-model="userInfo.passWordCheck"></Input>
+            <FormItem label="确认密码" prop="passwordCheck">
+                <Input type="password" v-model="userInfo.passwordCheck" placeholder="确认密码"></Input>
             </FormItem>
           </Form>
         </Modal>
@@ -89,7 +97,7 @@
       <Page 
           class="user-set-content-page"
           size="small" show-elevator show-sizer
-          :total="totalPage"
+          :total="totalNum"
           :current.sync="pageNow"
           @on-change="onPageChange"
           @on-page-size-change="onPageSizeChange"/>
@@ -100,20 +108,20 @@
         v-model="addUserModal"
         title="添加用户"
         @on-ok="commitAddUser">
-        <Form :model="userInfo" :rules="userInfoRule" :label-width="80">
-            <FormItem label="用户名" prop="userName">
-              <Input v-model="userInfo.userName" placeholder="输入用户名"></Input>
+        <Form ref="addUserModal" :model="userInfo" :rules="userInfoRule" :label-width="80">
+            <FormItem label="用户名" prop="username">
+              <Input v-model="userInfo.username" placeholder="输入用户名"></Input>
             </FormItem>
 
-            <FormItem label="昵称" prop="nickName">
-              <Input v-model="userInfo.nickName" placeholder="输入昵称"></Input>
+            <FormItem label="昵称" prop="nickname">
+              <Input v-model="userInfo.nickname" placeholder="输入昵称"></Input>
             </FormItem>
 
             <FormItem label="性别" prop="gender">
               <RadioGroup v-model="userInfo.gender">
-                <Radio label="男">男</Radio>
-                <Radio label="女">女</Radio>
-                <Radio label="?">?</Radio>
+                <Radio :label='1'>男</Radio>
+                <Radio :label='0'>女</Radio>
+                <Radio :label='2'>?</Radio>
               </RadioGroup>
             </FormItem>
 
@@ -137,15 +145,14 @@
               </Select>
             </FormItem>
 
-            <FormItem label="新密码" prop="passWord">
-              <Input type="password" v-model="userInfo.passWord"></Input>
+            <FormItem label="新密码" prop="password">
+              <Input type="password" v-model="userInfo.password" placeholder="输入密码"></Input>
             </FormItem>
 
-            <FormItem label="确认密码" prop="passWordCheck">
-                <Input type="password" v-model="userInfo.passWordCheck"></Input>
+            <FormItem label="确认密码" prop="passwordCheck">
+                <Input type="password" v-model="userInfo.passwordCheck" placeholder="确认密码"></Input>
             </FormItem>
           </Form>
-        </Modal>
     </Modal>
     <!-- 添加用户模态框 -->
 
@@ -157,7 +164,7 @@
         <Form :model="userInfo" :rules="userInfoRule" :label-width="80">
           <FormItem label="用户信息">
             <Input v-model="userInfo.infoArea" type="textarea" :autosize="{minRows: 5,maxRows: 20}" 
-              placeholder="/* 每一行数据以 Tab 键分割，依次包含用户名 密码  邮箱 */">
+              placeholder="/* 每一行数据以空格分割，依次包含用户名 密码 邮箱 */">
             </Input>
           </FormItem>
         </Form>
@@ -167,16 +174,18 @@
 </template>
 
 <script>
+import api from '@/utils/api'
+
 export default {
   data () {
     const validatePass = (rule, value, callback) => {
-      if (value !== '') {
-        this.$ref.userInfo.validateField('passWordCheck');
+      if (value === '') {
+        callback(new Error('密码不能为空'));
       }
       callback();
     };
     const validatePassCheck = (rule, value, callback) => {
-      if (value !== this.userInfo.passWord) {
+      if (value !== this.userInfo.password) {
         callback(new Error('两次输入的密码不匹配'));
       } else {
         callback();
@@ -191,11 +200,17 @@ export default {
         },
         {
           title: '用户名',
-          key: 'userName'
+          key: 'username'
         },
         {
           title: '性别',
-          key: 'gender'
+          key: 'gender',
+          render: (h, params) => {
+            var item = '女';
+            if (params.row.gender === 1) item = '男';
+            else if (params.row.gender === 2) item = '?';
+            return h('div', item);
+          }
         },
         {
           title: '学号',
@@ -210,12 +225,16 @@ export default {
           title: '\b',
           key: 'roles',
           render: (h, params) => {
-            return h('div', { class: 'user-set-roles' },
-              params.row.roles.map(item => {
-                return h('div', { class: 'user-set-rolebox' }, [
-                  h('div', { class: 'user-set-role' }, item)
-                ])
-              }));
+            if (params.row.roles && params.row.roles.length > 0) {
+              return h('div', { class: 'user-set-roles' },
+                params.row.roles.map(item => {
+                  return h('div', { class: 'user-set-rolebox' }, [
+                    h('div', { class: 'user-set-role' }, item)
+                  ])
+                }));
+            } else {
+              return h('div');
+            }
           }
         },
         {
@@ -231,9 +250,9 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.userInfoModal = 'true';
-                    this.userInfo.userName = params.row.userName;
-                    this.userInfo.nickName = params.row.nickName;
+                    this.userInfoModal = true;
+                    this.userInfo.username = params.row.username;
+                    this.userInfo.nickname = params.row.nickname;
                     this.userInfo.gender = params.row.gender;
                     this.userInfo.studentId = params.row.studentId;
                     this.userInfo.phone = params.row.phone;
@@ -249,10 +268,10 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.userPasswordModal = 'true';
-                    this.userInfo.userName = params.row.userName;
-                    this.userInfo.passWord = '';
-                    this.userInfo.passWordCheck = '';
+                    this.userPasswordModal = true;
+                    this.userInfo.username = params.row.username;
+                    this.userInfo.password = '';
+                    this.userInfo.passwordCheck = '';
                   }
                 }
               })
@@ -260,21 +279,24 @@ export default {
           }
         }
       ],
-      userTableData: [
-        {
-          userName: 'jeshrz',
-          nickName: 'hrzhrz',
-          gender: '男',
-          studentId: '201700530121',
-          roles: ['superadmin', 'admin'],
-          email: 'jeshrz@gmail.com',
-          phone: '13958874388'
-        }
+      // 表格导出格式
+      exportUserData: [
+        { title: 'userId', key: 'userId' },
+        { title: 'username', key: 'username' },
+        { title: 'nickname', key: 'nickname' },
+        { title: 'email', key: 'email' },
+        { title: 'emailVerified', key: 'emailVerified' },
+        { title: 'phone', key: 'phone' },
+        { title: 'gender', key: 'gender' },
+        { title: 'studentId', key: 'studentId' },
+        { title: 'roles', key: 'roles' }
       ],
-      totalPage: 100,
+      // 表格源数据
+      userTableData: [],
+      selectedUsers: [],
+      totalNum: 100,
       pageNow: 1,
       pageSize: 10,
-      totalProblemNum: 0,
       sortBy: '',
       ascending: false,
       userInfoModal: false,
@@ -282,28 +304,30 @@ export default {
       addUserModal: false,
       batchUserModal: false,
       userInfo: {
-        userName: '',
-        nickName: '',
-        gender: '',
+        username: '',
+        nickname: '',
+        gender: 2, // 0-女, 1-男, 2-?
         studentId: '',
         phone: '',
         email: '',
         roles: [],
-        passWord: '',
-        passWordCheck: '',
-        infoArea: ''
+        password: '',
+        passwordCheck: '',
+        infoArea: '',
+        userId: '',
+        emailVerified: 0
       },
       userInfoRule: {
-        userName: [
+        username: [
           { required: true, message: '用户名不能为空', trigger: 'blur' },
           { type: 'string', max: 30, message: '用户名不能超过 30 个字符', trigger: 'blur' }
         ],
-        nickName: [
+        nickname: [
           { required: false, trigger: 'blur' },
           { type: 'string', max: 30, message: '用户名不能超过 30 个字符', trigger: 'blur' }
         ],
         gender: [
-          { required: false, trigger: 'change' }
+          { type: 'number', required: false, trigger: 'change' }
         ],
         studentId: [
           { required: true, message: '学号不能为空', trigger: 'blur' },
@@ -320,24 +344,25 @@ export default {
         roles: [
           { required: false, trigger: 'change' }
         ], 
-        passWord: [
+        password: [
           { required: true, trigger: 'blur', min: 6, max: 32, message: '密码长度在 6 ~ 32 之间' },
           { validator: validatePass, trigger: 'blur' }
         ],
-        passWordCheck: [
+        passwordCheck: [
           { required: true, validator: validatePassCheck, trigger: 'change' }
         ]
       }
     }
   },
   methods: {
-    onPageChange: function(curPage) {
-      this.pageNow = curPage;
-      this.getProblemList();
+    // 分页按钮
+    onPageChange: function(pageNow) {
+      this.pageNow = pageNow;
+      this.getUserList();
     },
     onPageSizeChange: function(pageSize) {
       this.pageSize = pageSize;
-      this.getProblemList();
+      this.getUserList();
     },
     handleUserSort: function({ column, key, order }) {
       if (order === 'normal') {
@@ -348,44 +373,153 @@ export default {
         this.ascending = order === 'asc';
       }
     },
-    commitUserInfo () {
-      // this.$Message.info('Clicked ok');
+    // 表格全选
+    selectChange: function(selection) {
+      this.selectedUsers = selection;
     },
+    // 修改用户信息
+    commitUserInfo () {
+      this.$refs.userInfoModal.validate(valid => {
+        if (valid) {
+          var data = {
+            username: this.userInfo.username,
+            nickname: this.userInfo.nickname,
+            gender: this.userInfo.gender,
+            studentId: this.userInfo.studentId,
+            phone: this.userInfo.phone,
+            email: this.userInfo.email,
+            roles: this.userInfo.roles
+          }
+          console.log(data)
+          api.updateUserInfo(data).then(_ => {
+            this.$Message.success('修改成功');
+            this.getUserList();
+          }, _ => (this.$Message.error('修改失败')));
+        } else {
+          this.$Message.error('格式不符');
+        }
+      })
+    },
+    // 修改用户密码
     commitUserPassword () {
-
+      this.$refs.passwdForm.validate(valid => {
+        if (valid) {
+          var data = {
+            username: this.userInfo.username,
+            password: this.userInfo.password
+          }
+          api.updateUserPasswd(data).then(_ => {
+            this.$Message.success('修改成功');
+          }, _ => (this.$Message.error('修改失败')));
+        } else {
+          this.$Message.error('格式不符');
+        }
+      })
     },
     // 添加用户按钮
     addUser () {
-      this.addUserModal = 'true';
-      this.userInfo.userName = '';
-      this.userInfo.nickName = '';
-      this.userInfo.gender = '';
+      this.addUserModal = true;
+      this.userInfo.username = '';
+      this.userInfo.nickname = '';
+      this.userInfo.gender = 2;
       this.userInfo.studentId = '';
       this.userInfo.phone = '';
       this.userInfo.email = '';
       this.userInfo.roles = [];
-      this.userInfo.passWord = '';
-      this.userInfo.passWordCheck = '';
+      this.userInfo.password = '';
+      this.userInfo.passwordCheck = '';
     },
+    // 添加用户的确认按钮
     commitAddUser () {
-
+      this.$refs.addUserModal.validate(valid => {
+        if (valid) {
+          var data = [{
+            username: this.userInfo.username,
+            nickname: this.userInfo.nickname,
+            gender: this.userInfo.gender,
+            studentId: this.userInfo.studentId,
+            phone: this.userInfo.phone,
+            email: this.userInfo.email,
+            roles: this.userInfo.roles,
+            password: this.userInfo.password
+          }]
+          api.addUsers(data).then(_ => {
+            this.$Message.success('添加成功');
+            this.getUserList();
+          }, _ => (this.$Message.error('添加失败')));
+        } else {
+          this.$Message.error('格式不符');
+        }
+      })
     },
     // 批量导入用户按钮
     batchUser () {
-      this.batchUserModal = 'true';
+      this.batchUserModal = true;
       this.userInfo.infoArea = '';
     },
     commitBatchUser () {
-
+      var data = []
+      var row_data = this.userInfo.infoArea.split('\n')
+      var flag = 1
+      row_data.forEach(function(item) {
+        var tmp = item.split(' ')
+        if (tmp.length < 3) {
+          flag = 0
+        } else {
+          var tmp_json = {
+            username: tmp[0],
+            password: tmp[1],
+            email: tmp[2]
+          }
+          data.push(tmp_json);
+        }
+      })
+      if (flag === 0) {
+        this.$Message.error('格式不符');
+      } else {
+        api.addUsers(data).then(_ => {
+          this.$Message.success('导入成功');
+          this.getUserList();
+        }, _ => (this.$Message.error('导入失败')));
+      }
     },
     // 删除用户按钮
     deleteUser () {
-
+      if (this.selectedUsers.length === 0) {
+        this.$Message.error('无用户被选中');
+      } else {
+        var data = []
+        this.selectedUsers.forEach(function(item) {
+          data.push(item.username);
+        })
+        api.deleteUsers(data).then(_ => {
+          this.$Message.success('删除成功');
+          this.getUserList();
+        }, _ => (this.$Message.error('删除失败')));
+      }
     },
     // 文件导出按钮
     exportUser () {
-
+      this.$refs.userTable.exportCsv({
+        quoted: true,
+        filename: '所有用户数据',
+        columns: this.exportUserData,
+        data: this.userTableData
+      });
+    },
+    getUserList() {
+      var params = {
+        pageNow: this.pageNow,
+        pageSize: this.pageSize
+      }
+      api.getUserList(params).then(ret => {
+        this.totalNum = parseInt(ret.totalPage) * this.pageSize;
+        this.userTableData = ret.rows;
+      });
     }
+  },
+  mounted: function () {
+    this.getUserList();
   }
 }
 </script>
@@ -445,15 +579,6 @@ export default {
   .user-set-content-button {
     float: left;
     margin-right: 5px;
-  }
-}
-// 模态框
-.modalLine {
-  margin-bottom: 10px;
-  .modalItem {
-    float: right;
-    margin-right: 20px;
-    line-height: 30px;
   }
 }
 </style>

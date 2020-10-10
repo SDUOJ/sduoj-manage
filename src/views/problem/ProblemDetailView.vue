@@ -1,255 +1,281 @@
 <template>
-   <div>
-       <!-- <NavPath></NavPath> -->
-       <div class="container">
-          <!-- 标题 -->
-            <h2 v-text="problemInfo.title"></h2>
-          <!--  -->
-        <Row class="main">
-          <Col span="17" class="main-lf">
-          <!-- 题面描述 -->
-            <Card class="problem-box">
-              <div slot="header" class="problem-box-header">Description</div>
-              <div class="problem-markdown">
-                <markdown-it-vue-light :content="problemInfo.content"></markdown-it-vue-light>
-              </div>
-            </Card>
-          <!--  -->
-          <!-- 样例输入输出 -->
-            <Card class="problem-box" v-for="ex in problemInfo.examples" :key="ex.id">
-              <div slot="header" class="problem-box-header">
-                Example {{ ex.id }}
-              </div>
-                <div class="problem-example">
-                  <Tooltip content="Copy" placement="right">
-                    <h3 class="clip" @click="copyToClipboard(ex.input)"> Input </h3>
-                  </Tooltip>
-                  <markdown-it-vue-light :content="'```text\n' + ex.input + '\n```'"></markdown-it-vue-light>
-                </div>
-                <div class="problem-example">
-                  <Tooltip content="Copy" placement="right">
-                    <h3 class="clip" @click="copyToClipboard(ex.output)"> Output </h3>
-                  </Tooltip>
-                  <markdown-it-vue-light :content="'```text\n' + ex.output + '\n```'"></markdown-it-vue-light>
-                </div>
-            </Card>
-          <!--  -->
-          <!-- 代码编辑器 -->
-          <Card class="problem-box clearfix">
-            <CodeEditor style="margin-left: -15px;" 
-              :code.sync="code" 
-              :file.sync="file"
-              :language="lang" 
-              @changeLang="onChangeLang">
-            </CodeEditor>
-            <Button style="float: right; margin: 5px 0;" @click="onSubmit">提交</Button>
-          </Card>
-          <!--  -->
-          </Col>
-          <Col span="7">
-          <!-- 题目基本信息 -->
-            <Card class="problem-box">
-              <div slot="header" class="problem-box-header">Info</div>
-              <div class="problem-info">
-                <dl>
-                  <dt>Problem ID</dt>
-                  <dd>{{ problemInfo.problemId }}</dd>
-                </dl>
-                <dl>
-                  <dt>Time Limit</dt>
-                  <dd class="timelimit">{{ problemInfo.timeLimit }}</dd>
-                </dl>
-                <dl>
-                  <dt>Memory Limit</dt>
-                  <dd class="memlimit">{{ problemInfo.memoryLimit }}</dd>
-                </dl>
-                <dl>
-                  <dt>Source</dt>
-                  <dd>{{ problemInfo.source }}</dd>
-                </dl>
-                <dl>
-                  <dt>Tags</dt>
-                  <dd v-if="showTags" class="show-tags">
-                    <Poptip placement="bottom">
-                      <a>Show</a>
-                      <div slot="content">
-                        <span style="margin: 5px 5px" v-for="tag in problemInfo.tags" :key="tag">{{tag}}</span>
-                      </div>
-                    </Poptip>
-                  </dd>
-                  <dd v-else>Disabled</dd>
-                </dl>
-              </div>
-            </Card>
-          <!--  -->
-          <!-- 近期提交记录 -->
-          <Card class="problem-box" v-if="isLogin">
-            <div slot="header" class="problem-box-header">近期提交</div>
-            <table border="0" cellpadding="0" cellspacing="0" style="margin: 5px 0; width: 100%;">
-              <tr style="height: 30px;">
-                <th>结果</th>
-                <th>时间</th>
-              </tr>
-              <tr class="judge-result" @click="showDetail(sb.submissionId)" v-for="sb in submissions" :key="sb.submissionId">
-                <td width="70%" :class="utils.status2Class(sb.judgeResult)" style="text-align: center;" @click="toSubmissionDetail(submissionId)">{{ sb.judgeResult | changeResult }}</td>
-                <td width="30%" style="text-align: center;">{{ sb.when | changeTime }}</td>
-              </tr>
-            </table>
-            <Button type="text" style="width: 100%; margin: 5px auto;" @click="handleShowSubmission">查看所有提交</Button>
-          </Card>
-          </Col>
-        </Row>
-       </div>
-    </div> 
+    <Tabs value="problemDetailMarkdown">
+        <!-- 题面管理 -->
+        <TabPane label="题面管理" icon="ios-book-outline" name="problemDetailMarkdown">
+          <Row>
+            <h2 class="problemTitleBox">{{ problemInfo.problemCode }}. &nbsp; {{ problemInfo.problemTitle }} &nbsp; / &nbsp; {{ currentProblemDescription.title }}</h2>
+            <Dropdown class="problemDescriptionButton" style="width: 150px" @on-click="handleProblemDescriptionSwitch">
+              <Button type="primary" style="width: 150px" ghost>
+                题面切换
+                <Icon type="ios-arrow-down"></Icon>
+              </Button>
+              <DropdownMenu slot="list">
+                <DropdownItem v-for="item in problemInfo.problemDescriptionDTO" :name="item.id" :key="item.id">
+                  <div class="problemDescriptionBox">
+                    <div class="problemDescriptionBoxTitle">{{ item.title }}</div>
+                    <div class="problemDescriptionBoxDelete" v-if="item.id === problemInfo.defaultDescriptionId">
+                      <Icon type="ios-checkmark" />
+                    </div>
+                  </div>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+
+            <Dropdown class="problemDescriptionButton" style="width: 70px" @on-click="handleProblemDescriptionSwitch">
+              <Button type="error" style="width: 70px" ghost>
+                操作
+                <Icon type="ios-arrow-down"></Icon>
+              </Button>
+              <DropdownMenu slot="list" style="width: 70px">
+                <DropdownItem style="width: 70px" name="problemDescriptionSave">保存</DropdownItem>
+                <DropdownItem style="width: 70px" name="problemDescriptionCreate">创建</DropdownItem>
+                <DropdownItem style="width: 70px" name="problemDescriptionDelete">删除</DropdownItem>                
+              </DropdownMenu>
+            </Dropdown>
+          </Row>
+          <Row class="problemDatileMarkdown">
+            <Col span="12" class="problemDatileMarkdownBox">
+              <Input v-model="currentProblemDescription.content" type="textarea" :autosize="{minRows: 40,maxRows: 60}" />
+            </Col>
+            <Col span="12" class="problemDatileMarkdownBox">
+              <markdown-it-vue-light :content="currentProblemDescription.content" />
+            </Col>
+          </Row>
+        </TabPane>
+        <!-- 题面管理 -->
+
+        <!-- 保存题面模态框 -->
+        <Modal
+            v-model="problemDescriptionSaveModal"
+            title="保存当前题面"
+            @on-ok="problemDescriptionModalSave">
+            <Form :model="currentProblemDescriptionForm" :rules="currentProblemDescriptionFormRule" :label-width="80">
+              <FormItem label="题面名称" prop="title">
+                <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"></Input>
+              </FormItem>
+              <FormItem label="默认题面">
+                <RadioGroup v-model="currentProblemDescriptionForm.isDefault">
+                  <Radio :label='1'>是</Radio>
+                  <Radio :label='0'>否</Radio>
+                </RadioGroup>
+              </FormItem>
+              <FormItem label="是否公开">
+                <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
+                  <Radio :label='1'>是</Radio>
+                  <Radio :label='0'>否</Radio>
+                </RadioGroup>
+              </FormItem>
+            </Form>
+        </Modal>
+        <!-- 保存题面模态框 -->
+
+        <!-- 创建题面模态框 -->
+        <Modal
+            v-model="problemDescriptionCreateModal"
+            title="创建新题面"
+            @on-ok="problemDescriptionModalCreate">
+            <Form :model="currentProblemDescriptionForm" :rules="currentProblemDescriptionFormRule" :label-width="80">
+              <FormItem label="题面名称" prop="title">
+                <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"></Input>
+              </FormItem>
+              <FormItem label="默认题面">
+                <RadioGroup v-model="currentProblemDescriptionForm.isDefault">
+                  <Radio :label='1'>是</Radio>
+                  <Radio :label='0'>否</Radio>
+                </RadioGroup>
+              </FormItem>
+              <FormItem label="是否公开">
+                <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
+                  <Radio :label='1'>是</Radio>
+                  <Radio :label='0'>否</Radio>
+                </RadioGroup>
+              </FormItem>
+            </Form>
+        </Modal>
+        <!-- 创建题面模态框 -->
+
+        <!-- 删除题面模态框 -->
+        <Modal
+            v-model="problemDescriptionDeleteModal"
+            title="删除当前题面"
+            @on-ok="problemDescriptionModalDelete">
+            <Form :model="currentProblemDescriptionForm" :label-width="80">
+              <FormItem label="题面名称" prop="title">
+                <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title" disabled></Input>
+              </FormItem>
+            </Form>
+        </Modal>
+        <!-- 删除题面模态框 -->
+
+        <!-- 数据管理 -->
+        <TabPane label="数据管理" icon="ios-build-outline" name="problemDetailData">
+          交给瑞瑞了！瑞瑞最棒！瑞瑞最强！
+        </TabPane>
+        <!-- 数据管理 -->
+    </Tabs>
 </template>
 
 <script>
-// import NavPath from '../../components/NavPath.vue';
-import Card from '@/components/Card';
 import MarkdownItVueLight from 'markdown-it-vue/dist/markdown-it-vue-light.umd.min.js'
 import 'markdown-it-vue/dist/markdown-it-vue-light.css'
-import CodeEditor from '@/components/CodeEditor';
-
-import { format } from 'timeago.js';
-import utils from '@/utils';
-
-import { mapState } from 'vuex';
 
 export default {
-  components: { 
-    Card,
-    MarkdownItVueLight,
-    CodeEditor
+  components: {
+    MarkdownItVueLight
   },
-  filters: {
-    changeTime: timestamp => format(new Date(timestamp), 'zh_CN'),
-    changeResult: res => utils.judgeResultMap[res]
-  },
-  data: function() {
+  data () {
     return {
-      problemInfo: {
-        problemId: '',
-        title: '',
-        content: '',
-        timeLimit: '',
-        memoryLimit: '',
-        examples: [],
-        source: '',
-        tags: []
+      problemDescriptionSaveModal: false,
+      problemDescriptionCreateModal: false,
+      problemDescriptionDeleteModal: false,
+      currentProblemDescription: {
+        id: '1',
+        title: '中文题面',
+        content: 'Chinese Version',
+        isPublic: 1
       },
-      submissions: [],
-      code: '',
-      file: null,
-      lang: 'C++',
-      showTags: true
+      currentProblemDescriptionForm: {
+        id: '',
+        title: '',
+        isDefault: 0,
+        isPublic: 0
+      },
+      problemInfo: {
+        problemCode: 'POJ-1001',
+        problemTitle: 'A + B Problem',
+        timeLimit: '1000',
+        spaceLimit: '1024',
+        acceptNum: '530',
+        submitNum: '2030',
+        problemSource: '北京大学在线评测系统',
+        problemTags: ['线段树', '动态规划'],
+        languages: ['c++11', 'c++14', 'python2', 'java8'],
+        defaultDescriptionId: '2',
+        problemDescriptionDTO: [
+          {
+            id: '1',
+            title: '中文题面中文题面中文题面',
+            content: 'Chinese Version',
+            isPublic: 1
+          },
+          {
+            id: '2',
+            title: '英文题面',
+            content: 'English Version',
+            isPublic: 1
+          }
+        ]
+      },
+      currentProblemDescriptionFormRule: {
+        title: [
+          { required: true, message: '题面名称不能为空', trigger: 'blur' },
+          { type: 'string', trigger: 'blur' }
+        ]
+      }
     }
   },
   methods: {
-    copyToClipboard: function(content) {
-      this.$copyText(content).then(e => this.$Message.success('已复制到剪切板'), e => console.log(e));
+    // 题面保存按钮 - 弹出模态框
+    problemDescriptionSaveButton: function () {
+      this.problemDescriptionSaveModal = true;
+      this.currentProblemDescriptionForm.id = this.currentProblemDescription.id;
+      this.currentProblemDescriptionForm.title = this.currentProblemDescription.title;
+      this.currentProblemDescriptionForm.isDefault = this.currentProblemDescription.id === this.problemInfo.defaultDescriptionId ? 1 : 0;
+      this.currentProblemDescriptionForm.isPublic = this.currentProblemDescription.isPublic;
     },
-    showDetail: function(sid) {
-      console.log(sid);
+    // 创建新题面按钮 - 弹出模态框
+    problemDescriptionCreateButton: function () {
+      this.problemDescriptionCreateModal = true;
+      this.currentProblemDescriptionForm.id = 1000;
+      this.currentProblemDescriptionForm.title = '新建题面';
+      this.currentProblemDescriptionForm.isDefault = 0;
+      this.currentProblemDescriptionForm.isPublic = 1;
     },
-    onChangeLang: function(newLang) {
-      this.lang = newLang;
+    // 删除题面按钮 - 弹出模态框
+    problemDescriptionDeleteButton: function () {
+      this.problemDescriptionDeleteModal = true;
+      this.currentProblemDescriptionForm.id = this.currentProblemDescription.id;
+      this.currentProblemDescriptionForm.title = this.currentProblemDescription.title;
     },
-    onSubmit: function() {
-      console.log(this.code);
-      console.log(this.file);
+    // 题面切换下拉框的切换按钮
+    handleProblemDescriptionSwitch: function (id) {
+      if (id === 'problemDescriptionSave') this.problemDescriptionSaveButton();
+      else if (id === 'problemDescriptionCreate') this.problemDescriptionCreateButton();
+      else if (id === 'problemDescriptionDelete') this.problemDescriptionDeleteButton();
+      else {
+        for (let i = 0; i < this.problemInfo.problemDescriptionDTO.length; i++) {
+          var item = this.problemInfo.problemDescriptionDTO[i];
+          if (item.id === id) {
+            this.currentProblemDescription = item;
+            break;
+          }
+        }
+      }
     },
-    handleShowSubmission: function() {
-      this.$router.push('/submission?username=' + this.username + '&pid=' + this.problemInfo.problemId)
-    },
-    toSubmissionId: function(submissionId) {
-      this.$router.push('/submission/' + submissionId);
-    }
-  },
-  computed: {
-    ...mapState('user', ['username', 'isLogin']),
-    utils: () => utils
-  },
-  mounted: function() {
-    this.problemInfo = {
-      problemId: 1001,
-      title: 'A + B Problem',
-      content: '## 123123123\n`$a^2+b^2=c^2$`\n```c\n#include <sdtio.h>\nint main() {\n\rleturn 0;\n}\n```\n',
-      timeLimit: '1000',
-      memoryLimit: '1024',
-      source: 'unknown',
-      examples: [
-        { id: 1, input: '1 2', output: '3' },
-        { id: 2, input: '4 5', output: '9' }
-      ],
-      tags: ['greedy', 'math']
-    };
+    // 保存题面 - 模态框内
+    problemDescriptionModalSave: function () {
 
-    this.submissions = [
-      { submissionId: 1, judgeResult: 0, when: 1601125200000 },
-      { submissionId: 2, judgeResult: 1, when: 1601125200000 },
-      { submissionId: 3, judgeResult: 2, when: 1601125200000 },
-      { submissionId: 4, judgeResult: 8, when: 1601125200000 }
-    ]
+    },
+    // 创建新题面 - 模态框内
+    problemDescriptionModalCreate: function () {
+      // var item = this.currentProblemDescription;
+      // item.id = String(this.problemInfo.problemDescriptionDTO.length + 1);
+      // item.title = '空题面';
+      // item.content = '### 公式示例 \n `$x_1$`';
+      // item.isPublic = 0;
+      // this.problemInfo.problemDescriptionDTO.push(item);
+    },
+    // 删除题面 - 模态框内
+    problemDescriptionModalDelete: function () {
+
+    }
   }
 }
 </script>
 
 <style lang="less" scoped>
-.problem-box {
-  margin: 20px 20px 20px 0; 
-  .problem-box-header {
-    margin-left: 8px;
+.problemTitleBox {
+  float: left;
+  padding-left: 10px;
+}
+
+.problemDescriptionButton {
+  float: right;
+  margin-right: 10px;
+}
+
+.problemDatileMarkdown {
+  margin-top: 10px;
+  .problemDatileMarkdownBox {
+    padding: 10px;
+    /deep/ .ivu-input:hover {
+      border-color: #dcdee2;
+    }
+    /deep/ .ivu-input:focus {
+      border-color: #dcdee2;
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
   }
 }
 
-.problem-markdown {
-  padding: 12px 0;
-}
-
-.problem-example {
-  padding: 12px 0;
-  .clip:hover {
-    cursor: pointer;
+.problemDescriptionBox {
+  position: relative;
+  .problemDescriptionBoxTitle {
+    display: inline-block;
+    width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-}
-
-.problem-info {
-  user-select: none;
-  dl {
-    margin: 8px 0;
-  }
-  dt,dd {
-    display:inline; 
-    margin:0; 
-    padding:0;
-  } 
-  dd {
+  .problemDescriptionBoxDelete {
+    top: 1.5px;
+    position: absolute;
+    right: 0px;
     float: right;
   }
-  dt {
-    font-weight: bold;
-  }
-  dd::after{
-    content:"\0A";
-    white-space:pre;
-  }
-  .timelimit::after {
-    content:" ms\0A";
-    white-space:pre; 
-  }
-  .memlimit::after {
-    content:" KB\0A";
-    white-space:pre; 
-  }
-  .show-tags:hover {
-    cursor: pointer;
-  }
 }
 
-.judge-result {
-  height: 30px;
-}
-th, td {
-  border-bottom: 1px solid #d4d4d5;
+.dropDownItemBox {
+  height: 50px;
 }
 </style>
