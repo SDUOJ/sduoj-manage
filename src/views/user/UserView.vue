@@ -391,7 +391,6 @@ export default {
             email: this.userInfo.email,
             roles: this.userInfo.roles
           }
-          console.log(data)
           api.updateUserInfo(data).then(_ => {
             this.$Message.success('修改成功');
             this.getUserList();

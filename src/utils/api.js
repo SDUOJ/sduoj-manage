@@ -69,7 +69,6 @@ export default {
   },
   // 更改用户信息
   updateUserInfo: function(data) {
-    console.log(data)
     return post('/manage/user/update', data);
   },
   // 更改用户密码
@@ -83,5 +82,26 @@ export default {
   // 删除用户
   deleteUsers: function(data) {
     return post('/manage/user/delete', data);
+  },
+  // 查询题目列表
+  getProblemList: function(params) {
+    return get('/manage/problem/list', params);
+  },
+  // 更新题目信息
+  updateProblemInfo: function(data) {
+    return post('/manage/problem/update', data);
+  },
+  // 创建题目
+  createProblem: function(data) {
+    return post('/manage/problem/create', data);
+  },
+  // 查询题目的描述列表
+  getProblemDescriptionList: function(params) {
+    return get('/manage/problem/queryDescriptionList', params);
+  },
+  // 查询题目描述
+  getProblemDescription: function(params) {
+    console.log(params)
+    return get('/manage/problem/queryDescription', params);
   }
 }

@@ -15,51 +15,60 @@
           @on-sort-change="handleProblemSort">
         </Table>
 
-        <!-- 用户信息修改框 -->
+        <!-- 题目信息修改框 -->
         <Modal
           v-model="problemInfoModal"
           title="题目基本信息"
           @on-ok="commitProblemInfo">
-          <Form :model="problemInfo" :rules="problemInfoRule" :label-width="115">
+          <Form ref="problemInfoModal" :model="problemInfo" :rules="problemInfoRule" :label-width="115">
             <FormItem label="题目编码" prop="problemCode">
-              <Input v-model="problemInfo.problemCode" :placeholder="problemInfo.problemCode"></Input>
+              <Input v-model="problemInfo.problemCode" :placeholder="problemInfo.problemCode" disabled></Input>
             </FormItem>
 
             <FormItem label="题目标题" prop="problemTitle">
               <Input v-model="problemInfo.problemTitle" :placeholder="problemInfo.problemTitle"></Input>
             </FormItem>
 
+            <FormItem label="是否公开" prop="isPublic">
+              <RadioGroup v-model="problemInfo.isPublic">
+                <Radio :label='1'>是</Radio>
+                <Radio :label='0'>否</Radio>
+              </RadioGroup>
+            </FormItem>
+
             <FormItem label="时间限制 (ms)" prop="timeLimit">
               <Input v-model="problemInfo.timeLimit" :placeholder="problemInfo.timeLimit"></Input>
             </FormItem>
 
-            <FormItem label="空间限制 (MB)" prop="spaceLimit">
-              <Input v-model="problemInfo.spaceLimit" :placeholder="problemInfo.spaceLimit"></Input>
+            <FormItem label="空间限制 (MB)" prop="memoryLimit">
+              <Input v-model="problemInfo.memoryLimit" :placeholder="problemInfo.memoryLimit"></Input>
             </FormItem>
 
             <FormItem label="评测语言">
               <Select v-model="problemInfo.languages" multiple>
+                <Option value="cc">cc</Option>
                 <Option value="c++11">c++11</Option>
                 <Option value="c++14">c++14</Option>
                 <Option value="python2">python2</Option>
+                <Option value="python3">python3</Option>
                 <Option value="java8">java8</Option>
               </Select>
             </FormItem>
 
             <FormItem label="标签">
-              <Select v-model="problemInfo.problemTags" multiple filterable allow-create>
+              <Select v-model="problemInfo.problemTagDTOList" multiple filterable allow-create>
                 <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
                   <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
                 </OptionGroup>
               </Select>
             </FormItem>
 
-            <FormItem label="题目来源" prop="problemSource">
-              <Input v-model="problemInfo.problemSource" :placeholder="problemInfo.problemSource"></Input>
+            <FormItem label="题目来源" prop="source">
+              <Input v-model="problemInfo.source" :placeholder="problemInfo.source"></Input>
             </FormItem>
           </Form>
         </Modal>
-        <!-- 用户信息修改框 -->
+        <!-- 题目信息修改框 -->
         
     </Card>
     <div class="problem-set-content-footer">
@@ -70,32 +79,35 @@
       <Page 
           class="problem-set-content-page"
           size="small" show-elevator show-sizer
-          :total="totalPage"
+          :total="totalNum"
           :current.sync="pageNow"
           @on-change="onPageChange"
           @on-page-size-change="onPageSizeChange"/>
     </div>
 
-    <!-- 添加用户模态框 -->
+    <!-- 添加题目模态框 -->
     <Modal
         v-model="addProblemModal"
         title="添加用户"
         @on-ok="commitAddProblem">
-        <Form :model="problemInfo" :rules="problemInfoRule" :label-width="115">
-          <FormItem label="题目编码" prop="problemCode">
-            <Input v-model="problemInfo.problemCode" placeholder="输入题目编码"></Input>
-          </FormItem>
-
+        <Form ref="addProblemModal" :model="problemInfo" :rules="problemInfoRule" :label-width="115">
           <FormItem label="题目标题" prop="problemTitle">
             <Input v-model="problemInfo.problemTitle" placeholder="输入题目标题"></Input>
+          </FormItem>
+
+          <FormItem label="是否公开" prop="isPublic">
+            <RadioGroup v-model="problemInfo.isPublic">
+              <Radio :label='1'>是</Radio>
+              <Radio :label='0'>否</Radio>
+            </RadioGroup>
           </FormItem>
 
           <FormItem label="时间限制 (ms)" prop="timeLimit">
             <Input v-model="problemInfo.timeLimit" placeholder="输入时间限制"></Input>
           </FormItem>
 
-          <FormItem label="空间限制 (MB)" prop="spaceLimit">
-            <Input v-model="problemInfo.spaceLimit" placeholder="输入空间限制"></Input>
+          <FormItem label="空间限制 (MB)" prop="memoryLimit">
+            <Input v-model="problemInfo.memoryLimit" placeholder="输入空间限制"></Input>
           </FormItem>
 
           <FormItem label="评测语言">
@@ -108,19 +120,19 @@
           </FormItem>
 
           <FormItem label="标签">
-            <Select v-model="problemInfo.problemTags" multiple filterable allow-create>
+            <Select v-model="problemInfo.problemTagDTOList" multiple filterable allow-create>
               <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
                 <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
               </OptionGroup>
             </Select>
           </FormItem>
 
-          <FormItem label="题目来源" prop="problemSource">
-              <Input v-model="problemInfo.problemSource" placeholder="输入题目来源"></Input>
+          <FormItem label="题目来源" prop="source">
+              <Input v-model="problemInfo.source" placeholder="输入题目来源"></Input>
             </FormItem>
         </Form>
     </Modal>
-    <!-- 添加用户模态框 -->
+    <!-- 添加题目模态框 -->
 
     <!-- 标签管理模态框 -->
     <Modal
@@ -134,23 +146,11 @@
 </template>
 
 <script>
+import api from '@/utils/api'
 import ProblemCode from '@/components/ProblemCode';
 
 export default {
   data () {
-    const validatePass = (rule, value, callback) => {
-      if (value !== '') {
-        this.$ref.problemInfo.validateField('passWordCheck');
-      }
-      callback();
-    };
-    const validatePassCheck = (rule, value, callback) => {
-      if (value !== this.problemInfo.passWord) {
-        callback(new Error('两次输入的密码不匹配'));
-      } else {
-        callback();
-      }
-    };
     return {
       problemTableColumns: [
         {
@@ -213,7 +213,7 @@ export default {
         },
         {
           title: '空间限制 (MB)',
-          key: 'spaceLimit',
+          key: 'memoryLimit',
           width: 150,
           sortable: 'custom'
         },
@@ -232,14 +232,18 @@ export default {
         },
         {
           title: '\b',
-          key: 'problemTags',
+          key: 'problemTagDTOList',
           render: (h, params) => {
-            return h('div', { class: 'problem-set-problemtags' },
-              params.row.problemTags.map(item => {
-                return h('div', { class: 'problem-set-rolebox' }, [
-                  h('div', { class: 'problem-set-role' }, item)
-                ])
-              }));
+            if (params.row.problemTagDTOList && params.row.problemTagDTOList.length > 0) {
+              return h('div', { class: 'problem-set-problemtags' },
+                params.row.problemTagDTOList.map(item => {
+                  return h('div', { class: 'problem-set-rolebox' }, [
+                    h('div', { class: 'problem-set-role' }, item.title)
+                  ])
+                })); 
+            } else {
+              return h('div');
+            }
           }
         },
         {
@@ -255,14 +259,15 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.problemInfoModal = 'true';
+                    this.problemInfoModal = true;
                     this.problemInfo.problemCode = params.row.problemCode;
                     this.problemInfo.problemTitle = params.row.problemTitle;
-                    this.problemInfo.timeLimit = params.row.timeLimit;
-                    this.problemInfo.spaceLimit = params.row.spaceLimit;
-                    this.problemInfo.problemTags = params.row.problemTags;
+                    this.problemInfo.isPublic = params.row.isPublic;
+                    this.problemInfo.timeLimit = params.row.timeLimit.toString();
+                    this.problemInfo.memoryLimit = params.row.memoryLimit.toString();
+                    this.problemInfo.problemTagDTOList = params.row.problemTagDTOList;
                     this.problemInfo.languages = params.row.languages;
-                    this.problemInfo.problemSource = params.row.problemSource;
+                    this.problemInfo.source = params.row.source;
                   }
                 }
               })
@@ -274,16 +279,24 @@ export default {
         {
           problemCode: 'POJ-1001',
           problemTitle: 'A + B Problem',
-          timeLimit: '1000',
-          spaceLimit: '1024',
+          timeLimit: 1000,
+          memoryLimit: 1024,
           acceptNum: '530',
           submitNum: '2030',
-          problemSource: '北京大学在线评测系统',
-          problemTags: ['线段树', '动态规划'],
+          source: '北京大学在线评测系统',
+          problemTagDTOList: [
+            {
+              id: '2',
+              title: '树形DP'
+            },
+            {
+              id: '3',
+              title: '数位DP'
+            }],
           languages: ['c++11', 'c++14', 'python2', 'java8']
         }
       ],
-      totalPage: 100,
+      totalNum: 100,
       pageNow: 1,
       pageSize: 10,
       totalProblemNum: 0,
@@ -296,14 +309,15 @@ export default {
       // 标签管理模态框标记
       tagsManagementModal: false,
       problemInfo: {
+        isPublic: 0,
         problemCode: '',
         problemTitle: '',
         timeLimit: '',
-        spaceLimit: '',
+        memoryLimit: '',
         submitNum: '',
         acceptNum: '',
-        problemSource: '',
-        problemTags: [],
+        source: '',
+        problemTagDTOList: [],
         languages: []
       },
       problemInfoRule: {
@@ -314,19 +328,22 @@ export default {
         problemTitle: [
           { required: true, message: '题目标题不能为空', trigger: 'blur' }
         ],
+        isPublic: [
+          { type: 'number', required: true, trigger: 'change' }
+        ],
         timeLimit: [
           { required: true, message: '时间限制不能为空', trigger: 'blur' }
         ],
-        spaceLimit: [
+        memoryLimit: [
           { required: true, message: '空间限制不能为空', trigger: 'blur' }
         ],
-        problemSource: [
+        source: [
           { required: false, trigger: 'change' }
         ],
         languages: [
           { required: false, trigger: 'change' }
         ],
-        problemTags: [
+        problemTagDTOList: [
           { required: false, trigger: 'change' }
         ]
       },
@@ -500,42 +517,76 @@ export default {
         this.ascending = order === 'asc';
       }
     },
+    // 题目信息修改模态框确认
     commitProblemInfo () {
-      // this.$Message.info('Clicked ok');
+      this.$refs.problemInfoModal.validate(valid => {
+        if (valid) {
+          var data = {
+            problemCode: this.problemInfo.problemCode,
+            isPublic: this.problemInfo.isPublic,
+            problemTitle: this.problemInfo.problemTitle,
+            source: this.problemInfo.source,
+            languages: this.problemInfo.languages,
+            memoryLimit: parseInt(this.problemInfo.memoryLimit),
+            timeLimit: parseInt(this.problemInfo.timeLimit)
+          }
+          api.updateProblemInfo(data).then(_ => {
+            this.$Message.success('修改成功');
+            this.getProblemList();
+          }, _ => (this.$Message.error('修改失败')));
+        } else {
+          this.$Message.error('格式不符');
+        }
+      })
     },
-    commitProblemPassword () {
-
-    },
-    // 添加用户按钮
+    // 添加题目按钮
     addProblem () {
-      this.addProblemModal = 'true';
+      this.addProblemModal = true;
       this.problemInfo.ProblemCode = '';
       this.problemInfo.problemTitle = '';
       this.problemInfo.acceptNum = '';
       this.problemInfo.submitNum = '';
-      this.problemInfo.problemTags = [];
+      this.problemInfo.isPublic = 0;
+      this.problemInfo.problemTagDTOList = [];
       this.problemInfo.languages = [];
       this.problemInfo.timeLimit = '';
-      this.problemInfo.spaceLimit = '';
-      this.problemInfo.problemSource = '';
+      this.problemInfo.memoryLimit = '';
+      this.problemInfo.source = '';
     },
-    // 添加用户模态框确认
+    // 添加题目模态框确认
     commitAddProblem () {
-
+      this.$refs.addProblemModal.validate(valid => {
+        if (valid) {
+          var data = {
+            isPublic: this.problemInfo.isPublic,
+            problemTitle: this.problemInfo.problemTitle,
+            source: this.problemInfo.source,
+            languages: this.problemInfo.languages,
+            memoryLimit: parseInt(this.problemInfo.memoryLimit),
+            timeLimit: parseInt(this.problemInfo.timeLimit)
+          }
+          api.createProblem(data).then(_ => {
+            this.$Message.success('添加成功');
+            this.getProblemList();
+          }, _ => (this.$Message.error('添加失败')));
+        } else {
+          this.$Message.error('格式不符');
+        }
+      })
     },
     // 标签管理按钮
     tagsManagement () {
-      this.tagsManagementModal = 'true';
+      this.tagsManagementModal = true;
     },
     // 标签管理模态框确认
     commitTagsManagement () {
 
     },
-    // 删除用户按钮
+    // 删除题目按钮
     deleteProblem () {
 
     },
-    // 文件导出按钮
+    // 题库导出按钮
     exportProblem () {
 
     },
@@ -603,16 +654,32 @@ export default {
     },
     handleProblemClick: function(row, col) {
       if (col.key === 'problemTitle') {
-        // console.log(row.problemCode);
-        // console.log(this.$router)
         this.$router.push({
           name: 'problem-detail',
           params: {
-            problemCode: row.problemCode
+            problemCode: row.problemCode,
+            problemTitle: row.problemTitle,
+            defaultDescriptionId: row.defaultDescriptionId
           }
-        });
+        }); 
       }
+    },
+    // 获取题目列表
+    getProblemList() {
+      var params = {
+        pageNow: this.pageNow,
+        pageSize: this.pageSize,
+        sortBy: this.sortBy,
+        ascending: this.ascending
+      }
+      api.getProblemList(params).then(ret => {
+        this.problemTableData = ret.rows;
+        this.totalNum = parseInt(ret.total)
+      })
     }
+  },
+  mounted: function () {
+    this.getProblemList();
   }
 }
 </script>
