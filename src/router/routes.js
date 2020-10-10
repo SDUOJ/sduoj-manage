@@ -30,14 +30,6 @@ const routes = [
     name: 'problem-detail',
     component: ProblemDetailView
   },
-  // {
-  //   path: '/submission',
-  //   component: SubmissionView
-  // },
-  // {
-  //   path: '/submission/:submissionId',
-  //   component: SubmissionDetailView
-  // },
   {
     path: '*',
     component: NotFoundView

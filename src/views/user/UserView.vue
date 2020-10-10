@@ -22,7 +22,6 @@
             ref="userTable">
           </Table>
         </div>
-
         <!-- 用户信息修改框 -->
         <Modal
           v-model="userInfoModal"

@@ -91,7 +91,6 @@ export default {
 .ivu-layout-header {
   box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 1px 1px !important;
 }
-
 .layoutSider {
   position: fixed !important;
   height: 100% !important;
