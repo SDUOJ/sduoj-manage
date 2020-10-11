@@ -29,7 +29,7 @@
               <DropdownMenu slot="list" style="width: 70px">
                 <DropdownItem style="width: 70px" name="problemDescriptionSave">保存</DropdownItem>
                 <DropdownItem style="width: 70px" name="problemDescriptionCreate">创建</DropdownItem>
-                <DropdownItem style="width: 70px" name="problemDescriptionDelete">删除</DropdownItem>                
+                <DropdownItem style="width: 70px" name="problemDescriptionDelete">删除</DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </Row>
@@ -109,7 +109,7 @@
 
         <!-- 数据管理 -->
         <TabPane label="数据管理" icon="ios-build-outline" name="problemDetailData">
-          交给瑞瑞了！瑞瑞最棒！瑞瑞最强！
+          <CheckpointList :problemCode="problemInfo.problemCode" />
         </TabPane>
         <!-- 数据管理 -->
     </Tabs>
@@ -119,9 +119,12 @@
 import MarkdownItVueLight from 'markdown-it-vue/dist/markdown-it-vue-light.umd.min.js'
 import 'markdown-it-vue/dist/markdown-it-vue-light.css'
 
+import CheckpointList from '_c/checkpoints/CheckpointList';
+
 export default {
   components: {
-    MarkdownItVueLight
+    MarkdownItVueLight,
+    CheckpointList
   },
   data () {
     return {

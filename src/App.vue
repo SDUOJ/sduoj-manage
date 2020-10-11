@@ -50,7 +50,6 @@ export default {
     }
   },
   mounted: function () {
-    console.log(this.username);
   }
 };
 </script>
@@ -74,7 +73,7 @@ export default {
     font-size: 16px;
   }
   .ivu-btn-text:hover {
-    cursor: pointer; 
+    cursor: pointer;
     color: #717D7E;
   }
   .ivu-btn-text:focus {

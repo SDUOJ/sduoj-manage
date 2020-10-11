@@ -6,12 +6,15 @@ const ver1 = '/api';
 axios.defaults.baseURL = 'http://api.oj.sdu.edu.cn:8080' + ver1;
 axios.defaults.withCredentials = true;
 
-function post(url, data) {
+function post(url, data, options) {
   data = data || {};
+  options = options || {};
   return new Promise((resolve, reject) => {
-    axios.post(url, data)
+    axios.post(url, data, options)
       .then(response => {
-        if (response.data.code === 0) {
+        if (response.headers['content-type'].indexOf('application/json') === -1) {
+          resolve(response);
+        } else if (response.data.code === 0) {
           // everything alright
           resolve(response.data.data);
         } else {
@@ -83,5 +86,29 @@ export default {
   // 删除用户
   deleteUsers: function(data) {
     return post('/manage/user/delete', data);
+  },
+  // checkpoint单点上传
+  uploadSingleCheckpoint: function(data) {
+    return post('/manage/checkpoint/upload', data);
+  },
+  // checkpoint批量上传
+  uploadCheckpointFiles: function(data) {
+    return post('/manage/checkpoint/uploadFiles', data);
+  },
+  // 获取题目的checkpoint列表
+  getCheckpointList: function(problemCode) {
+    return get('/manage/checkpoint/list', { problemCode });
+  },
+  // 获取checkpoint详情
+  getCheckpointPreview: function(checkpointId) {
+    return get('/manage/checkpoint/query', { checkpointId });
+  },
+  // 全量更新题目的checkpoint
+  updateProblemCheckpoints: function(data) {
+    return post('/manage/problem/update', data);
+  },
+  // 下载checkpoints
+  downloadCheckpoints: function (data) {
+    return post('/manage/checkpoint/download', data, { responseType: 'blob' });
   }
 }
