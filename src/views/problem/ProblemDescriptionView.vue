@@ -2,7 +2,8 @@
   <div>
     <!-- 题面管理 -->
     <Row>
-      <h2 class="problemTitleBox">{{ problemCode }}. &nbsp; {{ problemInfo.problemTitle }} &nbsp; / &nbsp; {{ currentProblemDescription.title }}</h2>
+      <h2 class="problemTitleBox">{{ problemCode }}. &nbsp; {{ problemInfo.problemTitle }} &nbsp; / &nbsp; {{
+        currentProblemDescription.title }}</h2>
       <Dropdown class="problemDescriptionButton" style="width: 150px" @on-click="handleProblemDescriptionSwitch">
         <Button type="primary" style="width: 150px" ghost>
           题面切换
@@ -13,7 +14,7 @@
             <div class="problemDescriptionBox">
               <div class="problemDescriptionBoxTitle">{{ item.title }}</div>
               <div class="problemDescriptionBoxDelete" v-if="item.id === problemInfo.defaultDescriptionId">
-                <Icon type="ios-checkmark" />
+                <Icon type="ios-checkmark"/>
               </div>
             </div>
           </DropdownItem>
@@ -28,74 +29,80 @@
         <DropdownMenu slot="list" style="width: 70px">
           <DropdownItem style="width: 70px" name="problemDescriptionSave">保存</DropdownItem>
           <DropdownItem style="width: 70px" name="problemDescriptionCreate">创建</DropdownItem>
-          <DropdownItem style="width: 70px" name="problemDescriptionDelete">删除</DropdownItem>                
+          <DropdownItem style="width: 70px" name="problemDescriptionDelete">删除</DropdownItem>
         </DropdownMenu>
       </Dropdown>
     </Row>
     <Row class="problemDatileMarkdown">
       <Col span="12" class="problemDatileMarkdownBox">
-        <Input v-model="currentProblemDescription.markdownDescription" type="textarea" :autosize="{minRows: 40,maxRows: 60}" />
+        <Input v-model="currentProblemDescription.markdownDescription" type="textarea"
+               :autosize="{minRows: 40,maxRows: 60}"/>
       </Col>
       <Col span="12" class="problemDatileMarkdownBox">
-        <markdown-it-vue-light :content="currentProblemDescription.markdownDescription" />
+        <markdown-it-vue-light :content="currentProblemDescription.markdownDescription"/>
       </Col>
     </Row>
     <!-- 题面管理 -->
 
     <!-- 保存题面模态框 -->
     <Modal
-        v-model="problemDescriptionSaveModal"
-        title="保存当前题面"
-        @on-ok="problemDescriptionModalSave">
-        <Form ref="problemDescriptionSaveModal" :model="currentProblemDescriptionForm" :rules="currentProblemDescriptionFormRule" :label-width="80">
-          <FormItem label="题面名称" prop="title">
-            <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"></Input>
-          </FormItem>
-          <FormItem label="默认题面">
-            <RadioGroup v-model="currentProblemDescriptionForm.isDefault">
-              <Radio :label='1'>是</Radio>
-              <Radio :label='0'>否</Radio>
-            </RadioGroup>
-          </FormItem>
-          <FormItem label="是否公开">
-            <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
-              <Radio :label='1'>是</Radio>
-              <Radio :label='0'>否</Radio>
-            </RadioGroup>
-          </FormItem>
-        </Form>
+      v-model="problemDescriptionSaveModal"
+      title="保存当前题面"
+      @on-ok="problemDescriptionModalSave">
+      <Form ref="problemDescriptionSaveModal" :model="currentProblemDescriptionForm"
+            :rules="currentProblemDescriptionFormRule" :label-width="80">
+        <FormItem label="题面名称" prop="title">
+          <Input v-model="currentProblemDescriptionForm.title"
+                 :placeholder="currentProblemDescriptionForm.title"></Input>
+        </FormItem>
+        <FormItem label="默认题面">
+          <RadioGroup v-model="currentProblemDescriptionForm.isDefault">
+            <Radio :label='1'>是</Radio>
+            <Radio :label='0'>否</Radio>
+          </RadioGroup>
+        </FormItem>
+        <FormItem label="是否公开">
+          <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
+            <Radio :label='1'>是</Radio>
+            <Radio :label='0'>否</Radio>
+          </RadioGroup>
+        </FormItem>
+      </Form>
     </Modal>
     <!-- 保存题面模态框 -->
 
     <!-- 创建题面模态框 -->
     <Modal
-        v-model="problemDescriptionCreateModal"
-        title="创建新题面"
-        @on-ok="problemDescriptionModalCreate">
-        <Form ref="problemDescriptionCreateModal" :model="currentProblemDescriptionForm" :rules="currentProblemDescriptionFormRule" :label-width="80">
-          <FormItem label="题面名称" prop="title">
-            <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"></Input>
-          </FormItem>
-          <FormItem label="是否公开">
-            <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
-              <Radio :label='1'>是</Radio>
-              <Radio :label='0'>否</Radio>
-            </RadioGroup>
-          </FormItem>
-        </Form>
+      v-model="problemDescriptionCreateModal"
+      title="创建新题面"
+      @on-ok="problemDescriptionModalCreate">
+      <Form ref="problemDescriptionCreateModal" :model="currentProblemDescriptionForm"
+            :rules="currentProblemDescriptionFormRule" :label-width="80">
+        <FormItem label="题面名称" prop="title">
+          <Input v-model="currentProblemDescriptionForm.title"
+                 :placeholder="currentProblemDescriptionForm.title"></Input>
+        </FormItem>
+        <FormItem label="是否公开">
+          <RadioGroup v-model="currentProblemDescriptionForm.isPublic">
+            <Radio :label='1'>是</Radio>
+            <Radio :label='0'>否</Radio>
+          </RadioGroup>
+        </FormItem>
+      </Form>
     </Modal>
     <!-- 创建题面模态框 -->
 
     <!-- 删除题面模态框 -->
     <Modal
-        v-model="problemDescriptionDeleteModal"
-        title="删除当前题面"
-        @on-ok="problemDescriptionModalDelete">
-        <Form :model="currentProblemDescriptionForm" :label-width="80">
-          <FormItem label="题面名称" prop="title">
-            <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title" disabled></Input>
-          </FormItem>
-        </Form>
+      v-model="problemDescriptionDeleteModal"
+      title="删除当前题面"
+      @on-ok="problemDescriptionModalDelete">
+      <Form :model="currentProblemDescriptionForm" :label-width="80">
+        <FormItem label="题面名称" prop="title">
+          <Input v-model="currentProblemDescriptionForm.title" :placeholder="currentProblemDescriptionForm.title"
+                 disabled></Input>
+        </FormItem>
+      </Form>
     </Modal>
   </div>
 
@@ -110,7 +117,7 @@ export default {
   components: {
     MarkdownItVueLight
   },
-  data () {
+  data() {
     return {
       problemDescriptionSaveModal: false,
       problemDescriptionCreateModal: false,
@@ -145,8 +152,15 @@ export default {
       },
       currentProblemDescriptionFormRule: {
         title: [
-          { required: true, message: '题面名称不能为空', trigger: 'blur' },
-          { type: 'string', trigger: 'blur' }
+          {
+            required: true,
+            message: '题面名称不能为空',
+            trigger: 'blur'
+          },
+          {
+            type: 'string',
+            trigger: 'blur'
+          }
         ]
       }
     }
@@ -176,10 +190,13 @@ export default {
     },
     // 题面切换下拉框的切换按钮
     handleProblemDescriptionSwitch: function (id) {
-      if (id === 'problemDescriptionSave') this.problemDescriptionSaveButton();
-      else if (id === 'problemDescriptionCreate') this.problemDescriptionCreateButton();
-      else if (id === 'problemDescriptionDelete') this.problemDescriptionDeleteButton();
-      else {
+      if (id === 'problemDescriptionSave') {
+        this.problemDescriptionSaveButton();
+      } else if (id === 'problemDescriptionCreate') {
+        this.problemDescriptionCreateButton();
+      } else if (id === 'problemDescriptionDelete') {
+        this.problemDescriptionDeleteButton();
+      } else {
         this.currentProblemDescription.id = id;
         this.getDescription();
       }
@@ -306,48 +323,53 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.problemTitleBox {
-  float: left;
-  padding-left: 10px;
-}
-
-.problemDescriptionButton {
-  float: right;
-  margin-right: 10px;
-}
-
-.problemDatileMarkdown {
-  margin-top: 10px;
-  .problemDatileMarkdownBox {
-    padding: 10px;
-    /deep/ .ivu-input:hover {
-      border-color: #dcdee2;
-    }
-    /deep/ .ivu-input:focus {
-      border-color: #dcdee2;
-      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-    }
+  .problemTitleBox {
+    float: left;
+    padding-left: 10px;
   }
-}
 
-.problemDescriptionBox {
-  position: relative;
-  .problemDescriptionBoxTitle {
-    display: inline-block;
-    width: 100px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .problemDescriptionBoxDelete {
-    top: 1.5px;
-    position: absolute;
-    right: 0px;
+  .problemDescriptionButton {
     float: right;
+    margin-right: 10px;
   }
-}
 
-.dropDownItemBox {
-  height: 50px;
-}
+  .problemDatileMarkdown {
+    margin-top: 10px;
+
+    .problemDatileMarkdownBox {
+      padding: 10px;
+
+      /deep/ .ivu-input:hover {
+        border-color: #dcdee2;
+      }
+
+      /deep/ .ivu-input:focus {
+        border-color: #dcdee2;
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+      }
+    }
+  }
+
+  .problemDescriptionBox {
+    position: relative;
+
+    .problemDescriptionBoxTitle {
+      display: inline-block;
+      width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .problemDescriptionBoxDelete {
+      top: 1.5px;
+      position: absolute;
+      right: 0px;
+      float: right;
+    }
+  }
+
+  .dropDownItemBox {
+    height: 50px;
+  }
 </style>

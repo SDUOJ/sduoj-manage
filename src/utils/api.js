@@ -46,7 +46,7 @@ function get(url, params) {
 
 export default {
   // 用户相关
-  getProfile: function(success, error) {
+  getProfile: function (success, error) {
     axios.get('/user/getProfile')
       .then(response => {
         if (response.data.code === 0) {
@@ -67,75 +67,75 @@ export default {
       });
   },
   // 查询用户列表
-  getUserList: function(params) {
+  getUserList: function (params) {
     return get('/manage/user/list', params);
   },
   // 更改用户信息
-  updateUserInfo: function(data) {
+  updateUserInfo: function (data) {
     return post('/manage/user/update', data);
   },
   // 更改用户密码
-  updateUserPasswd: function(data) {
+  updateUserPasswd: function (data) {
     return post('/manage/user/update', data);
   },
   // 批量添加用户
-  addUsers: function(data) {
+  addUsers: function (data) {
     return post('/manage/user/addUsers', data);
   },
   // 删除用户
-  deleteUsers: function(data) {
+  deleteUsers: function (data) {
     return post('/manage/user/delete', data);
   },
   // 查询题目列表
-  getProblemList: function(params) {
+  getProblemList: function (params) {
     return get('/manage/problem/list', params);
   },
   // 查询题目
-  getProblem: function(params) {
+  getProblem: function (params) {
     return get('/manage/problem/query', params);
   },
   // 更新题目信息
-  updateProblemInfo: function(data) {
+  updateProblemInfo: function (data) {
     return post('/manage/problem/update', data);
   },
   // 创建题目
-  createProblem: function(data) {
+  createProblem: function (data) {
     return post('/manage/problem/create', data);
   },
   // 查询题目的描述列表
-  getProblemDescriptionList: function(params) {
+  getProblemDescriptionList: function (params) {
     return get('/manage/problem/queryDescriptionList', params);
   },
   // 查询题目描述
-  getProblemDescription: function(params) {
+  getProblemDescription: function (params) {
     return get('/manage/problem/queryDescription', params);
   },
   // 更新题面描述
-  updateDescription: function(data) {
+  updateDescription: function (data) {
     return post('/manage/problem/updateDescription', data);
   },
   // 创建新题面描述
-  createDescription: function(data) {
+  createDescription: function (data) {
     return post('/manage/problem/createDescription', data);
   },
-    // checkpoint单点上传
-  uploadSingleCheckpoint: function(data) {
+  // checkpoint单点上传
+  uploadSingleCheckpoint: function (data) {
     return post('/manage/checkpoint/upload', data);
   },
   // checkpoint批量上传
-  uploadCheckpointFiles: function(data) {
+  uploadCheckpointFiles: function (data) {
     return post('/manage/checkpoint/uploadFiles', data);
   },
   // 获取题目的checkpoint列表
-  getCheckpointList: function(problemCode) {
+  getCheckpointList: function (problemCode) {
     return get('/manage/checkpoint/list', { problemCode });
   },
   // 获取checkpoint详情
-  getCheckpointPreview: function(checkpointId) {
+  getCheckpointPreview: function (checkpointId) {
     return get('/manage/checkpoint/query', { checkpointId });
   },
   // 全量更新题目的checkpoint
-  updateProblemCheckpoints: function(data) {
+  updateProblemCheckpoints: function (data) {
     return post('/manage/problem/update', data);
   },
   // 下载checkpoints

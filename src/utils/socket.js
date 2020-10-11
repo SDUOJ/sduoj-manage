@@ -8,7 +8,8 @@ function websocketMessage(ret) {
   successCallback(JSON.parse(ret.data));
 }
 
-function websocketOpen() {}
+function websocketOpen() {
+}
 
 function websocketClose(e) {
   if (e && e.code !== 1000) {

@@ -10,7 +10,7 @@ const judgeResultMap = {
   8: 'Compile Error'
 };
 
-const status2Class = function(status) {
+const status2Class = function (status) {
   if (status === 0) {
     return 'verdict-pending';
   } else if (status === 1) {
@@ -22,7 +22,7 @@ const status2Class = function(status) {
   }
 }
 
-const result2Status = function(result) {
+const result2Status = function (result) {
   result = result.toLowerCase();
   if (result.indexOf('pend') !== -1) {
     return 0;

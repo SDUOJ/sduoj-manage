@@ -18,13 +18,15 @@ export default new Vuex.Store({
       let matched = route.matched;
       // console.log(matched)
       if (matched.length === 0 || matched[0].name !== 'home') {
-        matched = [{ path: '/home', meta: { title: '首页' } }].concat(matched);
+        matched = [{
+          path: '/home',
+          meta: { title: '首页' }
+        }].concat(matched);
       }
       state.pathComponents = matched;
     }
   },
-  actions: {
-  },
+  actions: {},
   modules: {
     user: user
   }

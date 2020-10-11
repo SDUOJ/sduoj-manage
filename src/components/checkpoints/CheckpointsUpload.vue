@@ -5,10 +5,10 @@
       <Button @click="reset" size="small" style="float: right" type="text">Reset</Button>
       <Form :model="singleCheckpoint">
         <FormItem label="Standard Input">
-          <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.input" />
+          <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.input"/>
         </FormItem>
         <FormItem label="Standard Output">
-          <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.output" />
+          <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.output"/>
         </FormItem>
       </Form>
     </div>
@@ -28,7 +28,9 @@
         </Tooltip>
       </Upload>
       <div class="autowrap">
-        <Tag v-for="(file, index) in files" :key="file.name" :name="file.name" closable @on-close="onFileRemove(index)"> {{ file.name }}</Tag>
+        <Tag v-for="(file, index) in files" :key="file.name" :name="file.name" closable @on-close="onFileRemove(index)">
+          {{ file.name }}
+        </Tag>
       </div>
       <Button style="margin-top: 20px;" @click="onUpload" :loading="onUploading" type="success">Upload</Button>
     </div>
@@ -40,7 +42,7 @@ import api from '_u/api';
 
 export default {
   name: 'CheckpointsUpload',
-  data: function() {
+  data: function () {
     return {
       singleCheckpoint: {
         input: '',
@@ -51,30 +53,30 @@ export default {
     }
   },
   methods: {
-    reset: function() {
+    reset: function () {
       this.singleCheckpoint.input = '';
       this.singleCheckpoint.output = '';
       this.clearFiles();
     },
-    beforeBatchUpload: function(file) {
+    beforeBatchUpload: function (file) {
       this.files.push(file);
       return false;
     },
-    clearFiles: function() {
+    clearFiles: function () {
       this.files = [];
       this.$refs.upload.clearFiles();
     },
-    onUpload: function() {
+    onUpload: function () {
       if (this.singleCheckpoint.input !== '' && this.singleCheckpoint.output !== '') {
         this.handleSingleSubmit();
       } else {
         this.handleBatchSubmit();
       }
     },
-    onFileRemove: function(index) {
+    onFileRemove: function (index) {
       this.files.splice(index, 1);
     },
-    validFile: function() {
+    validFile: function () {
       if (this.files.length === 0) {
         this.$Message.warning('Select files');
         return false;
@@ -112,7 +114,7 @@ export default {
       }
       return true;
     },
-    handleBatchSubmit: function() {
+    handleBatchSubmit: function () {
       if (!this.validFile()) return false;
       const form = new FormData();
       this.files.forEach(file => form.append('files', file));
@@ -125,7 +127,7 @@ export default {
         }, err => (this.$Message.error(err)))
         .finally(() => (this.onUploading = false));
     },
-    handleSingleSubmit: function() {
+    handleSingleSubmit: function () {
       this.onUploading = true;
       api.uploadSingleCheckpoint(this.singleCheckpoint)
         .then(ret => {
@@ -146,10 +148,12 @@ export default {
     word-break: break-all;
     overflow: hidden;
   }
+
   .subtitle {
     font-size: 15px;
     font-weight: bold;
   }
+
   .list_div {
     padding: 11px;
     background-color: white;

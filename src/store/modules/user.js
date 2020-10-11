@@ -13,11 +13,11 @@ const getters = {
 }
 
 const mutations = {
-  setProfile: function(state, profile) {
+  setProfile: function (state, profile) {
     state.profile = Object.assign({}, profile);
     window.localStorage.setItem('isLogin', !!profile.userId);
   },
-  clearProfile: function(state) {
+  clearProfile: function (state) {
     state.profile = {};
     window.localStorage.clear();
   }
@@ -29,7 +29,7 @@ const actions = {
     commit('setProfile', profile);
   },
   clearProfile({ commit }) {
-    commit('clearProfile'); 
+    commit('clearProfile');
   }
 }
 
