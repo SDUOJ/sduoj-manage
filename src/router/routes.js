@@ -10,6 +10,7 @@ import ProblemDetailView from '@/views/problem/ProblemDetailView';
 import ProblemDescriptionView from '@/views/problem/ProblemDescriptionView';
 import ProblemCheckpointView from '@/views/problem/ProblemCheckpointView';
 
+
 const routes = [
   {
     path: '/',

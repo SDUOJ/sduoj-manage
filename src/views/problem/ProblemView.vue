@@ -44,7 +44,6 @@
                 <Radio :label='0'>否</Radio>
               </RadioGroup>
             </FormItem>
-
             <FormItem label="时间限制 (ms)" prop="timeLimit">
               <Input v-model="problemInfo.timeLimit" :placeholder="problemInfo.timeLimit"></Input>
             </FormItem>
@@ -160,6 +159,19 @@ import ProblemCode from '@/components/ProblemCode';
 
 export default {
   data () {
+    const validatePass = (rule, value, callback) => {
+      if (value !== '') {
+        this.$ref.problemInfo.validateField('passWordCheck');
+      }
+      callback();
+    };
+    const validatePassCheck = (rule, value, callback) => {
+      if (value !== this.problemInfo.passWord) {
+        callback(new Error('两次输入的密码不匹配'));
+      } else {
+        callback();
+      }
+    };
     return {
       problemTableColumns: [
         {
