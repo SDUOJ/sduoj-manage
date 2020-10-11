@@ -5,6 +5,7 @@ import store from './store';
 import './plugins/iviewui';
 import './plugins/clipboard2';
 import VueHighlightJS from 'vue-highlightjs';
+
 Vue.use(VueHighlightJS);
 
 Vue.config.productionTip = false;
