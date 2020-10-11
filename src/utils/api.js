@@ -87,6 +87,10 @@ export default {
   getProblemList: function(params) {
     return get('/manage/problem/list', params);
   },
+  // 查询题目
+  getProblem: function(params) {
+    return get('/manage/problem/query', params);
+  },
   // 更新题目信息
   updateProblemInfo: function(data) {
     return post('/manage/problem/update', data);
@@ -101,7 +105,14 @@ export default {
   },
   // 查询题目描述
   getProblemDescription: function(params) {
-    console.log(params)
     return get('/manage/problem/queryDescription', params);
+  },
+  // 更新题面描述
+  updateDescription: function(data) {
+    return post('/manage/problem/updateDescription', data);
+  },
+  // 创建新题面描述
+  createDescription: function(data) {
+    return post('/manage/problem/createDescription', data);
   }
 }

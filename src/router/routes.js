@@ -7,6 +7,8 @@ import UserView from '@/views/user/UserView';
 // problem
 import ProblemView from '@/views/problem/ProblemView';
 import ProblemDetailView from '@/views/problem/ProblemDetailView';
+import ProblemDescriptionView from '@/views/problem/ProblemDescriptionView';
+import ProblemCheckpointView from '@/views/problem/ProblemCheckpointView';
 
 const routes = [
   {
@@ -28,16 +30,21 @@ const routes = [
   {
     path: '/problem/:problemCode',
     name: 'problem-detail',
-    component: ProblemDetailView
+    redirect: '/problem/:problemCode/description',
+    component: ProblemDetailView,
+    children: [
+      {
+        path: 'description',
+        name: 'problem-description',
+        component: ProblemDescriptionView
+      },
+      {
+        path: 'checkpoint',
+        name: 'problem-checkpoint',
+        component: ProblemCheckpointView
+      }
+    ]
   },
-  // {
-  //   path: '/submission',
-  //   component: SubmissionView
-  // },
-  // {
-  //   path: '/submission/:submissionId',
-  //   component: SubmissionDetailView
-  // },
   {
     path: '*',
     component: NotFoundView

@@ -17,9 +17,8 @@
 
         <div style="display: none;">
           <Table 
-            :columns="exportUserData" 
-            :data="userTableData"
-            ref="userTable">
+            :columns="exportUserTableColumns" 
+            ref="exportUserTable">
           </Table>
         </div>
 
@@ -281,7 +280,7 @@ export default {
         }
       ],
       // 表格导出格式
-      exportUserData: [
+      exportUserTableColumns: [
         { title: 'userId', key: 'userId' },
         { title: 'username', key: 'username' },
         { title: 'nickname', key: 'nickname' },
@@ -500,12 +499,21 @@ export default {
     },
     // 文件导出按钮
     exportUser () {
-      this.$refs.userTable.exportCsv({
-        quoted: true,
-        filename: '所有用户数据',
-        columns: this.exportUserData,
-        data: this.userTableData
-      });
+      if (this.selectedUsers.length === 0) {
+        this.$Message.error('无用户被选中');
+      } else {
+        var exportUserTableData = []
+        this.selectedUsers.forEach(function(item) {
+          exportUserTableData.push(item);
+        })
+        this.$refs.exportUserTable.exportCsv({
+          quoted: true,
+          filename: '用户数据',
+          columns: this.exportUserTableColumns,
+          data: exportUserTableData
+        });
+        this.$Message.success('导出成功');
+      }
     },
     getUserList() {
       var params = {

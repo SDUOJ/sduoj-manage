@@ -12,8 +12,17 @@
           :data="problemTableData" 
           class="problem-set-content-table"
           @on-cell-click="handleProblemClick"
+          @on-selection-change="selectChange"
           @on-sort-change="handleProblemSort">
         </Table>
+        
+        <!-- 导出模块 -->
+        <div style="display: none;">
+          <Table 
+            :columns="exportProblemTableColumns" 
+            ref="exportProblemTable">
+          </Table>
+        </div>
 
         <!-- 题目信息修改框 -->
         <Modal
@@ -56,7 +65,7 @@
             </FormItem>
 
             <FormItem label="标签">
-              <Select v-model="problemInfo.problemTagDTOList" multiple filterable allow-create>
+              <Select v-model="problemInfo.tagDTOList" multiple filterable allow-create>
                 <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
                   <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
                 </OptionGroup>
@@ -120,7 +129,7 @@
           </FormItem>
 
           <FormItem label="标签">
-            <Select v-model="problemInfo.problemTagDTOList" multiple filterable allow-create>
+            <Select v-model="problemInfo.tagDTOList" multiple filterable allow-create>
               <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
                 <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
               </OptionGroup>
@@ -232,11 +241,11 @@ export default {
         },
         {
           title: '\b',
-          key: 'problemTagDTOList',
+          key: 'tagDTOList',
           render: (h, params) => {
-            if (params.row.problemTagDTOList && params.row.problemTagDTOList.length > 0) {
+            if (params.row.tagDTOList && params.row.tagDTOList.length > 0) {
               return h('div', { class: 'problem-set-problemtags' },
-                params.row.problemTagDTOList.map(item => {
+                params.row.tagDTOList.map(item => {
                   return h('div', { class: 'problem-set-rolebox' }, [
                     h('div', { class: 'problem-set-role' }, item.title)
                   ])
@@ -265,7 +274,7 @@ export default {
                     this.problemInfo.isPublic = params.row.isPublic;
                     this.problemInfo.timeLimit = params.row.timeLimit.toString();
                     this.problemInfo.memoryLimit = params.row.memoryLimit.toString();
-                    this.problemInfo.problemTagDTOList = params.row.problemTagDTOList;
+                    this.problemInfo.tagDTOList = params.row.tagDTOList;
                     this.problemInfo.languages = params.row.languages;
                     this.problemInfo.source = params.row.source;
                   }
@@ -275,26 +284,22 @@ export default {
           }
         }
       ],
-      problemTableData: [
-        {
-          problemCode: 'POJ-1001',
-          problemTitle: 'A + B Problem',
-          timeLimit: 1000,
-          memoryLimit: 1024,
-          acceptNum: '530',
-          submitNum: '2030',
-          source: '北京大学在线评测系统',
-          problemTagDTOList: [
-            {
-              id: '2',
-              title: '树形DP'
-            },
-            {
-              id: '3',
-              title: '数位DP'
-            }],
-          languages: ['c++11', 'c++14', 'python2', 'java8']
-        }
+      problemTableData: [],
+      selectedProblem: [],
+      // 表格导出的数据格式
+      exportProblemTableColumns: [
+        { title: 'problemId', key: 'problemId' },
+        { title: 'problemCode', key: 'problemCode' },
+        { title: 'problemTitle', key: 'problemTitle' },
+        { title: 'isPublic', key: 'isPublic' },
+        { title: 'source', key: 'source' },
+        { title: 'submitNum', key: 'submitNum' },
+        { title: 'acceptNum', key: 'acceptNum' },
+        { title: 'languages', key: 'languages' },
+        { title: 'memoryLimit', key: 'memoryLimit' },
+        { title: 'timeLimit', key: 'timeLimit' },
+        { title: 'defaultDescriptionId', key: 'defaultDescriptionId' },
+        { title: 'tags', key: 'tags' }
       ],
       totalNum: 100,
       pageNow: 1,
@@ -317,7 +322,7 @@ export default {
         submitNum: '',
         acceptNum: '',
         source: '',
-        problemTagDTOList: [],
+        tagDTOList: [],
         languages: []
       },
       problemInfoRule: {
@@ -343,7 +348,7 @@ export default {
         languages: [
           { required: false, trigger: 'change' }
         ],
-        problemTagDTOList: [
+        tagDTOList: [
           { required: false, trigger: 'change' }
         ]
       },
@@ -500,14 +505,17 @@ export default {
     }
   },
   methods: {
+    // 切换页面
     onPageChange: function(curPage) {
       this.pageNow = curPage;
       this.getProblemList();
     },
+    // 更改页面大小
     onPageSizeChange: function(pageSize) {
       this.pageSize = pageSize;
       this.getProblemList();
     },
+    // 表格列排序
     handleProblemSort: function({ column, key, order }) {
       if (order === 'normal') {
         this.sortBy = '';
@@ -516,6 +524,10 @@ export default {
         this.sortBy = key;
         this.ascending = order === 'asc';
       }
+    },
+    // 表格全选
+    selectChange: function(selection) {
+      this.selectedProblem = selection;
     },
     // 题目信息修改模态框确认
     commitProblemInfo () {
@@ -547,7 +559,7 @@ export default {
       this.problemInfo.acceptNum = '';
       this.problemInfo.submitNum = '';
       this.problemInfo.isPublic = 0;
-      this.problemInfo.problemTagDTOList = [];
+      this.problemInfo.tagDTOList = [];
       this.problemInfo.languages = [];
       this.problemInfo.timeLimit = '';
       this.problemInfo.memoryLimit = '';
@@ -588,7 +600,26 @@ export default {
     },
     // 题库导出按钮
     exportProblem () {
-
+      if (this.selectedProblem.length === 0) {
+        this.$Message.error('无用户被选中');
+      } else {
+        var exportProblemTableData = []
+        this.selectedProblem.forEach(function(item) {
+          var tags = [];
+          item.tagDTOList.forEach(function(item2) {
+            tags.push(item2.title);
+          });
+          item.tags = tags;
+          exportProblemTableData.push(item);
+        });
+        this.$refs.exportProblemTable.exportCsv({
+          quoted: true,
+          filename: '题目数据',
+          columns: this.exportProblemTableColumns,
+          data: exportProblemTableData
+        });
+        this.$Message.success('导出成功');
+      }
     },
     // 树形标签函数
     renderTreeTags (h, { root, node, data }) {
@@ -657,9 +688,7 @@ export default {
         this.$router.push({
           name: 'problem-detail',
           params: {
-            problemCode: row.problemCode,
-            problemTitle: row.problemTitle,
-            defaultDescriptionId: row.defaultDescriptionId
+            problemCode: row.problemCode
           }
         }); 
       }
