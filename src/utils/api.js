@@ -72,7 +72,6 @@ export default {
   },
   // 更改用户信息
   updateUserInfo: function(data) {
-    console.log(data)
     return post('/manage/user/update', data);
   },
   // 更改用户密码
@@ -87,7 +86,39 @@ export default {
   deleteUsers: function(data) {
     return post('/manage/user/delete', data);
   },
-  // checkpoint单点上传
+  // 查询题目列表
+  getProblemList: function(params) {
+    return get('/manage/problem/list', params);
+  },
+  // 查询题目
+  getProblem: function(params) {
+    return get('/manage/problem/query', params);
+  },
+  // 更新题目信息
+  updateProblemInfo: function(data) {
+    return post('/manage/problem/update', data);
+  },
+  // 创建题目
+  createProblem: function(data) {
+    return post('/manage/problem/create', data);
+  },
+  // 查询题目的描述列表
+  getProblemDescriptionList: function(params) {
+    return get('/manage/problem/queryDescriptionList', params);
+  },
+  // 查询题目描述
+  getProblemDescription: function(params) {
+    return get('/manage/problem/queryDescription', params);
+  },
+  // 更新题面描述
+  updateDescription: function(data) {
+    return post('/manage/problem/updateDescription', data);
+  },
+  // 创建新题面描述
+  createDescription: function(data) {
+    return post('/manage/problem/createDescription', data);
+  },
+    // checkpoint单点上传
   uploadSingleCheckpoint: function(data) {
     return post('/manage/checkpoint/upload', data);
   },
