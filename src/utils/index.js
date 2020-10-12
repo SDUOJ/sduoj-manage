@@ -1,7 +1,7 @@
 import judge from './judge';
-import dateFormat from './DateFormat';
+import time from './time';
 
 export default {
   ...judge,
-  dateFormat
+  ...time
 }

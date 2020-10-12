@@ -45,7 +45,7 @@ function get(url, params) {
 }
 
 export default {
-  // 用户相关
+  // ---------------------- 用户相关 ----------------------
   getProfile: function (success, error) {
     axios.get('/user/getProfile')
       .then(response => {
@@ -86,6 +86,7 @@ export default {
   deleteUsers: function (data) {
     return post('/manage/user/delete', data);
   },
+  // ---------------------- 题目相关 ----------------------
   // 查询题目列表
   getProblemList: function (params) {
     return get('/manage/problem/list', params);
@@ -102,6 +103,7 @@ export default {
   createProblem: function (data) {
     return post('/manage/problem/create', data);
   },
+  // ---------------------- 题面相关 ----------------------
   // 查询题目的描述列表
   getProblemDescriptionList: function (params) {
     return get('/manage/problem/queryDescriptionList', params);
@@ -118,6 +120,7 @@ export default {
   createDescription: function (data) {
     return post('/manage/problem/createDescription', data);
   },
+  // ---------------------- 测试点相关 ----------------------
   // checkpoint单点上传
   uploadSingleCheckpoint: function (data) {
     return post('/manage/checkpoint/upload', data);
@@ -141,5 +144,14 @@ export default {
   // 下载checkpoints
   downloadCheckpoints: function (data) {
     return post('/manage/checkpoint/download', data, { responseType: 'blob' });
+  },
+  // ---------------------- 比赛相关 ----------------------
+  // 获取比赛列表
+  getContestList: function (params) {
+    return get('/manage/contest/page', params);
+  },
+  // 获取单个比赛详情
+  getContest: function (params) {
+    return get('/manage/contest/query', params);
   }
 }
