@@ -153,5 +153,13 @@ export default {
   // 获取单个比赛详情
   getContest: function (params) {
     return get('/manage/contest/query', params);
+  },
+  // 更新比赛信息
+  updateContest: function (data) {
+    return post('/manage/contest/update', data);
+  },
+  // 创建比赛
+  createContest: function (data) {
+    return post('/manage/contest/create', data);
   }
 }
