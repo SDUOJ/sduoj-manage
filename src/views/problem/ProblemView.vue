@@ -273,7 +273,11 @@ export default {
                     this.problemInfo.isPublic = params.row.isPublic;
                     this.problemInfo.timeLimit = params.row.timeLimit.toString();
                     this.problemInfo.memoryLimit = params.row.memoryLimit.toString();
-                    this.problemInfo.tagDTOList = params.row.tagDTOList;
+                    // TODO: 标签管理
+                    this.problemInfo.tagDTOList = [];
+                    params.row.tagDTOList.forEach(item => {
+                      this.problemInfo.tagDTOList.push(item.title);
+                    })
                     this.problemInfo.languages = params.row.languages;
                     this.problemInfo.source = params.row.source;
                   }
@@ -430,20 +434,24 @@ export default {
               label: '动态规划'
             },
             {
-              value: '线性 DP',
-              label: '线性 DP'
+              value: '线性DP',
+              label: '线性DP'
             },
             {
               value: '背包',
               label: '背包'
             },
             {
-              value: '区间 DP',
-              label: '区间 DP'
+              value: '区间DP',
+              label: '区间DP'
             },
             {
-              value: '树形 DP',
-              label: '树形 DP'
+              value: '树形DP',
+              label: '树形DP'
+            },
+            {
+              value: '数位DP',
+              label: '数位DP'
             }
           ]
         },
