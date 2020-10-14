@@ -10,6 +10,9 @@ import ProblemDetailView from '@/views/problem/ProblemDetailView';
 import ProblemDescriptionView from '@/views/problem/ProblemDescriptionView';
 import ProblemCheckpointView from '@/views/problem/ProblemCheckpointView';
 
+// contest
+import ContestView from '@/views/contest/ContestView';
+
 const routes = [
   {
     path: '/',
@@ -44,6 +47,11 @@ const routes = [
         component: ProblemCheckpointView
       }
     ]
+  },
+  {
+    path: '/contest',
+    name: 'contest',
+    component: ContestView
   },
   {
     path: '*',

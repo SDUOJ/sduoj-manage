@@ -21,6 +21,10 @@
 </script>
 
 <style lang="less" scoped>
+  /deep/ .ivu-menu {
+    z-index: 0;
+  }
+
   .problemMenu {
     margin-top: -10px;
     background: transparent;

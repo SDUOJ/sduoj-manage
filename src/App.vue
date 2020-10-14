@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
     <Layout :style="{minHeight: '100vh'}">
-      <Sider collapsible :collapsed-width="78" v-model="isCollapsed" class="layoutSider">
+      <Sider hide-trigger collapsible :collapsed-width="78" v-model="isCollapsed" class="layoutSider">
         <NavBar></NavBar>
       </Sider>
       <Layout>
@@ -83,11 +83,6 @@ export default {
       background: rgba(0, 0, 0, 0);
       box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
     }
-  }
-
-  .ivu-layout-sider .ivu-icon-ios-arrow-back:before {
-    // position: fixed !important;
-    content: none !important;
   }
 
   .ivu-layout-header {
