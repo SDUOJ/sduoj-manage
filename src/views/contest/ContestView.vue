@@ -94,6 +94,7 @@
               draggable
               :columns="addProblemTableColumns"
               :data="contestInfo.problems"
+              @on-drag-drop="contestProblemDrag"
               class="contest-set-content-table modal-form-problem">
               <template slot-scope="{ index }" slot="deleteProblem">
                 <Icon type="md-remove" style="color: #CD6155; cursor: pointer" @click="handleContestProblemDelete(index)" />
@@ -200,6 +201,7 @@
               draggable
               :columns="addProblemTableColumns"
               :data="contestInfo.problems"
+              @on-drag-drop="contestProblemDrag"
               class="contest-set-content-table modal-form-problem">
               <template slot-scope="{ index }" slot="deleteProblem">
                 <Icon type="md-remove" style="color: #CD6155; cursor: pointer" @click="handleContestProblemDelete(index)" />
@@ -566,6 +568,21 @@ export default {
         }
       }
     },
+    // 比赛表单中题目拖拽
+    contestProblemDrag: function (first, end) {
+      first = parseInt(first);
+      end = parseInt(end);
+      var data = [];
+      for (let i = 0; i < this.contestInfo.problems.length; i++) {
+        if (i === end) {
+          data.push(this.contestInfo.problems[first]);
+        }
+        if (i !== first) {
+          data.push(this.contestInfo.problems[i]);
+        }
+      }
+      this.$set(this.contestInfo, 'problems', data);
+    },
     // 比赛信息修改模态框 - 加题按钮
     handleContestProblemAdd: function () {
       var problemItem = {
@@ -598,6 +615,7 @@ export default {
         api.getProblem({ problemCode: this.contestInfo.problems[index].problemCode }).then(_ => {
           tmp.problemSearch = 1;
           tmp.problemWeight = 1;
+          tmp.problemTitle = _.problemTitle;
           api.getProblemDescriptionList({ problemCode: this.contestInfo.problems[index].problemCode }).then(ret => {
             tmp.problemDescriptionList = ret;
             if (ret.length) {
