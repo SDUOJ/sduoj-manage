@@ -27,10 +27,11 @@ function post(url, data, options) {
   });
 }
 
-function get(url, params) {
+function get(url, params, options) {
   params = params || {};
+  options = options || {};
   return new Promise((resolve, reject) => {
-    axios.get(url, { params })
+    axios.get(url, { params, options })
       .then(response => {
         if (response.data.code === 0) {
           resolve(response.data.data);
@@ -143,7 +144,7 @@ export default {
   },
   // 下载checkpoints
   downloadCheckpoints: function (data) {
-    return post('/manage/checkpoint/download', data, { responseType: 'blob' });
+    return post('filesys/zipDownload', data, { responseType: 'blob' });
   },
   // ---------------------- 比赛相关 ----------------------
   // 获取比赛列表

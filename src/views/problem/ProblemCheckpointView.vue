@@ -77,7 +77,7 @@
         </template>
         <template slot-scope="{ row }" slot="actions">
           <Button size="small" icon="md-download" type="primary" :loading="downloadLoading"
-                  @click="onDownload([row.checkpointId])"/>
+                  @click="onDownload([row])"/>
           <Poptip
             confirm
             :title="'Delete checkpoint ' + row.checkpointId + '?'"
@@ -280,10 +280,20 @@ export default {
         this.$delete(this.totalCheckpoints[idx], 'isExample');
       }
     },
-    onTotalTableDrag: function (index1, index2) {
-      const tmp = { ...this.totalCheckpoints[index1] };
-      this.$set(this.totalCheckpoints, index1, this.totalCheckpoints[index2]);
-      this.$set(this.totalCheckpoints, index2, tmp);
+    onTotalTableDrag: function (from, to) {
+      from = parseInt(from);
+      to = parseInt(to);
+      const tmp = { ...this.totalCheckpoints[from] };
+      if (from > to) {
+        for (let i = from - 1; i >= to; --i) {
+          this.$set(this.totalCheckpoints, i + 1, this.totalCheckpoints[i]);
+        }
+      } else {
+        for (let i = from + 1; i <= to; ++i) {
+          this.$set(this.totalCheckpoints, i - 1, this.totalCheckpoints[i]);
+        }
+      }
+      this.$set(this.totalCheckpoints, to, tmp);
     },
     onExampleTableDrag: function (index1, index2) {
       const tmp = { ...this.exampleCheckpoints[index1] };
@@ -291,10 +301,10 @@ export default {
       this.$set(this.exampleCheckpoints, index2, { ...tmp });
     },
     onTableSelect: function (selection) {
-      this.selectedCheckpoints = [...selection.map(item => item.checkpointId)];
+      this.selectedCheckpoints = selection;
     },
-    onDeleteCheckpoint: function (checkpointIds) {
-      this.totalCheckpoints = this.totalCheckpoints.filter(item => !checkpointIds.includes(item.checkpointId));
+    onDeleteCheckpoint: function (checkpoints) {
+      this.totalCheckpoints = this.totalCheckpoints.filter(item => !checkpoints.includes(item));
     },
     onCheckpointSave: function () {
       api.updateProblemCheckpoints({
@@ -308,9 +318,21 @@ export default {
     onCheckpointUpload: function (uploadCheckpoints) {
       this.totalCheckpoints = this.totalCheckpoints.concat(uploadCheckpoints);
     },
-    onDownload: function (checkpointIds) {
+    onDownload: function (checkpoints) {
+      const data = [];
+      checkpoints.forEach(item => {
+        data.push({
+          id: item.inputFileId,
+          downloadFilename: item.checkpointId + '.in'
+        });
+        data.push({
+          id: item.outputFileId,
+          downloadFilename: item.checkpointId + '.out'
+        });
+      })
       this.downloadLoading = true;
-      api.downloadCheckpoints([...checkpointIds])
+
+      api.downloadCheckpoints(data)
         .then(rep => {
           console.log(rep);
           const blob = new Blob([rep.data], { type: rep.headers['content-type'] });
