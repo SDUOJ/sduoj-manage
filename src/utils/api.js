@@ -162,5 +162,13 @@ export default {
   // 创建比赛
   createContest: function (data) {
     return post('/manage/contest/create', data);
+  },
+  // 查询单个评测模板
+  queryOneJudgeTemplate: function(id) {
+
+  },
+  // 查询多页评测模板
+  getTemplateList: function(params) {
+
   }
 }

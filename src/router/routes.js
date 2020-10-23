@@ -1,18 +1,3 @@
-// general
-import NotFoundView from '@/views/404/404View';
-
-// user
-import UserView from '@/views/user/UserView';
-
-// problem
-import ProblemView from '@/views/problem/ProblemView';
-import ProblemDetailView from '@/views/problem/ProblemDetailView';
-import ProblemDescriptionView from '@/views/problem/ProblemDescriptionView';
-import ProblemCheckpointView from '@/views/problem/ProblemCheckpointView';
-
-// contest
-import ContestView from '@/views/contest/ContestView';
-
 const routes = [
   {
     path: '/',
@@ -21,41 +6,46 @@ const routes = [
   {
     path: '/user',
     name: 'user',
-    component: UserView,
+    component: () => import('@/views/user/UserView'),
     meta: { title: '用户' }
   },
   {
     path: '/problem',
     name: 'problem',
-    component: ProblemView,
+    component: () => import('@/views/problem/ProblemView'),
     meta: { title: '题库' }
   },
   {
     path: '/problem/:problemCode',
     name: 'problem-detail',
     redirect: '/problem/:problemCode/description',
-    component: ProblemDetailView,
+    component: () => import('@/views/problem/ProblemDetailView'),
     children: [
       {
         path: 'description',
         name: 'problem-description',
-        component: ProblemDescriptionView
+        component: () => import('@/views/problem/ProblemDescriptionView')
       },
       {
         path: 'checkpoint',
         name: 'problem-checkpoint',
-        component: ProblemCheckpointView
+        component: () => import('@/views/problem/ProblemCheckpointView')
       }
     ]
   },
   {
     path: '/contest',
     name: 'contest',
-    component: ContestView
+    component: () => import('@/views/contest/ContestView')
+  },
+  {
+    path: '/template',
+    name: 'template',
+    component: () => import('@/views/template/JudgeTemplateView')
   },
   {
     path: '*',
-    component: NotFoundView
+    component: () => import('@/views/404/404View')
   }
 ]
 
