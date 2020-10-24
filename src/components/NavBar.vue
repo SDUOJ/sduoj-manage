@@ -6,21 +6,21 @@
       </div>
     </Row>
     <Menu :active-name="$route.path.split('/')[1]" theme="dark" width="auto">
-      <MenuItem name="user" to="/user">
+      <MenuItem name="user" :to="{ name: 'user' }">
         <Icon type="ios-navigate"></Icon>
         用户
       </MenuItem>
-      <MenuItem name="problem" to="/problem">
+      <MenuItem name="problem" :to="{ name: 'problem' }">
         <Icon type="ios-navigate"></Icon>
         题库
       </MenuItem>
-      <MenuItem name="contest" to="/contest">
+      <MenuItem name="contest" :to="{ name: 'contest' }">
         <Icon type="ios-keypad"></Icon>
         比赛
       </MenuItem>
-      <MenuItem name="undefined" to="/undefined">
+      <MenuItem name="undefined" :to="{ name: 'template' }">
         <Icon type="ios-paper"></Icon>
-        其他
+        评测模板
       </MenuItem>
     </Menu>
   </div>

@@ -12,24 +12,67 @@
         :data="judgeTemplateData"
         class="template-set-content-table"
         @on-cell-click="handleTableClick"
-        @on-selection-change="selectChange"
-        @on-sort-change="handleTableSort">
+        @on-selection-change="selectChange">
+        <template slot-scope="{ row }" slot="title-comment">
+          <Tooltip :content="row.comment" transfer>
+            <span>{{ row.title }}</span>
+          </Tooltip>
+        </template>
+        <template slot-scope="{ row }" slot="type">
+          <Tag :color="row.type | judgeTemplateTypeClass">{{ row.type | judgeTemplateTypeName }}</Tag>
+        </template>
+        <template slot-scope="{ row }" slot="create-time">
+          <Time slot="extra" :time="row.gmtCreate | parseInt" type="datetime"/>
+        </template>
+        <template slot-scope="{ row }" slot="update-time">
+          <Time slot="extra" :time="row.gmtModified | parseInt" type="datetime"/>
+        </template>
       </Table>
 
       <!-- 题目信息修改框 -->
       <Modal
+        :mask-closable="false"
         v-model="templateInfoModal"
-        title="题目基本信息"
+        :title="'Template #' + templateInfo.id"
         @on-ok="commitTemplateInfo">
-        <Form ref="templateInfo" :model="templateInfo" :rules="templateInfoRule" :label-width="115">
-       </Form>
+        <Form ref="templateInfo" :model="templateInfo" :rules="templateInfoRule">
+          <FormItem label="Title">
+            <Input v-model="templateInfo.title" />
+          </FormItem>
+          <FormItem label="Comment">
+            <Input v-model="templateInfo.comment" />
+          </FormItem>
+          <FormItem label="Type">
+            <Select v-model="templateInfo.type">
+              <Option v-for="type in judgeTemplateType" :key="type" :value="type">
+                {{ judgeTemplateProperity[type].name }}
+              </Option>
+            </Select>
+          </FormItem>
+          <FormItem label="File Extensions">
+            <Select
+              v-model="templateInfo.acceptFileExtensions"
+              filterable
+              multiple
+              allow-create
+              :default-label="templateInfo.acceptFileExtensions"
+              @on-create="handleCreateExtension">
+              <Option v-for="item in templateInfo.acceptFileExtensions" :value="item" :key="item">{{ item }}</Option>
+            </Select>
+          </FormItem>
+          <template v-if="judgeTemplateProperity[templateInfo.type].zipFile">
+
+          </template>
+          <template v-else>
+
+          </template>
+        </Form>
       </Modal>
       <!-- 题目信息修改框 -->
 
     </Card>
     <div class="problem-set-content-footer">
-      <Button type="default" size="small" class="problem-set-content-button" @click="addProblem">添加</Button>
-      <Button type="default" size="small" class="problem-set-content-button" @click="deleteProblem">删除</Button>
+      <Button type="default" size="small" class="problem-set-content-button" @click="addJudgeTemplate">添加</Button>
       <Page
         class="problem-set-content-page"
         size="small" show-elevator show-sizer
@@ -42,9 +85,10 @@
     <!-- 添加题目模态框 -->
     <Modal
       v-model="addTemplateModal"
-      title="添加用户"
+      title="添加评测模板"
       @on-ok="commitAddProblem">
       <Form ref="addTemplateModal" :model="templateInfo" :rules="templateInfoRule" :label-width="115">
+
       </Form>
     </Modal>
     <!-- 添加题目模态框 -->
@@ -52,10 +96,11 @@
 </template>
 
 <script>
-import api from '@/utils/api'
+import api from '_u/api';
+import { judgeTemplateType, judgeTemplateProperity } from '_u/types';
 
 export default {
-  data() {
+  data: function() {
     return {
       judgeTemplateColumns: [
         {
@@ -64,99 +109,39 @@ export default {
           align: 'center'
         },
         {
-          key: 'id'
+          key: 'id',
+          render: (h, params) => {
+            return h('span', {
+              class: 'hover'
+            }, params.row.id);
+          }
         },
-        {
-          title: 'Title',
-          key: 'title'
-        }
+        { title: 'Type', slot: 'type' },
+        { title: 'Title', slot: 'title-comment' },
+        { title: 'Remote OJ', key: 'remoteOj' },
+        { title: 'Create', slot: 'create-time' },
+        { title: 'Update', slot: 'update-time' }
       ],
       judgeTemplateData: [],
       selectedTemplate: [],
       totalNum: 100,
       pageNow: 1,
       pageSize: 10,
-      totalProblemNum: 0,
-      sortBy: '',
-      ascending: false,
-      // 题目信息修改模态框标记
+      // 评测修改模态框标记
       templateInfoModal: false,
-      // 添加题目模态框标记
+      // 添加评测模态框标记
       addTemplateModal: false,
-      // 标签管理模态框标记
-      tagsManagementModal: false,
-      templateInfo: {
-        isPublic: 0,
-        problemCode: '',
-        problemTitle: '',
-        timeLimit: '',
-        memoryLimit: '',
-        submitNum: '',
-        acceptNum: '',
-        source: '',
-        tagDTOList: [],
-        languages: []
-      },
-      templateInfoRule: {
-        problemCode: [
-          {
-            required: true,
-            message: '题目编码不能为空',
-            trigger: 'blur'
-          },
-          {
-            type: 'string',
-            message: '中间以 - 分割',
-            trigger: 'blur'
-          }
-        ],
-        problemTitle: [
-          {
-            required: true,
-            message: '题目标题不能为空',
-            trigger: 'blur'
-          }
-        ],
-        isPublic: [
-          {
-            type: 'number',
-            required: true,
-            trigger: 'change'
-          }
-        ],
-        timeLimit: [
-          {
-            required: true,
-            message: '时间限制不能为空',
-            trigger: 'blur'
-          }
-        ],
-        memoryLimit: [
-          {
-            required: true,
-            message: '空间限制不能为空',
-            trigger: 'blur'
-          }
-        ],
-        source: [
-          {
-            required: false,
-            trigger: 'change'
-          }
-        ],
-        languages: [
-          {
-            required: false,
-            trigger: 'change'
-          }
-        ],
-        tagDTOList: [
-          {
-            required: false,
-            trigger: 'change'
-          }
-        ]
-      }
+      templateInfo: {},
+      templateInfoRule: {}
+    }
+  },
+  filters: {
+    parseInt: (val) => parseInt(val),
+    judgeTemplateTypeClass: type => {
+      return judgeTemplateProperity[type].color;
+    },
+    judgeTemplateTypeName: type => {
+      return judgeTemplateProperity[type].name;
     }
   },
   methods: {
@@ -170,129 +155,61 @@ export default {
       this.pageSize = pageSize;
       this.getTemplateList();
     },
-    // 表格列排序
-    handleTableSort: function ({ column, key, order }) {
-      if (order === 'normal') {
-        this.sortBy = '';
-        this.ascending = false
-      } else {
-        this.sortBy = key;
-        this.ascending = order === 'asc';
-      }
-    },
     // 表格全选
     selectChange: function (selection) {
       this.selectedTemplate = selection;
     },
     // 题目信息修改模态框确认
-    commitTemplateInfo() {
+    commitTemplateInfo: function() {
       this.$refs.templateInfo.validate(valid => {
         if (valid) {
-          var data = {
-            problemCode: this.templateInfo.problemCode,
-            isPublic: this.templateInfo.isPublic,
-            problemTitle: this.templateInfo.problemTitle,
-            source: this.templateInfo.source,
-            languages: this.templateInfo.languages,
-            memoryLimit: parseInt(this.templateInfo.memoryLimit),
-            timeLimit: parseInt(this.templateInfo.timeLimit)
-          }
-          api.updateProblemInfo(data).then(_ => {
-            this.$Message.success('修改成功');
-            this.getTemplateList();
-          }, _ => (this.$Message.error('修改失败')));
         } else {
           this.$Message.error('格式不符');
         }
       })
     },
     // 添加题目按钮
-    addProblem() {
+    addJudgeTemplate: function() {
       this.addTemplateModal = true;
-      this.templateInfo.ProblemCode = '';
-      this.templateInfo.problemTitle = '';
-      this.templateInfo.acceptNum = '';
-      this.templateInfo.submitNum = '';
-      this.templateInfo.isPublic = 0;
-      this.templateInfo.tagDTOList = [];
-      this.templateInfo.languages = [];
-      this.templateInfo.timeLimit = '';
-      this.templateInfo.memoryLimit = '';
-      this.templateInfo.source = '';
     },
     // 添加题目模态框确认
-    commitAddProblem() {
+    commitAddProblem: function() {
       this.$refs.addTemplateModal.validate(valid => {
         if (valid) {
-          var data = {
-            isPublic: this.templateInfo.isPublic,
-            problemTitle: this.templateInfo.problemTitle,
-            source: this.templateInfo.source,
-            languages: this.templateInfo.languages,
-            memoryLimit: parseInt(this.templateInfo.memoryLimit),
-            timeLimit: parseInt(this.templateInfo.timeLimit)
-          }
-          api.createProblem(data).then(_ => {
-            this.$Message.success('添加成功');
-            this.getTemplateList();
-          }, _ => (this.$Message.error('添加失败')));
         } else {
           this.$Message.error('格式不符');
         }
       })
     },
-    // 标签管理按钮
-    tagsManagement() {
-      this.tagsManagementModal = true;
-    },
-    // 标签管理模态框确认
-    commitTagsManagement() {
-
-    },
-    // 删除题目按钮
-    deleteProblem() {
-
-    },
-    append(data) {
-      const children = data.children || [];
-      children.push({
-        title: '空标签',
-        expand: true
-      });
-      this.$set(data, 'children', children);
-    },
-    remove(root, node, data) {
-      const parentKey = root.find(el => el === node).parent;
-      const parent = root.find(el => el.nodeKey === parentKey).node;
-      const index = parent.children.indexOf(data);
-      parent.children.splice(index, 1);
-    },
     handleTableClick: function (row, col) {
-      if (col.key === 'problemTitle') {
-        this.$router.push({
-          name: 'problem-detail',
-          params: {
-            problemCode: row.problemCode
-          }
-        });
+      api.getOneTemplate(row.id).then(ret => {
+        this.templateInfo = ret;
+        console.log(this.templateInfo);
+        this.templateInfoModal = true;
+      });
+    },
+    handleCreateExtension: function(val) {
+      if (!this.templateInfo.acceptFileExtensions.includes(val)) {
+        this.templateInfo.acceptFileExtensions.push(val);
       }
     },
-    // 获取题目列表
-    getTemplateList() {
-      var params = {
+    // 获取评测模板列表
+    getTemplateList: function() {
+      api.getTemplateList({
         pageNow: this.pageNow,
-        pageSize: this.pageSize,
-        sortBy: this.sortBy,
-        ascending: this.ascending
-      }
-      api.getTemplateList(params).then(ret => {
+        pageSize: this.pageSize
+      }).then(ret => {
         this.judgeTemplateData = ret.rows;
         this.totalNum = parseInt(ret.total)
       })
     }
   },
+  computed: {
+    judgeTemplateProperity: () => judgeTemplateProperity,
+    judgeTemplateType: () => judgeTemplateType
+  },
   mounted: function () {
-    this.getTemplateList();
+    this.getTemplateList()
   }
 }
 </script>

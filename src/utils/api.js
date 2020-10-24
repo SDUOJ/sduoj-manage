@@ -164,11 +164,11 @@ export default {
     return post('/manage/contest/create', data);
   },
   // 查询单个评测模板
-  queryOneJudgeTemplate: function(id) {
-
+  getOneTemplate: function(id) {
+    return get('/manage/judgetemplate/query', { id });
   },
   // 查询多页评测模板
   getTemplateList: function(params) {
-
+    return get('/manage/judgetemplate/page', params);
   }
 }
