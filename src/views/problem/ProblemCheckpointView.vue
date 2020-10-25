@@ -94,16 +94,17 @@
       </Table>
     </div>
 
-    <!--    modal-->
+    <!--    upload modal-->
     <Modal
       title="Batch Upload"
       v-model="uploadModal"
       :mask-closable="false"
       width="30%"
     >
-      <CheckpointsUpload @upload="onCheckpointUpload"/>
+      <CheckpointsUpload @upload="onCheckpointUpload" ref="checkpointsUpload"/>
       <div slot="footer">
         <Button @click="uploadModal=false">Back</Button>
+        <Button @click="$refs.checkpointsUpload.onUpload()" type="primary">Ok</Button>
       </div>
     </Modal>
 

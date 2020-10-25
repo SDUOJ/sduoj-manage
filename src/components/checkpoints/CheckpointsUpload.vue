@@ -15,40 +15,46 @@
     <div>
       <span class="subtitle">Batch Upload</span>
       <Upload
-        action=""
         multiple
         paste
+        type="drag"
         accept=".in, .out"
         :format="['in', 'out']"
         :max-size="102400"
-        :before-upload="beforeBatchUpload"
+        :file-list.sync="fileList"
         ref="upload">
-        <Tooltip content="Only .in and .out files that less than 200MB are allowed" max-width="400">
-          <Button size="small">Select Files</Button>
-        </Tooltip>
+        <div style="padding: 20px 0">
+          <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+          <p>Click or drag files here to upload</p>
+        </div>
+<!--        <Tooltip content="Only .in and .out files that less than 200MB are allowed" max-width="400">-->
+<!--          <Button size="small">Select Files</Button>-->
+<!--        </Tooltip>-->
       </Upload>
-      <div class="autowrap">
-        <Tag v-for="(file, index) in files" :key="file.name" :name="file.name" closable @on-close="onFileRemove(index)">
-          {{ file.name }}
-        </Tag>
-      </div>
-      <Button style="margin-top: 20px;" @click="onUpload" :loading="onUploading" type="success">Upload</Button>
+<!--      <div class="autowrap">-->
+<!--        <Tag v-for="(file, index) in files" :key="file.name" :name="file.name" closable @on-close="onFileRemove(index)">-->
+<!--          {{ file.name }}-->
+<!--        </Tag>-->
+<!--      </div>-->
+<!--      <Button style="margin-top: 20px;" @click="onUpload" :loading="onUploading" type="success">Upload</Button>-->
     </div>
   </div>
 </template>
 
 <script>
 import api from '_u/api';
+import Upload from '_c/upload/upload';
 
 export default {
   name: 'CheckpointsUpload',
+  components: { Upload },
   data: function () {
     return {
       singleCheckpoint: {
         input: '',
         output: ''
       },
-      files: [],
+      fileList: [],
       onUploading: false
     }
   },
@@ -57,10 +63,6 @@ export default {
       this.singleCheckpoint.input = '';
       this.singleCheckpoint.output = '';
       this.clearFiles();
-    },
-    beforeBatchUpload: function (file) {
-      this.files.push(file);
-      return false;
     },
     clearFiles: function () {
       this.files = [];
@@ -74,18 +76,18 @@ export default {
       }
     },
     onFileRemove: function (index) {
-      this.files.splice(index, 1);
+      this.fileList.splice(index, 1);
     },
     validFile: function () {
-      if (this.files.length === 0) {
+      if (this.fileList.length === 0) {
         this.$Message.warning('Select files');
         return false;
       }
       let totSize = 0;
       const fileMap = new Map();
-      for (let i = 0; i < this.files.length; ++i) {
-        const file = this.files[i];
-        let name = this.files[i].name;
+      for (let i = 0; i < this.fileList.length; ++i) {
+        const file = this.fileList[i].file;
+        let name = file.name;
         if (name.endsWith('.in')) {
           name = name.slice(0, -3);
         } else if (name.endsWith('.out')) {
@@ -103,7 +105,6 @@ export default {
           unmatch.push(key);
         }
       });
-      console.log(unmatch.length);
       if (unmatch.length > 0) {
         unmatch.slice(0, Math.min(5, unmatch.length)).forEach(value => (this.$Message.error('file ' + value + ' does not match')));
         return false;
@@ -117,15 +118,15 @@ export default {
     handleBatchSubmit: function () {
       if (!this.validFile()) return false;
       const form = new FormData();
-      this.files.forEach(file => form.append('files', file));
-      this.onUploading = true;
+      this.fileList.forEach(file => form.append('files', file.file));
+      const loading = this.$Message.loading('Uploading ' + this.fileList.length + ' files');
       api.uploadCheckpointFiles(form)
         .then(ret => {
           this.$emit('upload', ret);
           this.$Message.success('Upload successfully');
           this.reset();
         }, err => (this.$Message.error(err)))
-        .finally(() => (this.onUploading = false));
+        .finally(() => (loading()));
     },
     handleSingleSubmit: function () {
       this.onUploading = true;
