@@ -137,6 +137,12 @@ export default {
       type: Boolean,
       default: false
     },
+    defaultFileList: {
+      type: Array,
+      default () {
+        return []
+      }
+    },
     disabled: {
       type: Boolean,
       default: false
@@ -233,7 +239,11 @@ export default {
         showProgress: true,
         file: file
       }
-      this.fileList.push(_file)
+      if (this.multiple) {
+        this.fileList.push(_file)
+      } else {
+        this.fileList = [_file];
+      }
       readMD5(file, this.handleProgress, this.handleSuccess);
     },
     getFile (file) {
@@ -286,6 +296,17 @@ export default {
     }
   },
   watch: {
+    defaultFileList: {
+      immediate: true,
+      handler (fileList) {
+        this.fileList = fileList.map(item => {
+          item.status = 'finished'
+          item.percentage = 100
+          item.uid = Date.now() + this.tempIndex++
+          return item
+        })
+      }
+    },
     fileList: function() {
       this.$emit('update:file-list', this.fileList);
     }

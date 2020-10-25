@@ -4,20 +4,14 @@
       <p slot="title">
         评测模板管理
       </p>
-      <Input placeholder="评测模板搜索" style="width: auto" slot="extra">
+      <Input placeholder="评测模板搜索" style="width: auto" slot="extra" v-model.lazy="searchTitle">
         <Icon type="ios-search" slot="suffix"/>
       </Input>
       <Table
         :columns="judgeTemplateColumns"
         :data="judgeTemplateData"
         class="template-set-content-table"
-        @on-cell-click="handleTableClick"
         @on-selection-change="selectChange">
-        <template slot-scope="{ row }" slot="title-comment">
-          <Tooltip :content="row.comment" transfer>
-            <span>{{ row.title }}</span>
-          </Tooltip>
-        </template>
         <template slot-scope="{ row }" slot="type">
           <Tag :color="row.type | judgeTemplateTypeClass">{{ row.type | judgeTemplateTypeName }}</Tag>
         </template>
@@ -29,27 +23,31 @@
         </template>
       </Table>
 
-      <!-- 题目信息修改框 -->
+      <!-- 评测模板修改框 -->
       <Modal
         :mask-closable="false"
         v-model="templateInfoModal"
-        :title="'Template #' + templateInfo.id"
+        :title="'Template #' + (templateInfo.id || '')"
+        width="1000"
         @on-ok="commitTemplateInfo">
-        <Form ref="templateInfo" :model="templateInfo" :rules="templateInfoRule">
-          <FormItem label="Title">
+        <Form ref="templateInfo" :model="templateInfo" :rules="templateInfoRule" label-position="top">
+          <FormItem label="ID">
+            <Input :placeholder="templateInfo.id || ''" disabled />
+          </FormItem>
+          <FormItem label="Title" prop="title">
             <Input v-model="templateInfo.title" />
           </FormItem>
           <FormItem label="Comment">
             <Input v-model="templateInfo.comment" />
           </FormItem>
-          <FormItem label="Type">
+          <FormItem label="Type" prop="type">
             <Select v-model="templateInfo.type">
               <Option v-for="type in judgeTemplateType" :key="type" :value="type">
                 {{ judgeTemplateProperity[type].name }}
               </Option>
             </Select>
           </FormItem>
-          <FormItem label="File Extensions">
+          <FormItem label="File Extensions" prop="acceptFileExtensions">
             <Select
               v-model="templateInfo.acceptFileExtensions"
               filterable
@@ -57,15 +55,38 @@
               allow-create
               :default-label="templateInfo.acceptFileExtensions"
               @on-create="handleCreateExtension">
-              <Option v-for="item in templateInfo.acceptFileExtensions" :value="item" :key="item">{{ item }}</Option>
+              <Option v-for="item in fileExtensionList" :value="item" :key="item">{{ item }}</Option>
             </Select>
           </FormItem>
-          <template v-if="judgeTemplateProperity[templateInfo.type].zipFile">
-
-          </template>
-          <template v-else>
-
-          </template>
+          <FormItem label="Script" prop="shellScript">
+            <div style="border: 1px solid #dcdee2; border-radius: 4px">
+              <ShellEditor v-if="templateInfo.type === judgeTemplateType.ADVANCED" :code.sync="templateInfo.shellScript" />
+              <JsonEditor v-else :code.sync="templateInfo.shellScript" />
+            </div>
+          </FormItem>
+          <FormItem>
+            <div slot="label">
+              <span>ZIP</span>
+              <Divider type="vertical" />
+              <Tooltip content="Download" placement="right" v-if="!!templateInfo.zipFileId" >
+                <Tag class="hover" closable @on-close="templateInfo.zipFileId=''" @click.native="handleDownload(templateInfo.zipFileId)">
+                  {{ templateInfo.zipFileId }}
+                </Tag>
+              </Tooltip>
+            </div>
+            <Upload
+              paste
+              type="drag"
+              accept=".zip"
+              :format="['zip']"
+              :file-list.sync="fileList"
+              ref="upload">
+              <div style="padding: 20px 0">
+                <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+                <p>Click or drag files here to upload</p>
+              </div>
+            </Upload>
+          </FormItem>
         </Form>
       </Modal>
       <!-- 题目信息修改框 -->
@@ -81,25 +102,22 @@
         @on-change="onPageChange"
         @on-page-size-change="onPageSizeChange"/>
     </div>
-
-    <!-- 添加题目模态框 -->
-    <Modal
-      v-model="addTemplateModal"
-      title="添加评测模板"
-      @on-ok="commitAddProblem">
-      <Form ref="addTemplateModal" :model="templateInfo" :rules="templateInfoRule" :label-width="115">
-
-      </Form>
-    </Modal>
-    <!-- 添加题目模态框 -->
   </div>
 </template>
 
 <script>
 import api from '_u/api';
 import { judgeTemplateType, judgeTemplateProperity } from '_u/types';
+import JsonEditor from '_c/editor/JsonEditor';
+import ShellEditor from '_c/editor/ShellEditor';
+import Upload from '_c/upload/upload';
 
 export default {
+  components: {
+    ShellEditor,
+    JsonEditor,
+    Upload
+  },
   data: function() {
     return {
       judgeTemplateColumns: [
@@ -108,31 +126,56 @@ export default {
           width: 60,
           align: 'center'
         },
-        {
-          key: 'id',
-          render: (h, params) => {
-            return h('span', {
-              class: 'hover'
-            }, params.row.id);
-          }
-        },
+        { key: 'id' },
         { title: 'Type', slot: 'type' },
-        { title: 'Title', slot: 'title-comment' },
+        { title: 'Title', key: 'title' },
+        { title: 'Comment', key: 'comment' },
         { title: 'Remote OJ', key: 'remoteOj' },
         { title: 'Create', slot: 'create-time' },
-        { title: 'Update', slot: 'update-time' }
+        { title: 'Update', slot: 'update-time' },
+        {
+          title: '\b',
+          key: 'modify',
+          width: 80,
+          render: (h, params) => {
+            return h('div', [
+              h('Button', {
+                props: {
+                  type: 'primary',
+                  icon: 'ios-construct'
+                },
+                on: {
+                  click: () => {
+                    api.getOneTemplate(params.row.id).then(ret => {
+                      this.templateInfo = ret;
+                      this.fileExtensionList = this.templateInfo.acceptFileExtensions;
+                      this.isAddTemplate = false;
+                      this.templateInfoModal = true;
+                    });
+                  }
+                }
+              })
+            ])
+          }
+        }
       ],
       judgeTemplateData: [],
       selectedTemplate: [],
       totalNum: 100,
       pageNow: 1,
       pageSize: 10,
-      // 评测修改模态框标记
+      isAddTemplate: false,
       templateInfoModal: false,
-      // 添加评测模态框标记
-      addTemplateModal: false,
       templateInfo: {},
-      templateInfoRule: {}
+      templateInfoRule: {
+        title: [{ required: true, trigger: 'blur' }],
+        type: [{ type: 'number', required: true, trigger: 'change' }],
+        acceptFileExtensions: [{ type: 'array', required: true, trigger: 'change' }],
+        shellScript: [{ required: true, trigger: 'change' }]
+      },
+      fileList: [],
+      fileExtensionList: [],
+      searchTitle: ''
     }
   },
   filters: {
@@ -146,62 +189,100 @@ export default {
   },
   methods: {
     // 切换页面
-    onPageChange: function (curPage) {
-      this.pageNow = curPage;
-      this.getTemplateList();
+    onPageChange: function (pageNow) {
+      this.pageNow = pageNow;
     },
     // 更改页面大小
     onPageSizeChange: function (pageSize) {
       this.pageSize = pageSize;
-      this.getTemplateList();
     },
     // 表格全选
     selectChange: function (selection) {
       this.selectedTemplate = selection;
     },
+    clearFileList: function() {
+      this.fileList = [];
+      this.$refs.upload.clearFiles()
+    },
     // 题目信息修改模态框确认
     commitTemplateInfo: function() {
-      this.$refs.templateInfo.validate(valid => {
+      this.$refs.templateInfo.validate(async valid => {
         if (valid) {
+          const loading = this.$Message.loading({
+            content: 'Uploading',
+            duration: 0
+          });
+          // check md5
+          if (this.fileList.length > 0) {
+            const file = this.fileList[0];
+            let ret = await api.checkMD5(file.md5);
+            if (!ret) {
+              const form = new FormData();
+              form.append('files', file.file)
+              ret = await api.multiUpload(form);
+              this.templateInfo.zipFileId = ret[0].id;
+            } else {
+              this.templateInfo.zipFileId = ret.id;
+            }
+            this.clearFileList();
+          }
+
+          if (this.isAddTemplate) {
+            api.createTemplate(this.templateInfo)
+              .then(ret => {
+                this.$Message.success('Success');
+                this.getTemplateList();
+              }).finally(() => (loading()));
+          } else {
+            api.updateTemplate({
+              id: this.templateInfo.id,
+              type: this.templateInfo.type,
+              title: this.templateInfo.title,
+              shellScript: this.templateInfo.shellScript,
+              zipFileId: this.templateInfo.zipFileId || '',
+              acceptFileExtensions: this.templateInfo.acceptFileExtensions,
+              comment: this.templateInfo.comment
+            }).then(ret => {
+              this.$Message.success('Updated');
+            }).finally(() => (loading()));
+          }
         } else {
           this.$Message.error('格式不符');
         }
       })
     },
-    // 添加题目按钮
     addJudgeTemplate: function() {
-      this.addTemplateModal = true;
-    },
-    // 添加题目模态框确认
-    commitAddProblem: function() {
-      this.$refs.addTemplateModal.validate(valid => {
-        if (valid) {
-        } else {
-          this.$Message.error('格式不符');
-        }
-      })
-    },
-    handleTableClick: function (row, col) {
-      api.getOneTemplate(row.id).then(ret => {
-        this.templateInfo = ret;
-        console.log(this.templateInfo);
-        this.templateInfoModal = true;
-      });
+      this.templateInfo = {
+        title: '',
+        comment: '',
+        type: 0,
+        shellScript: '',
+        acceptFileExtensions: [],
+        zipFileId: ''
+      };
+      this.fileExtensionList = [];
+      this.isAddTemplate = true;
+      this.templateInfoModal = true;
     },
     handleCreateExtension: function(val) {
-      if (!this.templateInfo.acceptFileExtensions.includes(val)) {
-        this.templateInfo.acceptFileExtensions.push(val);
-      }
+      this.templateInfo.acceptFileExtensions.push(val);
+    },
+    handleDownload: function(zipFileId) {
+      api.zipDownload([{
+        id: zipFileId,
+        downloadFilename: Date.now() + '.zip'
+      }]).catch(err => (this.$Message.error(err)));
     },
     // 获取评测模板列表
     getTemplateList: function() {
       api.getTemplateList({
         pageNow: this.pageNow,
-        pageSize: this.pageSize
+        pageSize: this.pageSize,
+        title: this.searchTitle
       }).then(ret => {
         this.judgeTemplateData = ret.rows;
-        this.totalNum = parseInt(ret.total)
-      })
+        this.totalNum = parseInt(ret.total);
+      }, err => (this.$Message.error(err.message)));
     }
   },
   computed: {
@@ -210,6 +291,17 @@ export default {
   },
   mounted: function () {
     this.getTemplateList()
+  },
+  watch: {
+    searchTitle: function() {
+      this.getTemplateList();
+    },
+    pageSize: function() {
+      this.getTemplateList();
+    },
+    pageNow: function() {
+      this.getTemplateList();
+    }
   }
 }
 </script>
@@ -287,26 +379,8 @@ export default {
   }
 </style>
 
-<style lang="less">
-  // 权限标签
-  .problem-set-problemtags {
-    float: right;
-
-    .problem-set-rolebox {
-      margin: 2px;
-      background-color: #F8F9F9;
-      float: right;
-      border-radius: 4px;
-
-      .problem-set-role {
-        user-select: none;
-        margin: 4px 6px;
-      }
-    }
-  }
-
-  // 树形标签
-  .tree-tags .ivu-tree-title {
-    width: 100%;
+<style lang="less" scoped>
+  .none-float {
+    float: none;
   }
 </style>

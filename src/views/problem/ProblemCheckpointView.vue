@@ -333,21 +333,8 @@ export default {
       })
       this.downloadLoading = true;
 
-      api.downloadCheckpoints(data)
-        .then(rep => {
-          console.log(rep);
-          const blob = new Blob([rep.data], { type: rep.headers['content-type'] });
-          const elink = document.createElement('a');
-          const filename = new Date().getTime().toString();
-          if ('download' in elink) {
-            elink.download = filename;
-            elink.href = URL.createObjectURL(blob);
-            elink.click();
-            URL.revokeObjectURL(elink.href);
-          } else {
-            navigator.msSaveBlob(blob, filename);
-          }
-        }, err => (this.$Message.error(err.message)))
+      api.zipDownload(data)
+        .catch(err => (this.$Message.error(err.message)))
         .finally(() => (this.downloadLoading = false));
     },
     onCheckpointUpdate: function (oldCheckpointId, newCheckpoint) {

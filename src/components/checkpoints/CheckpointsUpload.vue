@@ -27,16 +27,7 @@
           <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
           <p>Click or drag files here to upload</p>
         </div>
-<!--        <Tooltip content="Only .in and .out files that less than 200MB are allowed" max-width="400">-->
-<!--          <Button size="small">Select Files</Button>-->
-<!--        </Tooltip>-->
       </Upload>
-<!--      <div class="autowrap">-->
-<!--        <Tag v-for="(file, index) in files" :key="file.name" :name="file.name" closable @on-close="onFileRemove(index)">-->
-<!--          {{ file.name }}-->
-<!--        </Tag>-->
-<!--      </div>-->
-<!--      <Button style="margin-top: 20px;" @click="onUpload" :loading="onUploading" type="success">Upload</Button>-->
     </div>
   </div>
 </template>
@@ -65,7 +56,6 @@ export default {
       this.clearFiles();
     },
     clearFiles: function () {
-      this.files = [];
       this.$refs.upload.clearFiles();
     },
     onUpload: function () {
@@ -74,9 +64,6 @@ export default {
       } else {
         this.handleBatchSubmit();
       }
-    },
-    onFileRemove: function (index) {
-      this.fileList.splice(index, 1);
     },
     validFile: function () {
       if (this.fileList.length === 0) {
