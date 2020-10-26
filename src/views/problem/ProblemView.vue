@@ -14,6 +14,19 @@
         @on-cell-click="handleProblemClick"
         @on-selection-change="selectChange"
         @on-sort-change="handleProblemSort">
+        <template slot-scope="{ row }" slot="code">
+          <Tooltip v-if="row.problemCode.length > 20" max-width="180">
+            <span slot="content" style="white-space: normal; word-break: break-all">
+              <ProblemCode :problemCode="row.problemCode" />
+            </span>
+            <span>{{ row.problemCode.substring(0, 20) + '...' }}</span>
+          </Tooltip>
+          <ProblemCode v-else :problemCode="row.problemCode" />
+        </template>
+        <template slot-scope="{ row }" slot="title">
+          <span class="hover">{{ row.problemTitle }}</span>
+        </template>
+
       </Table>
 
       <!-- 导出模块 -->
@@ -27,43 +40,54 @@
       <!-- 题目信息修改框 -->
       <Modal
         v-model="problemInfoModal"
-        title="题目基本信息"
         @on-ok="commitProblemInfo">
+        <template slot="header">
+          <ProblemCode v-if="problemInfo.problemCode" :problemCode="problemInfo.problemCode"/>
+          <div v-else class="ivu-modal-header-inner">Add Problem</div>
+        </template>
         <Form ref="problemInfoModal" :model="problemInfo" :rules="problemInfoRule" :label-width="115">
-          <FormItem label="题目编码" prop="problemCode">
-            <Input v-model="problemInfo.problemCode" :placeholder="problemInfo.problemCode" disabled></Input>
+          <FormItem label="Title" prop="problemTitle">
+            <Input v-model="problemInfo.problemTitle" :placeholder="problemInfo.problemTitle" />
           </FormItem>
 
-          <FormItem label="题目标题" prop="problemTitle">
-            <Input v-model="problemInfo.problemTitle" :placeholder="problemInfo.problemTitle"></Input>
-          </FormItem>
-
-          <FormItem label="是否公开" prop="isPublic">
+          <FormItem label="Public" prop="isPublic">
             <RadioGroup v-model="problemInfo.isPublic">
               <Radio :label='1'>是</Radio>
               <Radio :label='0'>否</Radio>
             </RadioGroup>
           </FormItem>
-          <FormItem label="时间限制 (ms)" prop="timeLimit">
-            <Input v-model="problemInfo.timeLimit" :placeholder="problemInfo.timeLimit"></Input>
+          <FormItem label="Time Limit" prop="timeLimit">
+            <Input v-model="problemInfo.timeLimit">
+              <span slot="append">ms</span>
+            </Input>
           </FormItem>
 
-          <FormItem label="空间限制 (MB)" prop="memoryLimit">
-            <Input v-model="problemInfo.memoryLimit" :placeholder="problemInfo.memoryLimit"></Input>
+          <FormItem label="Memory Limit" prop="memoryLimit">
+            <Input v-model="problemInfo.memoryLimit">
+              <span slot="append">KB</span>
+            </Input>
           </FormItem>
 
-          <FormItem label="评测语言">
-            <Select v-model="problemInfo.languages" multiple>
-              <Option value="cc">cc</Option>
-              <Option value="c++11">c++11</Option>
-              <Option value="c++14">c++14</Option>
-              <Option value="python2">python2</Option>
-              <Option value="python3">python3</Option>
-              <Option value="java8">java8</Option>
+          <FormItem label="Judge Templates" prop="judgeTemplates">
+<!--            TODO: BUG!!!!!!! 远程搜索不能及时渲染-->
+            <Select
+              v-model="problemInfo.judgeTemplates"
+              multiple
+              filterable
+              :remote-method="queryTemplateOptions"
+              :default-label="templateOptions"
+              :loading="loading"
+              @on-set-default-options="setDefaultTemplateOptions">
+              <Tooltip v-for="template in templateOptions" :key="template.id" :content="template.comment" style="width: 100%"  placement="right" transfer>
+                <Option :value="template.id" :label="template.id + ':' + template.title">
+                  <span>{{ template.id + ':' + template.title}}</span>
+                  <span style="float:right;color:#ccc">{{ template.type | judgeTemplateTypeName }}</span>
+                </Option>
+              </Tooltip>
             </Select>
           </FormItem>
 
-          <FormItem label="标签">
+          <FormItem label="Tags">
             <Select v-model="problemInfo.tagDTOList" multiple filterable allow-create>
               <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
                 <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
@@ -71,7 +95,7 @@
             </Select>
           </FormItem>
 
-          <FormItem label="题目来源" prop="source">
+          <FormItem label="Source" prop="source">
             <Input v-model="problemInfo.source" :placeholder="problemInfo.source"></Input>
           </FormItem>
         </Form>
@@ -81,7 +105,6 @@
     </Card>
     <div class="problem-set-content-footer">
       <Button type="default" size="small" class="problem-set-content-button" @click="addProblem">添加</Button>
-      <Button type="default" size="small" class="problem-set-content-button" @click="deleteProblem">删除</Button>
       <Button type="default" size="small" class="problem-set-content-button" @click="exportProblem">文件导出</Button>
       <Button type="default" size="small" class="problem-set-content-button" @click="tagsManagement">标签管理</Button>
       <Page
@@ -92,55 +115,6 @@
         @on-change="onPageChange"
         @on-page-size-change="onPageSizeChange"/>
     </div>
-
-    <!-- 添加题目模态框 -->
-    <Modal
-      v-model="addProblemModal"
-      title="添加用户"
-      @on-ok="commitAddProblem">
-      <Form ref="addProblemModal" :model="problemInfo" :rules="problemInfoRule" :label-width="115">
-        <FormItem label="题目标题" prop="problemTitle">
-          <Input v-model="problemInfo.problemTitle" placeholder="输入题目标题"></Input>
-        </FormItem>
-
-        <FormItem label="是否公开" prop="isPublic">
-          <RadioGroup v-model="problemInfo.isPublic">
-            <Radio :label='1'>是</Radio>
-            <Radio :label='0'>否</Radio>
-          </RadioGroup>
-        </FormItem>
-
-        <FormItem label="时间限制 (ms)" prop="timeLimit">
-          <Input v-model="problemInfo.timeLimit" placeholder="输入时间限制"></Input>
-        </FormItem>
-
-        <FormItem label="空间限制 (MB)" prop="memoryLimit">
-          <Input v-model="problemInfo.memoryLimit" placeholder="输入空间限制"></Input>
-        </FormItem>
-
-        <FormItem label="评测语言">
-          <Select v-model="problemInfo.languages" multiple>
-            <Option value="c++11">c++11</Option>
-            <Option value="c++14">c++14</Option>
-            <Option value="python2">python2</Option>
-            <Option value="java8">java8</Option>
-          </Select>
-        </FormItem>
-
-        <FormItem label="标签">
-          <Select v-model="problemInfo.tagDTOList" multiple filterable allow-create>
-            <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
-              <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
-            </OptionGroup>
-          </Select>
-        </FormItem>
-
-        <FormItem label="题目来源" prop="source">
-          <Input v-model="problemInfo.source" placeholder="输入题目来源"></Input>
-        </FormItem>
-      </Form>
-    </Modal>
-    <!-- 添加题目模态框 -->
 
     <!-- 标签管理模态框 -->
     <Modal
@@ -156,9 +130,11 @@
 <script>
 import api from '@/utils/api'
 import ProblemCode from '@/components/ProblemCode';
+import { judgeTemplateProperity } from '_u/types';
 
 export default {
-  data() {
+  components: { ProblemCode },
+  data: function() {
     return {
       problemTableColumns: [
         {
@@ -167,75 +143,31 @@ export default {
           align: 'center'
         },
         {
-          title: '题目编码',
           key: 'problemCode',
-          render: (h, params) => {
-            if (params.row.problemCode !== undefined) {
-              if (params.row.problemCode.length > 20) {
-                const texts = params.row.problemCode.substring(0, 20) + '...';
-                return h('Tooltip', {
-                  props: {
-                    placement: 'top',
-                    maxWidth: '180'
-                  }
-                }, [
-                  h(ProblemCode, {
-                    props: {
-                      problemCode: texts
-                    }
-                  }),
-                  h('span', {
-                    slot: 'content',
-                    style: {
-                      whiteSpace: 'normal',
-                      wordBreak: 'break-all'
-                    }
-                  }, params.row.problemCode)
-                ]);
-              } else {
-                return h(ProblemCode, {
-                  props: {
-                    problemCode: params.row.problemCode
-                  }
-                });
-              }
-            }
-          }
+          width: 210,
+          slot: 'code'
         },
         {
-          title: '题目标题',
+          title: 'Title',
           key: 'problemTitle',
-          render: (h, params) => {
-            return h('div', {
-              style: {
-                cursor: 'pointer'
-              }
-            }, params.row.problemTitle)
-          }
+          slot: 'title'
         },
         {
-          title: '时间限制 (ms)',
+          title: 'Time Limit (ms)',
           key: 'timeLimit',
-          width: 150,
           sortable: 'custom'
         },
         {
-          title: '空间限制 (MB)',
+          title: 'Memory Limit (MB)',
           key: 'memoryLimit',
-          width: 150,
           sortable: 'custom'
         },
         {
-          title: '通过 / 提交',
+          title: 'Accepts / Submits',
           key: 'acceptNum',
           sortable: 'custom',
-          width: 130,
           render: (h, params) => {
-            return h('span', [
-              params.row.acceptNum,
-              ' / ',
-              params.row.submitNum
-            ])
+            return h('span', [params.row.acceptNum, ' / ', params.row.submitNum])
           }
         },
         {
@@ -267,19 +199,12 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.problemInfoModal = true;
-                    this.problemInfo.problemCode = params.row.problemCode;
-                    this.problemInfo.problemTitle = params.row.problemTitle;
-                    this.problemInfo.isPublic = params.row.isPublic;
-                    this.problemInfo.timeLimit = params.row.timeLimit.toString();
-                    this.problemInfo.memoryLimit = params.row.memoryLimit.toString();
-                    // TODO: 标签管理
-                    this.problemInfo.tagDTOList = [];
-                    params.row.tagDTOList.forEach(item => {
-                      this.problemInfo.tagDTOList.push(item.title);
+                    this.problemInfo = params.row;
+                    this.$nextTick(() => {
+                      this.templateOptions = this.problemInfo.judgeTemplateListDTOList;
                     })
-                    this.problemInfo.languages = params.row.languages;
-                    this.problemInfo.source = params.row.source;
+                    this.isAddProblem = false;
+                    this.problemInfoModal = true;
                   }
                 }
               })
@@ -320,8 +245,8 @@ export default {
           key: 'acceptNum'
         },
         {
-          title: 'languages',
-          key: 'languages'
+          title: 'judgeTemplates',
+          key: 'judgeTemplates'
         },
         {
           title: 'memoryLimit',
@@ -343,87 +268,23 @@ export default {
       totalNum: 100,
       pageNow: 1,
       pageSize: 10,
-      totalProblemNum: 0,
       sortBy: '',
       ascending: false,
+      loading: false,
       // 题目信息修改模态框标记
+      isAddProblem: false,
       problemInfoModal: false,
-      // 添加题目模态框标记
-      addProblemModal: false,
       // 标签管理模态框标记
       tagsManagementModal: false,
-      problemInfo: {
-        isPublic: 0,
-        problemCode: '',
-        problemTitle: '',
-        timeLimit: '',
-        memoryLimit: '',
-        submitNum: '',
-        acceptNum: '',
-        source: '',
-        tagDTOList: [],
-        languages: []
-      },
+      problemInfo: {},
       problemInfoRule: {
-        problemCode: [
-          {
-            required: true,
-            message: '题目编码不能为空',
-            trigger: 'blur'
-          },
-          {
-            type: 'string',
-            message: '中间以 - 分割',
-            trigger: 'blur'
-          }
-        ],
-        problemTitle: [
-          {
-            required: true,
-            message: '题目标题不能为空',
-            trigger: 'blur'
-          }
-        ],
-        isPublic: [
-          {
-            type: 'number',
-            required: true,
-            trigger: 'change'
-          }
-        ],
-        timeLimit: [
-          {
-            required: true,
-            message: '时间限制不能为空',
-            trigger: 'blur'
-          }
-        ],
-        memoryLimit: [
-          {
-            required: true,
-            message: '空间限制不能为空',
-            trigger: 'blur'
-          }
-        ],
-        source: [
-          {
-            required: false,
-            trigger: 'change'
-          }
-        ],
-        languages: [
-          {
-            required: false,
-            trigger: 'change'
-          }
-        ],
-        tagDTOList: [
-          {
-            required: false,
-            trigger: 'change'
-          }
-        ]
+        problemTitle: [{ required: true, trigger: 'blur' }],
+        isPublic: [{ type: 'number', required: true, trigger: 'change' }],
+        timeLimit: [{ type: 'number', required: true, trigger: 'blur' }],
+        memoryLimit: [{ type: 'number', required: true, trigger: 'blur' }],
+        judgeTemplates: [{ required: true }]
       },
+      templateOptions: [],
       problemTagList: [
         {
           value: '动态规划',
@@ -582,16 +443,23 @@ export default {
       }
     }
   },
+  filters: {
+    parseInt: (val) => parseInt(val),
+    judgeTemplateTypeClass: type => {
+      return judgeTemplateProperity[type].color;
+    },
+    judgeTemplateTypeName: type => {
+      return judgeTemplateProperity[type].name;
+    }
+  },
   methods: {
     // 切换页面
-    onPageChange: function (curPage) {
-      this.pageNow = curPage;
-      this.getProblemList();
+    onPageChange: function (pageNow) {
+      this.pageNow = pageNow;
     },
     // 更改页面大小
     onPageSizeChange: function (pageSize) {
       this.pageSize = pageSize;
-      this.getProblemList();
     },
     // 表格列排序
     handleProblemSort: function ({ column, key, order }) {
@@ -608,78 +476,66 @@ export default {
       this.selectedProblem = selection;
     },
     // 题目信息修改模态框确认
-    commitProblemInfo() {
+    commitProblemInfo: function() {
       this.$refs.problemInfoModal.validate(valid => {
         if (valid) {
-          var data = {
+          const data = {
             problemCode: this.problemInfo.problemCode,
             isPublic: this.problemInfo.isPublic,
             problemTitle: this.problemInfo.problemTitle,
             source: this.problemInfo.source,
-            languages: this.problemInfo.languages,
+            judgeTemplates: this.problemInfo.judgeTemplates,
             memoryLimit: parseInt(this.problemInfo.memoryLimit),
             timeLimit: parseInt(this.problemInfo.timeLimit)
           }
-          api.updateProblemInfo(data).then(_ => {
-            this.$Message.success('修改成功');
-            this.getProblemList();
-          }, _ => (this.$Message.error('修改失败')));
+          api[this.isAddProblem ? 'createProblem' : 'updateProblemInfo'](data)
+            .then(_ => (this.$Message.success('Success')), err => (this.$Message.error(err.message)))
+            .finally(() => (this.getProblemList()));
         } else {
           this.$Message.error('格式不符');
         }
       })
     },
     // 添加题目按钮
-    addProblem() {
-      this.addProblemModal = true;
-      this.problemInfo.ProblemCode = '';
-      this.problemInfo.problemTitle = '';
-      this.problemInfo.acceptNum = '';
-      this.problemInfo.submitNum = '';
-      this.problemInfo.isPublic = 0;
-      this.problemInfo.tagDTOList = [];
-      this.problemInfo.languages = [];
-      this.problemInfo.timeLimit = '';
-      this.problemInfo.memoryLimit = '';
-      this.problemInfo.source = '';
+    addProblem: function() {
+      this.problemInfo = {
+        problemCode: '',
+        problemTitle: '',
+        isPublic: 0,
+        tagDTOList: [],
+        judgeTemplates: [],
+        timeLimit: '',
+        memoryLimit: '',
+        source: ''
+      };
+      this.templateOptions = [];
+      this.isAddProblem = true;
+      this.problemInfoModal = true;
     },
-    // 添加题目模态框确认
-    commitAddProblem() {
-      this.$refs.addProblemModal.validate(valid => {
-        if (valid) {
-          var data = {
-            isPublic: this.problemInfo.isPublic,
-            problemTitle: this.problemInfo.problemTitle,
-            source: this.problemInfo.source,
-            languages: this.problemInfo.languages,
-            memoryLimit: parseInt(this.problemInfo.memoryLimit),
-            timeLimit: parseInt(this.problemInfo.timeLimit)
-          }
-          api.createProblem(data).then(_ => {
-            this.$Message.success('添加成功');
-            this.getProblemList();
-          }, _ => (this.$Message.error('添加失败')));
-        } else {
-          this.$Message.error('格式不符');
-        }
+    handleProblemClick: function (row, col) {
+      if (col.key === 'problemTitle') {
+        this.$router.push({
+          name: 'problem-detail',
+          params: { problemCode: row.problemCode }
+        });
+      }
+    },
+    // 获取题目列表
+    getProblemList() {
+      api.getProblemList({
+        pageNow: this.pageNow,
+        pageSize: this.pageSize,
+        sortBy: this.sortBy,
+        ascending: this.ascending
+      }).then(ret => {
+        this.problemTableData = ret.rows;
+        this.totalNum = parseInt(ret.total)
       })
     },
-    // 标签管理按钮
-    tagsManagement() {
-      this.tagsManagementModal = true;
-    },
-    // 标签管理模态框确认
-    commitTagsManagement() {
-
-    },
-    // 删除题目按钮
-    deleteProblem() {
-
-    },
     // 题库导出按钮
-    exportProblem() {
+    exportProblem: function() {
       if (this.selectedProblem.length === 0) {
-        this.$Message.error('无用户被选中');
+        this.$Message.error('No problems selected');
       } else {
         var exportProblemTableData = []
         this.selectedProblem.forEach(function (item) {
@@ -699,8 +555,30 @@ export default {
         this.$Message.success('导出成功');
       }
     },
+    queryTemplateOptions: function(title) {
+      if (title === '') {
+        this.templateOptions = [];
+      } else if (!this.loading) {
+        this.loading = true;
+        this.templateOptions = [];
+        api.queryTemplateTitle(title).then(ret => {
+          ret.forEach(item => (this.templateOptions.push(item)));
+        }).finally(() => (this.loading = false));
+      }
+    },
+    setDefaultTemplateOptions: function(options) {
+      // this.templateOptions = [];
+      // console.log(options);
+      // options.forEach(opt => {
+      //   api.getOneTemplate(opt.value).then(ret => {
+      //     console.log(ret);
+      //     this.templateOptions.push(ret);
+      //   })
+      // })
+    },
+
     // 树形标签函数
-    renderTreeTags(h, { root, node, data }) {
+    renderTreeTags: function(h, { root, node, data }) {
       return h('span', {
         style: {
           display: 'inline-block',
@@ -751,7 +629,7 @@ export default {
         ])
       ]);
     },
-    append(data) {
+    append: function(data) {
       const children = data.children || [];
       children.push({
         title: '空标签',
@@ -759,38 +637,29 @@ export default {
       });
       this.$set(data, 'children', children);
     },
-    remove(root, node, data) {
+    remove: function(root, node, data) {
       const parentKey = root.find(el => el === node).parent;
       const parent = root.find(el => el.nodeKey === parentKey).node;
       const index = parent.children.indexOf(data);
       parent.children.splice(index, 1);
     },
-    handleProblemClick: function (row, col) {
-      if (col.key === 'problemTitle') {
-        this.$router.push({
-          name: 'problem-detail',
-          params: {
-            problemCode: row.problemCode
-          }
-        });
-      }
+    // 标签管理按钮
+    tagsManagement: function() {
+      this.tagsManagementModal = true;
     },
-    // 获取题目列表
-    getProblemList() {
-      var params = {
-        pageNow: this.pageNow,
-        pageSize: this.pageSize,
-        sortBy: this.sortBy,
-        ascending: this.ascending
-      }
-      api.getProblemList(params).then(ret => {
-        this.problemTableData = ret.rows;
-        this.totalNum = parseInt(ret.total)
-      })
-    }
+    // 标签管理模态框确认
+    commitTagsManagement: function() {}
   },
   mounted: function () {
     this.getProblemList();
+  },
+  watch: {
+    pageNow: function() {
+      this.getProblemList();
+    },
+    pageSize: function() {
+      this.getProblemList();
+    }
   }
 }
 </script>

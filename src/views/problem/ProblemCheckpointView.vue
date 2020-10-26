@@ -94,16 +94,17 @@
       </Table>
     </div>
 
-    <!--    modal-->
+    <!--    upload modal-->
     <Modal
       title="Batch Upload"
       v-model="uploadModal"
       :mask-closable="false"
       width="30%"
     >
-      <CheckpointsUpload @upload="onCheckpointUpload"/>
+      <CheckpointsUpload @upload="onCheckpointUpload" ref="checkpointsUpload"/>
       <div slot="footer">
         <Button @click="uploadModal=false">Back</Button>
+        <Button @click="$refs.checkpointsUpload.onUpload()" type="primary">Ok</Button>
       </div>
     </Modal>
 
@@ -332,21 +333,8 @@ export default {
       })
       this.downloadLoading = true;
 
-      api.downloadCheckpoints(data)
-        .then(rep => {
-          console.log(rep);
-          const blob = new Blob([rep.data], { type: rep.headers['content-type'] });
-          const elink = document.createElement('a');
-          const filename = new Date().getTime().toString();
-          if ('download' in elink) {
-            elink.download = filename;
-            elink.href = URL.createObjectURL(blob);
-            elink.click();
-            URL.revokeObjectURL(elink.href);
-          } else {
-            navigator.msSaveBlob(blob, filename);
-          }
-        }, err => (this.$Message.error(err.message)))
+      api.zipDownload(data)
+        .catch(err => (this.$Message.error(err.message)))
         .finally(() => (this.downloadLoading = false));
     },
     onCheckpointUpdate: function (oldCheckpointId, newCheckpoint) {

@@ -58,7 +58,7 @@
           <FormItem label="比赛密码" prop="password" v-if="contestInfo.features.openness !== 'public'">
             <Input v-model="contestInfo.password" :placeholder="contestInfo.password"></Input>
           </FormItem>
-        
+
           <Row>
               <Col span="10">
                 <FormItem label="开始时间" prop="gmtStart">
@@ -165,7 +165,7 @@
           <FormItem label="比赛密码" prop="password" v-if="contestInfo.features.openness !== 'public'">
             <Input v-model="contestInfo.password" :placeholder="contestInfo.password"></Input>
           </FormItem>
-        
+
           <Row>
               <Col span="10">
                 <FormItem label="开始时间" prop="gmtStart">
@@ -231,7 +231,7 @@
 
 <script>
 import api from '@/utils/api'
-import utils from '@/utils';
+import moment from 'moment';
 import { mapGetters, mapState } from 'vuex';
 
 export default {
@@ -281,7 +281,9 @@ export default {
           sortable: 'custom',
           width: 120,
           render: (h, params) => {
-            return h('span', utils.time2hour(parseInt(params.row.gmtEnd) - parseInt(params.row.gmtStart)));
+            const contestStartTime = moment(new Date(parseInt(params.row.gmtStart)));
+            const contestEndTime = moment(new Date(parseInt(params.row.gmtEnd)));
+            return h('span', moment(contestEndTime - contestStartTime).format('hh:mm:ss'));
           }
         },
         {
@@ -439,8 +441,8 @@ export default {
           mode: '',
           openness: ''
         },
-        gmtStart: utils.time2date(0),
-        gmtEnd: utils.time2date(0),
+        gmtStart: '',
+        gmtEnd: '',
         source: '',
         markdownDescription: '',
         problems: [{
@@ -518,10 +520,10 @@ export default {
       this.contestInfo.contestId = params.row.contestId;
       this.contestInfo.contestTitle = params.row.contestTitle;
       this.contestInfo.features = params.row.features;
-      this.contestInfo.gmtStart = utils.time2date(new Date(parseInt(params.row.gmtStart)));
-      this.contestInfo.gmtEnd = utils.time2date(new Date(parseInt(params.row.gmtEnd)));
+      this.contestInfo.gmtStart = moment(new Date(parseInt(params.row.gmtStart))).format('yyy-MM-DD hh:mm:ss');
+      this.contestInfo.gmtEnd = moment(new Date(parseInt(params.row.gmtEnd))).format('yyy-MM-DD hh:mm:ss');
       this.contestInfo.source = params.row.source;
-      this.contestInfo.gmtLength = utils.time2minute(parseInt(params.row.gmtEnd) - parseInt(params.row.gmtStart));
+      this.contestInfo.gmtLength = parseInt((parseInt(params.row.gmtEnd) - parseInt(params.row.gmtStart)) / 60 / 1000).toString();
       // get 获取 password、problems、participants、markdownDescription
       api.getContest({ contestId: params.row.contestId }).then(ret => {
         this.contestInfo.password = ret.password;
@@ -548,10 +550,9 @@ export default {
     // 修改比赛时长
     changeGmtLength: function () {
       if (this.contestInfo.gmtStart) {
-        var date1 = new Date(this.contestInfo.gmtStart).getTime();
-        var length = this.contestInfo.gmtLength * 60 * 1000;
-        var date2 = date1 + length;
-        this.contestInfo.gmtEnd = utils.time2date(new Date(parseInt(date2)));
+        const start = new Date(this.contestInfo.gmtStart).getTime();
+        const length = this.contestInfo.gmtLength * 60 * 1000;
+        this.contestInfo.gmtEnd = moment(new Date(start + length)).format('yyy-MM-DD hh:mm:ss');
       }
     },
     // 修改比赛结束时间
@@ -624,7 +625,7 @@ export default {
             this.$set(this.contestInfo.problems, index, tmp);
           })
         }, _ => {
-          tmp.problemSearch = 0;          
+          tmp.problemSearch = 0;
           this.$set(this.contestInfo.problems, index, tmp);
         })
       } else {
@@ -707,8 +708,8 @@ export default {
         mode: 'acm',
         openness: 'public'
       };
-      this.contestInfo.gmtStart = utils.time2date(new Date().getTime());
-      this.contestInfo.gmtEnd = utils.time2date(new Date().getTime());
+      this.contestInfo.gmtStart = moment(new Date().getTime()).format('yyyy-MM-DD hh:mm:ss');
+      this.contestInfo.gmtEnd = moment(new Date().getTime()).format('yyyy-MM-DD hh:mm:ss');
       this.contestInfo.source = '';
       this.contestInfo.markdownDescription = '';
       this.contestInfo.problems = [];
@@ -764,8 +765,8 @@ export default {
           var item2 = {
             contestId: item.contestId,
             contestTitle: item.contestTitle,
-            gmtStart: utils.time2date(new Date(parseInt(item.gmtStart))),
-            gmtEnd: utils.time2date(new Date(parseInt(item.gmtEnd))),
+            gmtStart: moment(new Date(parseInt(item.gmtStart))).format('yyyy-MM-DD hh:mm:ss'),
+            gmtEnd: moment(new Date(parseInt(item.gmtEnd))).format('yyyy-MM-DD hh:mm:ss'),
             mode: item.features.mode,
             openness: item.features.openness,
             participantNum: item.participantNum,

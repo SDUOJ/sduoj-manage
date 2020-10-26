@@ -22,6 +22,7 @@ function post(url, data, options) {
           reject(response.data);
         }
       }, err => {
+        Vue.prototype.$Loading.finish();
         reject(err.response.data);
       })
   });
@@ -40,6 +41,7 @@ function get(url, params, options) {
           reject(response.data);
         }
       }, err => {
+        Vue.prototype.$Loading.finish();
         reject(err.response.data);
       })
   })
@@ -142,10 +144,6 @@ export default {
   updateProblemCheckpoints: function (data) {
     return post('/manage/problem/update', data);
   },
-  // 下载checkpoints
-  downloadCheckpoints: function (data) {
-    return post('filesys/zipDownload', data, { responseType: 'blob' });
-  },
   // ---------------------- 比赛相关 ----------------------
   // 获取比赛列表
   getContestList: function (params) {
@@ -162,5 +160,58 @@ export default {
   // 创建比赛
   createContest: function (data) {
     return post('/manage/contest/create', data);
+  },
+  // ----------------- 评测模板相关 -------------------
+  // 查询单个评测模板
+  getOneTemplate: function(id) {
+    return get('/manage/judgetemplate/query', { id });
+  },
+  // 查询多页评测模板
+  getTemplateList: function(params) {
+    return get('/manage/judgetemplate/page', params);
+  },
+  // 创建评测模板
+  createTemplate: function(data) {
+    return post('/manage/judgetemplate/create', data);
+  },
+  // 更新评测模板
+  updateTemplate: function(data) {
+    return post('/manage/judgetemplate/update', data);
+  },
+  // 评测模板title右模糊匹配
+  queryTemplateTitle: function(title) {
+    return get('/manage/judgetemplate/listByTitle', { title });
+  },
+  // ----------------- 评测模板相关 -------------------
+  // 单文件上传
+  singleUpload: function(data) {
+    return post('/filesys/upload', data);
+  },
+  // 多文件上传
+  multiUpload: function(data) {
+    return post('/filesys/uploadFiles', data);
+  },
+  // 用 md5 查文件
+  checkMD5: function(md5) {
+    return get('/filesys/queryByMd5', { md5 });
+  },
+  // 以zip包下载多个文件
+  zipDownload: function(data) {
+    return new Promise((resolve, reject) => {
+      post('filesys/zipDownload', data, { responseType: 'blob' }).then(ret => {
+        resolve(ret);
+        const blob = new Blob([ret.data], { type: ret.headers['content-type'] });
+        const elink = document.createElement('a');
+        const filename = new Date().getTime().toString();
+        if ('download' in elink) {
+          elink.download = filename;
+          elink.href = URL.createObjectURL(blob);
+          elink.click();
+          URL.revokeObjectURL(elink.href);
+        } else {
+          navigator.msSaveBlob(blob, filename);
+        }
+      }, err => (reject(err)));
+    })
   }
 }
