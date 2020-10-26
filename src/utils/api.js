@@ -170,11 +170,17 @@ export default {
   getTemplateList: function(params) {
     return get('/manage/judgetemplate/page', params);
   },
+  // 创建评测模板
   createTemplate: function(data) {
     return post('/manage/judgetemplate/create', data);
   },
+  // 更新评测模板
   updateTemplate: function(data) {
     return post('/manage/judgetemplate/update', data);
+  },
+  // 评测模板title右模糊匹配
+  queryTemplateTitle: function(title) {
+    return get('/manage/judgetemplate/listByTitle', { title });
   },
   // ----------------- 评测模板相关 -------------------
   // 单文件上传
