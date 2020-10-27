@@ -393,11 +393,6 @@ export default {
     api.getCheckpointList(this.problemCode).then(ret => {
       this.originalTableData = ret;
       this.totalCheckpoints = [...ret];
-      // this.totalCheckpoints.forEach(checkpoint => {
-      //   if (checkpoint.caseIndex !== null) {
-      //     checkpoint.isCase = true;
-      //   }
-      // })
     })
   },
   beforeRouteLeave: function (to, from, next) {
