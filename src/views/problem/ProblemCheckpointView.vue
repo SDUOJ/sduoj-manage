@@ -48,7 +48,7 @@
         </template>
         <template slot-scope="{ row }" slot="checkpointId">
           <span class="hover" style="margin-right: 10px">{{ row.checkpointId }}</span>
-          <Tag v-if="row.caseIndex !== null">{{ `Case ${row.caseIndex + 1}` }}</Tag>
+          <Tag v-if="isCase(row)">{{ `Case ${row.caseIndex + 1}` }}</Tag>
         </template>
         <template slot-scope="{ index }" slot="score">
           <Input style="width: 100px" v-model.number="totalCheckpoints[index].checkpointScore" />
@@ -64,7 +64,7 @@
             <span class="hover"><Icon type="md-trash" color="#ed4014"/></span>
           </Poptip>
           <Divider type="vertical" />
-          <template v-if="row.caseIndex === null">
+          <template v-if="!isCase(row)">
            <Tooltip v-if="row.inputSize < 1024 && row.outputSize < 1024" content="Set Case" placement="right">
              <span class="hover" @click="setCaseCheckpoint(row.checkpointId, true)"><Icon type="md-add" color="#19be6b" /></span>
            </Tooltip>
@@ -269,7 +269,7 @@ export default {
       return true;
     },
     caseCheckpoints: function() {
-      const arr = this.totalCheckpoints.filter(checkpoint => checkpoint.caseIndex !== null);
+      const arr = this.totalCheckpoints.filter(checkpoint => this.isCase(checkpoint));
       arr.sort((a, b) => a.caseIndex - b.caseIndex);
       for (let i = 0; i < arr.length; ++i) {
         arr[i].caseIndex = i;
@@ -278,7 +278,10 @@ export default {
     }
   },
   methods: {
-    setCaseCheckpoint: function (checkpointId, state) {
+    isCase: function(checkpoint) {
+      return checkpoint.caseIndex !== null && checkpoint.caseIndex !== undefined;
+    },
+    setCaseCheckpoint: function(checkpointId, state) {
       for (let i = 0; i < this.totalCheckpoints.length; ++i) {
         if (this.totalCheckpoints[i].checkpointId === checkpointId) {
           this.totalCheckpoints[i].caseIndex = state ? this.caseCheckpoints.length : null;
@@ -380,11 +383,11 @@ export default {
       // 平均分向下取整
       const each = parseInt(parseInt(score) / this.totalCheckpoints.length);
       for (let i = 0; i < this.totalCheckpoints.length; ++i) {
-        this.totalCheckpoints[i].checkpointScore = each;
+        this.$set(this.totalCheckpoints[i], 'checkpointScore', each);
         score -= each;
       }
       for (let i = this.totalCheckpoints.length - 1; i >= 0 && score > 0; --i) {
-        this.totalCheckpoints[i].checkpointScore++;
+        this.$set(this.totalCheckpoints[i], 'checkpointScore', this.totalCheckpoints[i].checkpointScore + 1);
         score--;
       }
     }
