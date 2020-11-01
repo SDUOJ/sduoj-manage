@@ -35,7 +35,7 @@ export default {
   },
   methods: {
     toUserPage: function () {
-      window.location = 'http://oj.sdu.edu.cn:8081/#/home';
+      window.open(this.clientURL, '_blank');
     }
   },
   components: { NavBar },
@@ -47,6 +47,13 @@ export default {
         'menu-item',
         this.isCollapsed ? 'collapsed-menu' : ''
       ]
+    },
+    clientURL: function () {
+      if (process.env.NODE_ENV === 'production') {
+        return location.origin;
+      } else {
+        return process.env.VUE_APP_OJ_CLIENT;
+      }
     }
   },
   mounted: function () {
