@@ -2,8 +2,7 @@ import Vue from 'vue';
 import axios from 'axios';
 import store from '@/store';
 
-const ver1 = '/api';
-axios.defaults.baseURL = 'http://api.oj.cs.sdu.edu.cn:8080' + ver1;
+axios.defaults.baseURL = `${process.env.VUE_APP_OJ_SERVER}/api`;
 axios.defaults.withCredentials = true;
 
 function post(url, data, options) {
