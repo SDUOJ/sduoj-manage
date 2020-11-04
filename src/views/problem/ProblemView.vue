@@ -57,13 +57,13 @@
             </RadioGroup>
           </FormItem>
           <FormItem label="Time Limit" prop="timeLimit">
-            <Input v-model="problemInfo.timeLimit">
+            <Input v-model.number="problemInfo.timeLimit">
               <span slot="append">ms</span>
             </Input>
           </FormItem>
 
           <FormItem label="Memory Limit" prop="memoryLimit">
-            <Input v-model="problemInfo.memoryLimit">
+            <Input v-model.number="problemInfo.memoryLimit">
               <span slot="append">KB</span>
             </Input>
           </FormItem>
