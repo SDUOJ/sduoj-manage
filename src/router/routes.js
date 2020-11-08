@@ -12,7 +12,7 @@ const routes = [
   {
     path: '/problem',
     name: 'problem',
-    component: () => import('@/views/problem/ProblemView'),
+    component: () => import('@/views/newproblem/ProblemView'),
     meta: { title: '题库' }
   },
   {

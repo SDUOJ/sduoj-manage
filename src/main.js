@@ -11,7 +11,7 @@ Vue.use(VueHighlightJS);
 Vue.config.productionTip = false;
 
 Vue.prototype.$Message.config({
-  duration: 2,
+  duration: 3,
   top: 60
 });
 
