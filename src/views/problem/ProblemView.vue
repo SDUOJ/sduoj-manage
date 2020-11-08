@@ -1,18 +1,13 @@
 <template>
   <div>
-    <Card :dis-hover="true">
-      <p slot="title">
-        题库管理
-      </p>
-      <Input placeholder="题目搜索" style="width: auto" slot="extra">
-        <Icon type="ios-search" slot="suffix"/>
-      </Input>
+    <Card dis-hover>
+      <p slot="title">Problem</p>
+<!--      TODO: 题目列表和题面一样可以在table上直接修改-->
       <Table
-        :columns="problemTableColumns"
-        :data="problemTableData"
-        class="problem-set-content-table"
-        @on-cell-click="handleProblemClick"
-        @on-selection-change="selectChange"
+        :loading="loading"
+        :columns="problemColumns"
+        :data="problems"
+        no-data-text=""
         @on-sort-change="handleProblemSort">
         <template slot-scope="{ row }" slot="code">
           <Tooltip v-if="row.problemCode.length > 20" max-width="180">
@@ -26,458 +21,186 @@
         <template slot-scope="{ row }" slot="title">
           <span class="hover">{{ row.problemTitle }}</span>
         </template>
-
-      </Table>
-
-      <!-- 导出模块 -->
-      <div style="display: none;">
-        <Table
-          :columns="exportProblemTableColumns"
-          ref="exportProblemTable">
-        </Table>
-      </div>
-
-      <!-- 题目信息修改框 -->
-      <Modal
-        v-model="problemInfoModal"
-        @on-ok="commitProblemInfo">
-        <template slot="header">
-          <ProblemCode v-if="problemInfo.problemCode" :problemCode="problemInfo.problemCode"/>
-          <div v-else class="ivu-modal-header-inner">Add Problem</div>
+        <template slot-scope="{ row }" slot="time">
+          <span class="time">{{ row.timeLimit || 0 }}</span>
         </template>
-        <Form ref="problemInfoModal" :model="problemInfo" :rules="problemInfoRule" :label-width="115">
-          <FormItem label="Title" prop="problemTitle">
-            <Input v-model="problemInfo.problemTitle" :placeholder="problemInfo.problemTitle" />
-          </FormItem>
-
-          <FormItem label="Public" prop="isPublic">
-            <RadioGroup v-model="problemInfo.isPublic">
-              <Radio :label='1'>是</Radio>
-              <Radio :label='0'>否</Radio>
-            </RadioGroup>
-          </FormItem>
-          <FormItem label="Time Limit" prop="timeLimit">
-            <Input v-model="problemInfo.timeLimit">
-              <span slot="append">ms</span>
-            </Input>
-          </FormItem>
-
-          <FormItem label="Memory Limit" prop="memoryLimit">
-            <Input v-model="problemInfo.memoryLimit">
-              <span slot="append">KB</span>
-            </Input>
-          </FormItem>
-
-          <FormItem label="Judge Templates" prop="judgeTemplates">
-<!--            TODO: BUG!!!!!!! 远程搜索不能及时渲染-->
-            <Select
-              v-model="problemInfo.judgeTemplates"
-              multiple
-              filterable
-              :remote-method="queryTemplateOptions"
-              :default-label="templateOptions"
-              :loading="loading"
-              @on-set-default-options="setDefaultTemplateOptions">
-              <Tooltip v-for="template in templateOptions" :key="template.id" :content="template.comment" style="width: 100%"  placement="right" transfer>
-                <Option :value="template.id" :label="template.id + ':' + template.title">
-                  <span>{{ template.id + ':' + template.title}}</span>
-                  <span style="float:right;color:#ccc">{{ template.type | judgeTemplateTypeName }}</span>
-                </Option>
-              </Tooltip>
-            </Select>
-          </FormItem>
-
-          <FormItem label="Tags">
-            <Select v-model="problemInfo.tagDTOList" multiple filterable allow-create>
-              <OptionGroup v-for="item in problemTagList" :label="item.value" :key="item.value">
-                <Option v-for="item2 in item.tags" :value="item2.value" :key="item2.value">{{ item2.label }}</Option>
-              </OptionGroup>
-            </Select>
-          </FormItem>
-
-          <FormItem label="Source" prop="source">
-            <Input v-model="problemInfo.source" :placeholder="problemInfo.source"></Input>
-          </FormItem>
-        </Form>
-      </Modal>
-      <!-- 题目信息修改框 -->
-
+        <template slot-scope="{ row }" slot="mem">
+          <span class="mem">{{ row.memoryLimit || 0 }}</span>
+        </template>
+        <template slot-scope="{ row }" slot="tag">
+          <div class="tags">
+            <Tag v-for="item in row.tagDTOList" :key="item.id">{{ item.title }}</Tag>
+          </div>
+        </template>
+        <template slot-scope="{ row }" slot="edit">
+          <span class="clickable" @click="onEditProblem(row)">Edit</span>
+          <Divider type="vertical" />
+          <span class="clickable" @click="showProblemDescriptions(row)">Description</span>
+          <Divider type="vertical" />
+          <span class="clickable" @click="showProblemCheckpoints(row)">Checkpoints</span>
+        </template>
+      </Table>
     </Card>
-    <div class="problem-set-content-footer">
-      <Button type="default" size="small" class="problem-set-content-button" @click="addProblem">添加</Button>
-      <Button type="default" size="small" class="problem-set-content-button" @click="exportProblem">文件导出</Button>
-      <Button type="default" size="small" class="problem-set-content-button" @click="tagsManagement">标签管理</Button>
+    <div class="footer-tools">
+      <Button type="default" size="small" class="float-left footer-btn" @click="addProblem">Add</Button>
+      <Button type="default" size="small" class="float-left footer-btn" @click="tagsManagement">Tags</Button>
       <Page
-        class="problem-set-content-page"
+        class="float-right"
         size="small" show-elevator show-sizer
-        :total="totalNum"
+        :total="total"
         :current.sync="pageNow"
+        :page-size="pageSize"
+        :page-size-opts="pageSizeOpts"
         @on-change="onPageChange"
         @on-page-size-change="onPageSizeChange"/>
     </div>
 
-    <!-- 标签管理模态框 -->
     <Modal
-      v-model="tagsManagementModal"
-      title="标签管理"
-      @on-ok="commitTagsManagement">
-      <Tree :data="treeTagsData" :render="renderTreeTags" class="tree-tags"></Tree>
+      v-model="problemInfoModal"
+      :loading="problemInfoModalLoading"
+      @on-ok="handleUpdateProblem">
+      <template slot="header">
+        <ProblemCode v-if="problemInfo.problemCode" :problemCode="problemInfo.problemCode"/>
+        <div v-else class="ivu-modal-header-inner">Add Problem</div>
+      </template>
+
+      <Form :model="problemInfo" :rules="problemColumnRules" ref="problemInfo">
+        <FormItem label="Title" prop="problemTitle">
+          <Input v-model="problemInfo.problemTitle" />
+        </FormItem>
+        <FormItem label="Public" required>
+          <i-switch :value="problemInfo.isPublic" :true-value="1" :false-value="0" />
+        </FormItem>
+        <FormItem label="Time Limit" required>
+          <Input v-model.number="problemInfo.timeLimit">
+            <span slot="append">ms</span>
+          </Input>
+        </FormItem>
+        <FormItem label="Memory Limit" required>
+          <Input v-model.number="problemInfo.memoryLimit">
+            <span slot="append">KB</span>
+          </Input>
+        </FormItem>
+        <FormItem label="Juidge Template" v-if="problemInfoModal">
+          <Select
+            multiple
+            filterable
+            v-model="problemInfo.judgeTemplates"
+            :loading="judgeTemplateQueryLoading"
+            :remote-method="queryTemplateOptions"
+            :default-label="(this.problemInfo.judgeTemplateListDTOList || []).map(o => `${o.id}: ${o.title}`)"
+            @on-set-default-options="setJudgeTemplateSet">
+            <Option v-for="template in judgeTemplateSet" :key="template.value" :value="template.value" :label="template.label">
+              <span>{{ template.label }}</span>
+              <span style="color: #ccc"> {{ template.comment }}</span>
+              <span style="float: right;color: #ccc; margin-right: 20px">{{ template.type }}</span>
+            </Option>
+          </Select>
+        </FormItem>
+<!--        tag 暂不可用-->
+<!--        <FormItem label="Tags">-->
+
+<!--        </FormItem>-->
+        <FormItem label="Source">
+          <Input v-model="problemInfo.source" />
+        </FormItem>
+      </Form>
     </Modal>
-    <!-- 标签管理模态框 -->
+
+    <Modal
+      v-model="descriptionModel"
+      width="80%"
+      footer-hide
+      :closable="false">
+      <ProblemDescription ref="ProblemDescription" />
+    </Modal>
+
+    <Modal
+      v-model="checkpointModel"
+      width="80%"
+      ok-text="Save"
+      cancel-text="Unsave"
+      :mask-closable="false"
+      :loading="uploadModalLoading"
+      @on-ok="saveCheckpoints">
+      <ProblemCheckpoint ref="ProblemCheckpoint" />
+    </Modal>
   </div>
 </template>
 
 <script>
-import api from '@/utils/api'
-import ProblemCode from '@/components/ProblemCode';
+import ProblemCode from '_c/ProblemCode';
+import ProblemCheckpoint from '_c/problem/ProblemCheckpoint';
+import ProblemDescription from '_c/problem/ProblemDescription';
+import api from '_u/api';
 import { judgeTemplateProperity } from '_u/types';
 
+import { Page } from '_c/mixins';
+
 export default {
-  components: { ProblemCode },
+  name: 'ProblemView',
+  components: {
+    ProblemCode,
+    ProblemCheckpoint,
+    ProblemDescription
+  },
+  mixins: [Page],
   data: function() {
     return {
-      problemTableColumns: [
+      problemColumns: [
+        { title: 'Id', key: 'problemId', maxWidth: 80 },
+        { key: 'problemCode', maxWidth: 130, slot: 'code' },
+        { title: 'Title', key: 'problemTitle' },
+        { title: 'Time Limit', key: 'timeLimit', sortable: 'custom', slot: 'time' },
+        { title: 'Memory Limit', key: 'memoryLimit', sortable: 'custom', slot: 'mem' },
         {
-          type: 'selection',
-          width: 60,
-          align: 'center'
-        },
-        {
-          key: 'problemCode',
-          width: 210,
-          slot: 'code'
-        },
-        {
-          title: 'Title',
-          key: 'problemTitle',
-          slot: 'title'
-        },
-        {
-          title: 'Time Limit (ms)',
-          key: 'timeLimit',
-          sortable: 'custom'
-        },
-        {
-          title: 'Memory Limit (MB)',
-          key: 'memoryLimit',
-          sortable: 'custom'
-        },
-        {
-          title: 'Accepts / Submits',
-          key: 'acceptNum',
+          title: 'AC Ratio',
           sortable: 'custom',
-          render: (h, params) => {
-            return h('span', [params.row.acceptNum, ' / ', params.row.submitNum])
-          }
+          render: (h, params) => h('span', `${params.row.acceptNum} / ${params.row.submitNum}`)
         },
-        {
-          title: '\b',
-          key: 'tagDTOList',
-          render: (h, params) => {
-            if (params.row.tagDTOList && params.row.tagDTOList.length > 0) {
-              return h('div', { class: 'problem-set-problemtags' },
-                params.row.tagDTOList.map(item => {
-                  return h('div', { class: 'problem-set-rolebox' }, [
-                    h('div', { class: 'problem-set-role' }, item.title)
-                  ])
-                }));
-            } else {
-              return h('div');
-            }
-          }
-        },
-        {
-          title: '\b',
-          key: 'modify',
-          width: 80,
-          render: (h, params) => {
-            return h('div', [
-              h('Button', {
-                props: {
-                  type: 'primary',
-                  icon: 'ios-construct'
-                },
-                on: {
-                  click: () => {
-                    this.problemInfo = params.row;
-                    this.$nextTick(() => {
-                      this.templateOptions = this.problemInfo.judgeTemplateListDTOList;
-                    })
-                    this.isAddProblem = false;
-                    this.problemInfoModal = true;
-                  }
-                }
-              })
-            ])
-          }
-        }
+        { title: 'Source', key: 'source' },
+        { title: 'Owner', key: 'username' },
+        { title: '\b', slot: 'tag' },
+        { title: '\b', slot: 'edit', minWidth: 150 }
       ],
-      problemTableData: [],
-      selectedProblem: [],
-      // 表格导出的数据格式
-      exportProblemTableColumns: [
-        {
-          title: 'problemId',
-          key: 'problemId'
-        },
-        {
-          title: 'problemCode',
-          key: 'problemCode'
-        },
-        {
-          title: 'problemTitle',
-          key: 'problemTitle'
-        },
-        {
-          title: 'isPublic',
-          key: 'isPublic'
-        },
-        {
-          title: 'source',
-          key: 'source'
-        },
-        {
-          title: 'submitNum',
-          key: 'submitNum'
-        },
-        {
-          title: 'acceptNum',
-          key: 'acceptNum'
-        },
-        {
-          title: 'judgeTemplates',
-          key: 'judgeTemplates'
-        },
-        {
-          title: 'memoryLimit',
-          key: 'memoryLimit'
-        },
-        {
-          title: 'timeLimit',
-          key: 'timeLimit'
-        },
-        {
-          title: 'defaultDescriptionId',
-          key: 'defaultDescriptionId'
-        },
-        {
-          title: 'tags',
-          key: 'tags'
-        }
-      ],
-      totalNum: 100,
-      pageNow: 1,
-      pageSize: 10,
-      sortBy: '',
-      ascending: false,
-      loading: false,
-      // 题目信息修改模态框标记
-      isAddProblem: false,
-      problemInfoModal: false,
-      // 标签管理模态框标记
-      tagsManagementModal: false,
-      problemInfo: {},
-      problemInfoRule: {
-        problemTitle: [{ required: true, trigger: 'blur' }],
-        isPublic: [{ type: 'number', required: true, trigger: 'change' }],
-        timeLimit: [{ type: 'number', required: true, trigger: 'blur' }],
-        memoryLimit: [{ type: 'number', required: true, trigger: 'blur' }],
-        judgeTemplates: [{ required: true }]
+      problemColumnRules: {
+        problemTitle: [{ required: true, max: 96, trigger: 'blur' }]
       },
-      templateOptions: [],
-      problemTagList: [
-        {
-          value: '动态规划',
-          label: '动态规划',
-          tags: [
-            {
-              value: '动态规划',
-              label: '动态规划'
-            },
-            {
-              value: '线性DP',
-              label: '线性DP'
-            },
-            {
-              value: '背包',
-              label: '背包'
-            },
-            {
-              value: '区间DP',
-              label: '区间DP'
-            },
-            {
-              value: '树形DP',
-              label: '树形DP'
-            },
-            {
-              value: '数位DP',
-              label: '数位DP'
-            }
-          ]
-        },
-        {
-          value: '数据结构',
-          label: '数据结构',
-          tags: [
-            {
-              value: '数据结构',
-              label: '数据结构'
-            },
-            {
-              value: '单调栈',
-              label: '单调栈'
-            },
-            {
-              value: '单调队列',
-              label: '单调队列'
-            },
-            {
-              value: '线段树',
-              label: '线段树'
-            },
-            {
-              value: '树状数组',
-              label: '树状数组'
-            }
-          ]
-        }
-      ],
-      treeTagsData: [
-        {
-          title: '根标签',
-          expand: true,
-          render: (h, { root, node, data }) => {
-            return h('span', {
-              style: {
-                display: 'inline-block',
-                width: '100%'
-              }
-            }, [
-              h('span', [
-                h('Icon', {
-                  props: {
-                    type: 'ios-folder-outline'
-                  },
-                  style: {
-                    marginRight: '8px'
-                  }
-                }),
-                h('span', data.title)
-              ]),
-              h('span', {
-                style: {
-                  display: 'inline-block',
-                  float: 'right',
-                  marginRight: '32px'
-                }
-              }, [
-                h('Button', {
-                  props: Object.assign({}, this.treeButtonProps, {
-                    icon: 'ios-add',
-                    type: 'primary'
-                  }),
-                  style: {
-                    width: '64px'
-                  },
-                  on: {
-                    click: () => {
-                      this.append(data)
-                    }
-                  }
-                })
-              ])
-            ]);
-          },
-          children: [
-            {
-              title: '动态规划',
-              expand: true,
-              children: [
-                {
-                  title: '线性 DP',
-                  expand: true
-                },
-                {
-                  title: '背包',
-                  expand: true
-                },
-                {
-                  title: '区间 DP',
-                  expand: true
-                },
-                {
-                  title: '树形 DP',
-                  expand: true
-                }
-              ]
-            },
-            {
-              title: '数据结构',
-              expand: true,
-              children: [
-                {
-                  title: '单调栈',
-                  expand: true
-                },
-                {
-                  title: '单调队列',
-                  expand: true
-                },
-                {
-                  title: '线段树',
-                  expand: true
-                },
-                {
-                  title: '树状数组',
-                  expand: true
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      treeButtonProps: {
-        type: 'default',
-        size: 'small'
-      }
-    }
-  },
-  filters: {
-    parseInt: (val) => parseInt(val),
-    judgeTemplateTypeClass: type => {
-      return judgeTemplateProperity[type].color;
-    },
-    judgeTemplateTypeName: type => {
-      return judgeTemplateProperity[type].name;
+      problems: [],
+      problemInfo: {},
+      judgeTemplateSet: [],
+      total: 0,
+      loading: false,
+      problemInfoModalLoading: true,
+      uploadModalLoading: true,
+      judgeTemplateQueryLoading: false,
+      problemInfoModal: false,
+      checkpointModel: false,
+      descriptionModel: false,
+      isAddProblem: false
     }
   },
   methods: {
-    // 切换页面
-    onPageChange: function (pageNow) {
+    onPageChange: function(pageNow) {
       this.pageNow = pageNow;
     },
-    // 更改页面大小
-    onPageSizeChange: function (pageSize) {
+    onPageSizeChange: function(pageSize) {
       this.pageSize = pageSize;
     },
-    // 表格列排序
-    handleProblemSort: function ({ column, key, order }) {
-      if (order === 'normal') {
-        this.sortBy = '';
-        this.ascending = false
-      } else {
-        this.sortBy = key;
-        this.ascending = order === 'asc';
-      }
+    getProblemList: function() {
+      this.loading = true;
+      api.getProblemList({
+        pageNow: this.pageNow,
+        pageSize: this.pageSize,
+        sortBy: this.sortBy,
+        ascending: this.ascending
+      }).then(ret => {
+        this.problems = ret.rows;
+        this.total = parseInt(ret.totalPage) * this.pageSize;
+      }).finally(() => (this.loading = false));
     },
-    // 表格全选
-    selectChange: function (selection) {
-      this.selectedProblem = selection;
-    },
-    // 题目信息修改模态框确认
-    commitProblemInfo: function() {
-      this.$refs.problemInfoModal.validate(valid => {
+    handleUpdateProblem: function() {
+      this.$refs.problemInfo.validate(valid => {
         if (valid) {
           const data = {
             problemCode: this.problemInfo.problemCode,
@@ -489,274 +212,123 @@ export default {
             timeLimit: parseInt(this.problemInfo.timeLimit)
           }
           api[this.isAddProblem ? 'createProblem' : 'updateProblemInfo'](data)
-            .then(_ => (this.$Message.success('Success')), err => (this.$Message.error(err.message)))
-            .finally(() => (this.getProblemList()));
+            .then(_ => {
+              this.$Message.success('Success');
+              this.getProblemList();
+              this.problemInfoModal = false;
+            }, err => {
+              this.$Message.error(err.message);
+              this.problemInfoModalLoading = false;
+              this.$nextTick(() => {
+                this.problemInfoModalLoading = true;
+              })
+            })
         } else {
-          this.$Message.error('格式不符');
+          this.problemInfoModalLoading = false;
+          this.$nextTick(() => {
+            this.problemInfoModalLoading = true;
+          })
         }
       })
     },
-    // 添加题目按钮
     addProblem: function() {
       this.problemInfo = {
         problemCode: '',
         problemTitle: '',
         isPublic: 0,
         tagDTOList: [],
+        judgeTemplateListDTOList: [],
         judgeTemplates: [],
         timeLimit: '',
         memoryLimit: '',
         source: ''
       };
-      this.templateOptions = [];
       this.isAddProblem = true;
       this.problemInfoModal = true;
     },
-    handleProblemClick: function (row, col) {
-      if (col.key === 'problemTitle') {
-        this.$router.push({
-          name: 'problem-detail',
-          params: { problemCode: row.problemCode }
-        });
-      }
+    onEditProblem: function(problem) {
+      this.problemInfo = problem;
+      this.isAddProblem = false;
+      this.problemInfoModal = true;
     },
-    // 获取题目列表
-    getProblemList() {
-      api.getProblemList({
-        pageNow: this.pageNow,
-        pageSize: this.pageSize,
-        sortBy: this.sortBy,
-        ascending: this.ascending
-      }).then(ret => {
-        this.problemTableData = ret.rows;
-        this.totalNum = parseInt(ret.total)
+    showProblemDescriptions: function(problem) {
+      this.$refs.ProblemDescription.query(problem);
+      this.descriptionModel = true;
+    },
+    showProblemCheckpoints: function(problem) {
+      this.$refs.ProblemCheckpoint.query(problem.problemCode);
+      this.checkpointModel = true;
+    },
+    saveCheckpoints: function() {
+      this.$refs.ProblemCheckpoint.save(() => {
+        this.checkpointModel = false;
+      }, () => {
+        this.uploadModalLoading = false;
+        this.$nextTick(() => {
+          this.uploadModalLoading = true;
+        });
       })
     },
-    // 题库导出按钮
-    exportProblem: function() {
-      if (this.selectedProblem.length === 0) {
-        this.$Message.error('No problems selected');
+    handleProblemSort: function ({ key, order }) {
+      if (order === 'normal') {
+        this.ascending = false
       } else {
-        var exportProblemTableData = []
-        this.selectedProblem.forEach(function (item) {
-          var tags = [];
-          item.tagDTOList.forEach(function (item2) {
-            tags.push(item2.title);
+        this.sortBy = key;
+        this.ascending = order === 'asc';
+      }
+    },
+    queryTemplateOptions: function(query) {
+      if (query !== '') {
+        this.judgeTemplateQueryLoading = true;
+        api.queryTemplateTitle(query).then(ret => {
+          this.judgeTemplateSet = ret.map(o => {
+            return {
+              value: o.id,
+              label: `${o.id}: ${o.title}`,
+              comment: o.comment,
+              type: judgeTemplateProperity[o.type].name
+            }
           });
-          item.tags = tags;
-          exportProblemTableData.push(item);
-        });
-        this.$refs.exportProblemTable.exportCsv({
-          quoted: true,
-          filename: '题目数据',
-          columns: this.exportProblemTableColumns,
-          data: exportProblemTableData
-        });
-        this.$Message.success('导出成功');
+          this.judgeTemplateQueryLoading = false;
+        })
+      } else {
+        this.judgeTemplateSet = [];
       }
     },
-    queryTemplateOptions: function(title) {
-      if (title === '') {
-        this.templateOptions = [];
-      } else if (!this.loading) {
-        this.loading = true;
-        this.templateOptions = [];
-        api.queryTemplateTitle(title).then(ret => {
-          ret.forEach(item => (this.templateOptions.push(item)));
-        }).finally(() => (this.loading = false));
-      }
-    },
-    setDefaultTemplateOptions: function(options) {
-      // this.templateOptions = [];
-      // console.log(options);
-      // options.forEach(opt => {
-      //   api.getOneTemplate(opt.value).then(ret => {
-      //     console.log(ret);
-      //     this.templateOptions.push(ret);
-      //   })
-      // })
+    setJudgeTemplateSet: function() {
+      this.judgeTemplateSet = this.problemInfo.judgeTemplateListDTOList.map(o => {
+        return {
+          value: o.id,
+          label: `${o.id}: ${o.title}`,
+          comment: o.comment,
+          type: judgeTemplateProperity[o.type].name
+        }
+      });
     },
 
-    // 树形标签函数
-    renderTreeTags: function(h, { root, node, data }) {
-      return h('span', {
-        style: {
-          display: 'inline-block',
-          width: '100%'
-        }
-      }, [
-        h('span', [
-          h('Icon', {
-            props: {
-              type: 'ios-paper-outline'
-            },
-            style: {
-              marginRight: '8px'
-            }
-          }),
-          h('span', data.title)
-        ]),
-        h('span', {
-          style: {
-            display: 'inline-block',
-            float: 'right',
-            marginRight: '32px'
-          }
-        }, [
-          h('Button', {
-            props: Object.assign({}, this.treeButtonProps, {
-              icon: 'ios-add'
-            }),
-            style: {
-              marginRight: '8px'
-            },
-            on: {
-              click: () => {
-                this.append(data)
-              }
-            }
-          }),
-          h('Button', {
-            props: Object.assign({}, this.treeButtonProps, {
-              icon: 'ios-remove'
-            }),
-            on: {
-              click: () => {
-                this.remove(root, node, data)
-              }
-            }
-          })
-        ])
-      ]);
-    },
-    append: function(data) {
-      const children = data.children || [];
-      children.push({
-        title: '空标签',
-        expand: true
-      });
-      this.$set(data, 'children', children);
-    },
-    remove: function(root, node, data) {
-      const parentKey = root.find(el => el === node).parent;
-      const parent = root.find(el => el.nodeKey === parentKey).node;
-      const index = parent.children.indexOf(data);
-      parent.children.splice(index, 1);
-    },
-    // 标签管理按钮
     tagsManagement: function() {
-      this.tagsManagementModal = true;
-    },
-    // 标签管理模态框确认
-    commitTagsManagement: function() {}
+
+    }
   },
-  mounted: function () {
+  mounted: function() {
     this.getProblemList();
   },
   watch: {
-    pageNow: function() {
-      this.getProblemList();
-    },
-    pageSize: function() {
-      this.getProblemList();
+    $route: function () {
+      this.getProblemList()
     }
   }
 }
 </script>
 
 <style lang="less" scoped>
-  /deep/ .ivu-card {
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-
-    .ivu-card-head {
-      background-color: #F4F6F6;
-    }
-
-    .ivu-card-body {
-      padding: 0;
-    }
-
-    .ivu-input-wrapper {
-      top: -5px;
-    }
-
-    .problem-set-content-table {
-      // ivu 表格头部
-      .ivu-table-header {
-        padding-right: 0;
-
-        th {
-          background-color: #fff;
-        }
-      }
-
-      .ivu-table::before {
-        height: 0;
-      }
-
-      // ivu 表格内部
-      .ivu-table-body {
-        padding-right: 0;
-      }
-
-      .ivu-table-tbody {
-        width: 100%;
-        padding: 0;
-        margin: 0;
-        border-spacing: 0;
-      }
-
-      .ivu-table-row-hover td {
-        background-color: #fbfcfc;
-      }
-
-      // ivu 数据内容
-      .problem-set-name {
-        float: left;
-      }
-    }
+  .time::after {
+    content: " ms\0A";
+    white-space: pre;
   }
 
-  .ivu-card-bordered {
-    border-bottom: none !important;
-  }
-
-  // 分页栏
-  .problem-set-content-footer {
-    margin-top: 12px;
-
-    .problem-set-content-page {
-      float: right;
-    }
-
-    .problem-set-content-button {
-      float: left;
-      margin-right: 5px;
-    }
-  }
-</style>
-
-<style lang="less">
-  // 权限标签
-  .problem-set-problemtags {
-    float: right;
-
-    .problem-set-rolebox {
-      margin: 2px;
-      background-color: #F8F9F9;
-      float: right;
-      border-radius: 4px;
-
-      .problem-set-role {
-        user-select: none;
-        margin: 4px 6px;
-      }
-    }
-  }
-
-  // 树形标签
-  .tree-tags .ivu-tree-title {
-    width: 100%;
+  .mem::after {
+    content: " KB\0A";
+    white-space: pre;
   }
 </style>

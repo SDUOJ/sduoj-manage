@@ -16,24 +16,6 @@ const routes = [
     meta: { title: '题库' }
   },
   {
-    path: '/problem/:problemCode',
-    name: 'problem-detail',
-    redirect: '/problem/:problemCode/description',
-    component: () => import('@/views/problem/ProblemDetailView'),
-    children: [
-      {
-        path: 'description',
-        name: 'problem-description',
-        component: () => import('@/views/problem/ProblemDescriptionView')
-      },
-      {
-        path: 'checkpoint',
-        name: 'problem-checkpoint',
-        component: () => import('@/views/problem/ProblemCheckpointView')
-      }
-    ]
-  },
-  {
     path: '/contest',
     name: 'contest',
     component: () => import('@/views/contest/ContestView')
