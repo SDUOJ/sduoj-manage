@@ -2,7 +2,7 @@
   <div>
     <Card dis-hover>
       <p slot="title">Problem</p>
-<!--      TODO: 题目列表和题面一样可以在table上直接修改-->
+      <!--      TODO: 题目列表和题面一样可以在table上直接修改-->
       <Table
         :loading="loading"
         :columns="problemColumns"
@@ -97,10 +97,10 @@
             </Option>
           </Select>
         </FormItem>
-<!--        tag 暂不可用-->
-<!--        <FormItem label="Tags">-->
+        <!--        tag 暂不可用-->
+        <!--        <FormItem label="Tags">-->
 
-<!--        </FormItem>-->
+        <!--        </FormItem>-->
         <FormItem label="Source">
           <Input v-model="problemInfo.source" />
         </FormItem>
@@ -134,9 +134,7 @@ import ProblemCheckpoint from '_c/problem/ProblemCheckpoint';
 import ProblemDescription from '_c/problem/ProblemDescription';
 import api from '_u/api';
 import { judgeTemplateProperity } from '_u/types';
-
 import { Page } from '_c/mixins';
-
 export default {
   name: 'ProblemView',
   components: {
@@ -305,9 +303,7 @@ export default {
         }
       });
     },
-
     tagsManagement: function() {
-
     }
   },
   mounted: function() {
@@ -326,7 +322,6 @@ export default {
     content: " ms\0A";
     white-space: pre;
   }
-
   .mem::after {
     content: " KB\0A";
     white-space: pre;
