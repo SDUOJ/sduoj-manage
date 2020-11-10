@@ -3,4 +3,6 @@ import '../styles/iview-variables.less';
 import '../styles/global.less';
 import ViewUI from 'view-design'
 
-Vue.use(ViewUI);
+import locale from 'view-design/dist/locale/en-US';
+
+Vue.use(ViewUI, { locale });

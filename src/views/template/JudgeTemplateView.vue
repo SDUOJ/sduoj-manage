@@ -92,10 +92,10 @@
       <!-- 题目信息修改框 -->
 
     </Card>
-    <div class="problem-set-content-footer">
-      <Button type="default" size="small" class="problem-set-content-button" @click="addJudgeTemplate">添加</Button>
+    <div class="footer-tools">
+      <Button type="default" size="small" class="float-left footer-btn" @click="addJudgeTemplate">添加</Button>
       <Page
-        class="problem-set-content-page"
+        class="float-right"
         size="small" show-elevator show-sizer
         :total="totalNum"
         :current.sync="pageNow"
@@ -229,7 +229,7 @@ export default {
 
           if (this.isAddTemplate) {
             api.createTemplate(this.templateInfo)
-              .then(ret => {
+              .then(_ => {
                 this.$Message.success('Success');
                 this.getTemplateList();
               }).finally(() => (loading()));
@@ -242,7 +242,7 @@ export default {
               zipFileId: this.templateInfo.zipFileId || '',
               acceptFileExtensions: this.templateInfo.acceptFileExtensions,
               comment: this.templateInfo.comment
-            }).then(ret => {
+            }).then(_ => {
               this.$Message.success('Updated');
             }).finally(() => (loading()));
           }
@@ -305,79 +305,6 @@ export default {
   }
 }
 </script>
-
-<style lang="less" scoped>
-  /deep/ .ivu-card {
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-
-    .ivu-card-head {
-      background-color: #F4F6F6;
-    }
-
-    .ivu-card-body {
-      padding: 0;
-    }
-
-    .ivu-input-wrapper {
-      top: -5px;
-    }
-
-    .template-set-content-table {
-      // ivu 表格头部
-      .ivu-table-header {
-        padding-right: 0;
-
-        th {
-          background-color: #fff;
-        }
-      }
-
-      .ivu-table::before {
-        height: 0;
-      }
-
-      // ivu 表格内部
-      .ivu-table-body {
-        padding-right: 0;
-      }
-
-      .ivu-table-tbody {
-        width: 100%;
-        padding: 0;
-        margin: 0;
-        border-spacing: 0;
-      }
-
-      .ivu-table-row-hover td {
-        background-color: #fbfcfc;
-      }
-
-      // ivu 数据内容
-      .problem-set-name {
-        float: left;
-      }
-    }
-  }
-
-  .ivu-card-bordered {
-    border-bottom: none !important;
-  }
-
-  // 分页栏
-  .problem-set-content-footer {
-    margin-top: 12px;
-
-    .problem-set-content-page {
-      float: right;
-    }
-
-    .problem-set-content-button {
-      float: left;
-      margin-right: 5px;
-    }
-  }
-</style>
 
 <style lang="less" scoped>
   .none-float {

@@ -10,6 +10,12 @@
   position: relative;
 }
 
+.clearfix:after {
+  content: '';
+  clear:both;
+  display: table;
+}
+
 .footer {
   text-align: center;
   padding: 50px 50px 24px;
@@ -17,41 +23,83 @@
   font-size: 14px;
 }
 
-.verdict-accepted {
-  color: #5cb85c;
-  font-weight: 500;
+.footer-tools {
+  margin-top: 12px;
 }
 
-.verdict-accepted:hover {
-  cursor: pointer;
+.float-right {
+  float: right;
 }
 
-// judge failed
-.verdict-failed {
-  color: #d9534f;
-  font-weight: 500;
+.float-left {
+  float: left;
 }
 
-.verdict-failed:hover {
-  cursor: pointer;
+.footer-btn {
+  margin-right: 5px;
 }
 
-// judge pending
-.verdict-pending {
-  color: grey;
-  font-weight: 500;
+.ivu-card {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+
+  .ivu-card-head {
+    background-color: #F4F6F6;
+  }
+
+  .ivu-card-body {
+    padding: 0;
+  }
+
+  .ivu-input-wrapper {
+    top: -5px;
+  }
+
+  .user-set-content-table {
+    // ivu 表格头部
+    .ivu-table-header {
+      padding-right: 0;
+
+      th {
+        background-color: #fff;
+      }
+    }
+
+    .ivu-table::before {
+      height: 0;
+    }
+
+    // ivu 表格内部
+    .ivu-table-body {
+      padding-right: 0;
+    }
+
+    .ivu-table-tbody {
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      border-spacing: 0;
+    }
+
+    .ivu-table-row-hover td {
+      background-color: #fbfcfc;
+    }
+
+    // ivu 数据内容
+    .user-set-name {
+      float: left;
+    }
+  }
 }
 
-.verdict-pending:hover {
-  cursor: pointer;
+.ivu-card-bordered {
+  border-bottom: none !important;
 }
 
-// judge 
-.verdict-compile-error {
-  color: orange;
-  font-weight: 500;
-}
-
-.verdict-compile-error:hover {
-  cursor: pointer;
+.clickable {
+  color: #2D8cF0;
+  &:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
 }

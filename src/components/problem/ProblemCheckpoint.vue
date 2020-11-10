@@ -1,29 +1,22 @@
 <template>
   <div>
-    <div class="clearfix">
-      <div style="float: right; margin-left: 10px;">
-        <Button
-          @click="onCheckpointSave"
-          icon="md-checkmark"
-          type="success"
-        >Save</Button>
-      </div>
-    </div>
-
     <div class="checkpointtable">
       <span>Case Checkpoints</span>
       <Table
+        stripe
+        draggable
         class="list_div"
         :columns="caseColumns"
         :data="caseCheckpoints"
         :max-height="600"
-        draggable
-        @on-drag-drop="onCaseTableDrag"
-        stripe>
+        :loading="loading"
+        @on-drag-drop="onCaseTableDrag">
         <template slot="drag">
           <Icon type="ios-menu-outline"/>
         </template>
         <template slot-scope="{ row }" slot="actions">
+          <Tag>{{ `Case ${row.caseIndex + 1}` }}</Tag>
+          <Divider type="vertical" />
           <Tooltip content="Cancel" placement="right">
             <span class="hover" @click="setCaseCheckpoint(row.checkpointId, false)"><Icon type="md-remove" color="#19be6b" /></span>
           </Tooltip>
@@ -40,6 +33,7 @@
         :columns="totalColumns"
         :data="totalCheckpoints"
         :max-height="600"
+        :loading="loading"
         @on-cell-click="onPreview"
         @on-drag-drop="onTotalTableDrag"
         @on-selection-change="onTableSelect">
@@ -48,7 +42,6 @@
         </template>
         <template slot-scope="{ row }" slot="checkpointId">
           <span class="hover" style="margin-right: 10px">{{ row.checkpointId }}</span>
-          <Tag v-if="isCase(row)">{{ `Case ${row.caseIndex + 1}` }}</Tag>
         </template>
         <template slot-scope="{ index }" slot="score">
           <Input style="width: 100px" v-model.number="totalCheckpoints[index].checkpointScore" />
@@ -60,14 +53,15 @@
             transfer
             confirm
             :title="`Delete ${row.checkpointId} ?`"
-            @on-ok="onDeleteCheckpoints([row.checkpointId])">
+            @on-ok="onDeleteCheckpoints([row])">
             <span class="hover"><Icon type="md-trash" color="#ed4014"/></span>
           </Poptip>
           <Divider type="vertical" />
-          <template v-if="!isCase(row)">
-           <Tooltip v-if="row.inputSize < 1024 && row.outputSize < 1024" content="Set Case" placement="right">
-             <span class="hover" @click="setCaseCheckpoint(row.checkpointId, true)"><Icon type="md-add" color="#19be6b" /></span>
-           </Tooltip>
+          <Tag v-if="isCase(row)">{{ `Case ${row.caseIndex + 1}` }}</Tag>
+          <template v-else>
+            <Tooltip v-if="row.inputSize < 1024 && row.outputSize < 1024" content="Set Case" placement="right">
+              <span class="hover" @click="setCaseCheckpoint(row.checkpointId, true)"><Icon type="md-add" color="#19be6b" /></span>
+            </Tooltip>
             <Tooltip v-else content="Too large" placement="right">
               <span><Icon type="md-add" disabled color="#c5c8ce"/></span>
             </Tooltip>
@@ -76,26 +70,30 @@
       </Table>
       <div class="clearfix" style="margin-top: 10px">
         <div style="float: left;">
-          <Button
-            icon="md-download"
-            type="primary"
-            :loading="downloadLoading"
-            @click="onDownload(selectedCheckpoints)" />
-        </div>
-        <div style="float: left; margin: 0 10px;">
-          <Button
-            icon="md-trash"
-            @click="onDeleteCheckpoint(selectedCheckpoints)"
-            type="error" />
-        </div>
-        <div style="float: left">
-          <Button
-            @click="uploadModal=true"
-            icon="md-cloud-upload"/>
+          <ButtonGroup>
+            <Button
+              type="primary"
+              :loading="downloadLoading"
+              @click="onDownload(selectedCheckpoints)">
+              Batch download
+            </Button>
+            <Button
+              type="error"
+              @click="onDeleteCheckpoints(selectedCheckpoints)">
+              Batch delete
+            </Button>
+            <Button
+              @click="uploadModal=true">
+              Uploads
+            </Button>
+          </ButtonGroup>
         </div>
         <div style="float: right">
-            <Input style="width: 100px; margin-right: 10px" @on-enter="setScores($refs.totalScore.currentValue)" ref="totalScore"/>
-            <Button type="primary" @click="setScores($refs.totalScore.currentValue)">Set</Button>
+          <div class="clearfix">
+            <Button style="float: right" type="primary" @click="setScores($refs.totalScore.currentValue)">Average</Button>
+            <Input style="width: 100px; margin-right: 10px; float: right" @on-enter="setScores($refs.totalScore.currentValue)" ref="totalScore" placeholder="Sum score"/>
+          </div>
+          <div style="color: #ccc;">You can set average score for each checkpoint</div>
         </div>
       </div>
     </div>
@@ -104,32 +102,26 @@
     <Modal
       title="Batch Upload"
       v-model="uploadModal"
-      :mask-closable="false"
-      width="30%">
-      <CheckpointsUpload @upload="onCheckpointUpload" ref="checkpointsUpload"/>
-      <div slot="footer">
-        <Button @click="uploadModal=false">Back</Button>
-        <Button @click="$refs.checkpointsUpload.onUpload()" type="primary">Ok</Button>
-      </div>
+      width="30%"
+      :loading="true"
+      @on-ok="onCheckpointUpload">
+      <CheckpointsUpload ref="CheckpointsUpload"/>
     </Modal>
 
     <Modal
       title="Checkpoint Preview"
       v-model="previewModal"
-      :loading="previewLoading"
-      :mask-closable="false"
-      width="30%">
-      <CheckpointPreview :checkpoint="checkpointQuery" @update="onCheckpointUpdate"/>
-      <div slot="footer">
-        <Button @click="previewModal=false">Back</Button>
-      </div>
+      width="30%"
+      :loading="true"
+      @on-ok="onCheckpointUpdate">
+      <CheckpointPreview ref="CheckpointPreview"/>
     </Modal>
   </div>
 </template>
 
 <script>
-import CheckpointsUpload from '_c/checkpoints/CheckpointsUpload';
-import CheckpointPreview from '_c/checkpoints/CheckpointPreview';
+import CheckpointsUpload from './checkpoints/CheckpointsUpload';
+import CheckpointPreview from './checkpoints/CheckpointPreview';
 import api from '_u/api';
 
 export default {
@@ -141,33 +133,11 @@ export default {
   data: function () {
     return {
       totalColumns: [
-        {
-          slot: 'drag',
-          title: ' ',
-          maxWidth: 30,
-          center: true
-        },
-        {
-          type: 'selection',
-          width: 53,
-          align: 'center'
-        },
-        {
-          key: 'checkpointId',
-          slot: 'checkpointId'
-        },
-        {
-          title: 'Input Preview',
-          key: 'inputPreview',
-          className: 'hover',
-          tooltip: true
-        },
-        {
-          title: 'Output Preview',
-          key: 'outputPreview',
-          className: 'hover',
-          tooltip: true
-        },
+        { slot: 'drag', title: ' ', maxWidth: 30 },
+        { type: 'selection', width: 53 },
+        { key: 'checkpointId', slot: 'checkpointId' },
+        { title: 'Input Preview', key: 'inputPreview', className: 'hover', tooltip: true },
+        { title: 'Output Preview', key: 'outputPreview', className: 'hover', tooltip: true },
         {
           title: 'Input file',
           render: (h, params) => h('span', params.row.inputFilename || '')
@@ -198,31 +168,15 @@ export default {
         { title: 'Actions', slot: 'actions' }
       ],
       caseColumns: [
-        {
-          slot: 'drag',
-          title: ' ',
-          maxWidth: 30,
-          center: true
-        },
-        {
-          key: 'checkpointId'
-        },
-        {
-          title: 'Input Preview',
-          key: 'inputPreview',
-          tooltip: true
-        },
-        {
-          title: 'Output Preview',
-          key: 'outputPreview',
-          tooltip: true
-        },
+        { slot: 'drag', title: ' ', maxWidth: 30 },
+        { key: 'checkpointId' },
+        { title: 'Input Preview', key: 'inputPreview', tooltip: true },
+        { title: 'Output Preview', key: 'outputPreview', tooltip: true },
         {
           title: 'Input file',
           render: (h, params) => h('span', params.row.inputFilename === null ? '' : params.row.inputFilename)
         },
         {
-
           title: 'Output file',
           render: (h, params) => h('span', params.row.outputFilename === null ? '' : params.row.outputFilename)
         },
@@ -240,34 +194,16 @@ export default {
       ],
       uploadModal: false,
       previewModal: false,
-      previewLoading: false,
+      loading: false,
       downloadLoading: false,
-      originalTableData: [],
       totalCheckpoints: [],
       selectedCheckpoints: [],
       checkpointQuery: {},
-      totalScore: ''
+      totalScore: '',
+      problemCode: ''
     }
   },
   computed: {
-    problemCode: function () {
-      return this.$route.params.problemCode;
-    },
-    checkpointEqual: function () {
-      if (this.totalCheckpoints === this.originalTableData) return true;
-      if (this.totalCheckpoints == null || this.originalTableData == null) return false;
-      if (this.totalCheckpoints.length !== this.originalTableData.length) return false;
-
-      // If you don't care about the order of the elements inside
-      // the array, you should sort both arrays here.
-      // Please note that calling sort on an array will modify that array.
-      // you might want to clone your array first.
-
-      for (var i = 0; i < this.originalTableData.length; ++i) {
-        if (this.originalTableData[i] !== this.totalCheckpoints[i]) return false;
-      }
-      return true;
-    },
     caseCheckpoints: function() {
       const arr = this.totalCheckpoints.filter(checkpoint => this.isCase(checkpoint));
       arr.sort((a, b) => a.caseIndex - b.caseIndex);
@@ -284,7 +220,7 @@ export default {
     setCaseCheckpoint: function(checkpointId, state) {
       for (let i = 0; i < this.totalCheckpoints.length; ++i) {
         if (this.totalCheckpoints[i].checkpointId === checkpointId) {
-          this.totalCheckpoints[i].caseIndex = state ? this.caseCheckpoints.length : null;
+          this.$set(this.totalCheckpoints[i], 'caseIndex', state ? this.caseCheckpoints.length : null);
           return;
         }
       }
@@ -305,35 +241,46 @@ export default {
       this.$set(this.totalCheckpoints, to, tmp);
     },
     onCaseTableDrag: function (from, to) {
-      for (let i = 0; i < this.totalCheckpoints.length; ++i) {
-        if (this.totalCheckpoints[i].caseIndex === from) {
-          this.$set(this.totalCheckpoints[i], 'caseIndex', to);
+      from = parseInt(from);
+      to = parseInt(to);
+      console.log(from, to);
+      let caseCheckpointsIndex = [];
+      this.totalCheckpoints.forEach((o, i) => {
+        if (this.isCase(o)) {
+          caseCheckpointsIndex.push({ ...o, index: i });
+        }
+      });
+      caseCheckpointsIndex.sort((a, b) => a.caseIndex - b.caseIndex);
+      caseCheckpointsIndex = caseCheckpointsIndex.map(o => o.index);
+      this.$set(this.totalCheckpoints[caseCheckpointsIndex[from]], 'caseIndex', to);
+      if (from > to) {
+        for (let i = from - 1; i >= to; --i) {
+          this.$set(this.totalCheckpoints[caseCheckpointsIndex[i]], 'caseIndex', i + 1);
+        }
+      } else {
+        for (let i = from + 1; i <= to; ++i) {
+          this.$set(this.totalCheckpoints[caseCheckpointsIndex[i]], 'caseIndex', i - 1);
         }
       }
     },
     onTableSelect: function (selection) {
       this.selectedCheckpoints = selection;
     },
-    onDeleteCheckpoint: function (checkpoints) {
-      this.totalCheckpoints = this.totalCheckpoints.filter(item => !checkpoints.includes(item));
+    onDeleteCheckpoints: function (checkpoints) {
+      const checkpointIds = checkpoints.map(o => o.checkpointId);
+      const len = this.totalCheckpoints.length;
+      for (let i = len - 1; i >= 0; --i) {
+        if (checkpointIds.includes(this.totalCheckpoints[i].checkpointId)) {
+          this.totalCheckpoints.splice(i, 1);
+        }
+      }
     },
-    onCheckpointSave: function () {
-      api.updateProblemCheckpoints({
-        problemCode: this.problemCode,
-        checkpoints: this.totalCheckpoints.map(item => {
-          return {
-            checkpointId: item.checkpointId,
-            checkpointScore: item.checkpointScore
-          }
-        }),
-        checkpointCases: this.caseCheckpoints.map(item => item.checkpointId)
-      }).then(_ => {
-        this.originalTableData = [...this.totalCheckpoints];
-        this.$Message.success('Updated');
+    onCheckpointUpload: function () {
+      this.$refs.CheckpointsUpload.save((uploadCheckpoints) => {
+        this.totalCheckpoints = this.totalCheckpoints.concat(uploadCheckpoints);
+      }, () => {
+        this.uploadModal = false;
       })
-    },
-    onCheckpointUpload: function (uploadCheckpoints) {
-      this.totalCheckpoints = this.totalCheckpoints.concat(uploadCheckpoints);
     },
     onDownload: function (checkpoints) {
       if (checkpoints.length === 0) {
@@ -356,27 +303,30 @@ export default {
         .catch(err => (this.$Message.error(err.message)))
         .finally(() => (this.downloadLoading = false));
     },
-    onCheckpointUpdate: function (oldCheckpointId, newCheckpoint) {
-      for (let i = 0; i < this.totalCheckpoints.length; ++i) {
-        if (this.totalCheckpoints[i].checkpointId === oldCheckpointId) {
-          newCheckpoint.checkpointScore = this.totalCheckpoints[i].checkpointScore;
-          newCheckpoint.isCase = this.totalCheckpoints[i].isCase;
-          this.totalCheckpoints.splice(i, 1, newCheckpoint);
-          return;
+    onCheckpointUpdate: function () {
+      this.$refs.CheckpointPreview.save((oldCheckpointId, newCheckpoint) => {
+        for (let i = 0; i < this.totalCheckpoints.length; ++i) {
+          if (this.totalCheckpoints[i].checkpointId === oldCheckpointId) {
+            newCheckpoint.checkpointScore = this.totalCheckpoints[i].checkpointScore;
+            newCheckpoint.caseIndex = this.totalCheckpoints[i].caseIndex;
+            this.totalCheckpoints.splice(i, 1, newCheckpoint);
+            return;
+          }
         }
-      }
-      throw new Error('No such checkpoint: ' + oldCheckpointId);
+        throw new Error('No such checkpoint: ' + oldCheckpointId);
+      }, () => {
+        this.previewModal = false;
+      });
     },
     onPreview: function (row, column) {
       if (!['checkpointId', 'inputPreview', 'outputPreview'].includes(column.key)) {
         return;
       }
       const checkpointId = row.checkpointId;
-      this.previewLoading = true;
       api.getCheckpointPreview(checkpointId).then(ret => {
-        this.checkpointQuery = ret;
+        this.$refs.CheckpointPreview.set(ret);
         this.previewModal = true;
-      }).finally(() => (this.previewLoading = false));
+      });
     },
     setScores: function (score) {
       score = parseInt(score);
@@ -390,29 +340,47 @@ export default {
         this.$set(this.totalCheckpoints[i], 'checkpointScore', this.totalCheckpoints[i].checkpointScore + 1);
         score--;
       }
-    }
-  },
-  mounted: function () {
-    api.getCheckpointList(this.problemCode).then(ret => {
-      this.originalTableData = ret;
-      this.totalCheckpoints = [...ret];
-    })
-  },
-  beforeRouteLeave: function (to, from, next) {
-    if (!this.checkpointEqual) {
-      this.$Modal.confirm({
-        title: 'Notice',
-        content: '<p>You have modified the checkpoints, save it?</p>',
-        loading: true,
-        onOk: async () => {
-          await this.onCheckpointSave();
-          this.$Modal.remove();
-          next();
-        },
-        onCancel: () => (next())
+    },
+    query: function(problemCode) {
+      this.problemCode = problemCode;
+      this.loading = true;
+      api.getCheckpointList(problemCode).then(ret => {
+        this.totalCheckpoints = [...ret];
+      }).finally(() => {
+        this.loading = false;
       });
-    } else {
-      next();
+    },
+    save: function (onSuccess, onError, onFinally) {
+      const checkpoints = this.totalCheckpoints.map(o => {
+        return {
+          checkpointId: o.checkpointId,
+          checkpointScore: o.checkpointScore
+        }
+      })
+      let allScoreSet = true;
+      checkpoints.forEach((o, i) => {
+        if (o.checkpointScore === undefined || o.checkpointScore === null) {
+          this.$Message.error(`Set score for checkpoint #${i}`);
+          allScoreSet = false;
+        }
+      });
+      if (allScoreSet === true) {
+        api.updateProblemCheckpoints({
+          problemCode: this.problemCode,
+          checkpointCases: this.caseCheckpoints.map(item => item.checkpointId),
+          checkpoints
+        }).then(_ => {
+          this.$Message.success('Updated');
+          if (onSuccess) {
+            onSuccess();
+          }
+        }, onError)
+          .finally(onFinally);
+      } else {
+        if (onError) {
+          onError();
+        }
+      }
     }
   }
 }
