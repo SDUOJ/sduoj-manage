@@ -1,12 +1,7 @@
 <template>
   <div>
     <Card :dis-hover="true">
-      <p slot="title">
-        比赛管理
-      </p>
-      <Input placeholder="比赛搜索" style="width: auto" slot="extra">
-        <Icon type="ios-search" slot="suffix"/>
-      </Input>
+      <p slot="title">Contest</p>
       <Table
         :columns="contestTableColumns"
         :data="contestTableData"
@@ -26,20 +21,16 @@
       <!-- 比赛信息修改框 -->
       <Modal
         v-model="contestInfoModal"
-        title="比赛基本信息"
+        :title="contestInfo.contestId"
         width="900px"
         :loading="modalLoading"
         @on-ok="commitContestInfo">
         <Form ref="contestInfoModal" :model="contestInfo" :rules="contestInfoRule" :label-width="115" class="modal-form">
-          <FormItem label="比赛编号">
-            <Input v-model="contestInfo.contestId" :placeholder="contestInfo.contestId" disabled></Input>
-          </FormItem>
-
-          <FormItem label="比赛标题" prop="contestTitle">
+          <FormItem label="Title" prop="contestTitle">
             <Input v-model="contestInfo.contestTitle" :placeholder="contestInfo.contestTitle"></Input>
           </FormItem>
 
-          <FormItem label="比赛类型">
+          <FormItem label="Mode">
             <RadioGroup v-model="contestInfo.features.mode">
               <Radio label="oi">OI</Radio>
               <Radio label="acm">ACM</Radio>
@@ -47,7 +38,7 @@
             </RadioGroup>
           </FormItem>
 
-          <FormItem label="开放类型">
+          <FormItem label="Openness">
             <Select v-model="contestInfo.features.openness" :placeholder="contestInfo.features.openness">
                 <Option value="public">公开 - 任何人可以看题与提交</Option>
                 <Option value="protected">保护 - 任何人都能看题，但只有知道密码才能提交</Option>
@@ -55,38 +46,38 @@
             </Select>
           </FormItem>
 
-          <FormItem label="比赛密码" prop="password" v-if="contestInfo.features.openness !== 'public'">
+          <FormItem label="Password" prop="password" v-if="contestInfo.features.openness !== 'public'">
             <Input v-model="contestInfo.password" :placeholder="contestInfo.password"></Input>
           </FormItem>
 
           <Row>
               <Col span="10">
-                <FormItem label="开始时间" prop="gmtStart">
-                    <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm" placeholder="选择开始时间" style="width: 200px" @on-change="changeGmtStart"></DatePicker>
+                <FormItem label="Start" prop="gmtStart">
+                    <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm" style="width: 200px" @on-change="changeGmtStart"></DatePicker>
                 </FormItem>
               </Col>
               <Col span="14">
-                <FormItem label="时长（分钟）" prop="gmtLength">
+                <FormItem label="Duration" prop="gmtLength">
                     <InputNumber v-model="contestInfo.gmtLength" :min="0" @on-change="changeGmtLength"></InputNumber>
                 </FormItem>
               </Col>
           </Row>
 
-          <FormItem label="结束时间" prop="gmtEnd">
-            <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm" placeholder="选择结束时间" style="width: 200px" @on-change="changeGmtEnd"></DatePicker>
+          <FormItem label="End" prop="gmtEnd">
+            <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm" style="width: 200px" @on-change="changeGmtEnd"></DatePicker>
           </FormItem>
 
-          <FormItem label="比赛来源" prop="source">
+          <FormItem label="Source" prop="source">
             <Input v-model="contestInfo.source" :placeholder="contestInfo.source"></Input>
           </FormItem>
 
-          <FormItem label="比赛公告" prop="markdownDescription">
+          <FormItem label="Announcement" prop="markdownDescription">
             <Input class="problemDatileMarkdownBox" v-model="contestInfo.markdownDescription" type="textarea"
             :autosize="{minRows: 3,maxRows: 6}"/>
           </FormItem>
 
-          <FormItem label="比赛用户" prop="participants">
-            <Input class="problemDatileMarkdownBox" v-model="contestInfo.participants" type="textarea" placeholder="以逗号分隔用户"
+          <FormItem label="Participants" prop="participants">
+            <Input class="problemDatileMarkdownBox" v-model="contestInfo.participants" type="textarea" placeholder="Separated user by a space"
             :autosize="{minRows: 3,maxRows: 6}"/>
           </FormItem>
 
@@ -122,13 +113,13 @@
 
     </Card>
     <div class="contest-set-content-footer">
-      <Button type="default" size="small" class="contest-set-content-button" @click="addContest">添加</Button>
-      <Button type="default" size="small" class="contest-set-content-button" @click="deleteContest">删除</Button>
-      <Button type="default" size="small" class="contest-set-content-button" @click="exportContest">文件导出</Button>
+      <Button type="default" size="small" class="contest-set-content-button" @click="addContest">Add</Button>
+      <Button type="default" size="small" class="contest-set-content-button" @click="deleteContest">Delete</Button>
+      <Button type="default" size="small" class="contest-set-content-button" @click="exportContest">Export</Button>
       <Page
         class="contest-set-content-page"
         size="small" show-elevator show-sizer
-        :total="totalNum"
+        :total="total"
         :current.sync="pageNow"
         @on-change="onPageChange"
         @on-page-size-change="onPageSizeChange"/>
@@ -137,16 +128,16 @@
     <!-- 比赛创建框 -->
       <Modal
         v-model="addContestModal"
-        title="创建比赛"
+        title="Create Contest"
         width="900px"
         :loading="modalLoading"
         @on-ok="commitAddContest">
         <Form ref="addContestModal" :model="contestInfo" :rules="contestInfoRule" :label-width="115" class="modal-form">
-          <FormItem label="比赛标题" prop="contestTitle">
+          <FormItem label="Title" prop="contestTitle">
             <Input v-model="contestInfo.contestTitle" :placeholder="contestInfo.contestTitle"></Input>
           </FormItem>
 
-          <FormItem label="比赛类型">
+          <FormItem label="Mode">
             <RadioGroup v-model="contestInfo.features.mode">
               <Radio label="oi">OI</Radio>
               <Radio label="acm">ACM</Radio>
@@ -154,7 +145,7 @@
             </RadioGroup>
           </FormItem>
 
-          <FormItem label="开放类型">
+          <FormItem label="Openness">
             <Select v-model="contestInfo.features.openness" :placeholder="contestInfo.features.openness">
                 <Option value="public">公开 - 任何人可以看题与提交</Option>
                 <Option value="protected">保护 - 任何人都能看题，但只有知道密码才能提交</Option>
@@ -162,38 +153,38 @@
             </Select>
           </FormItem>
 
-          <FormItem label="比赛密码" prop="password" v-if="contestInfo.features.openness !== 'public'">
+          <FormItem label="Password" prop="password" v-if="contestInfo.features.openness !== 'public'">
             <Input v-model="contestInfo.password" :placeholder="contestInfo.password"></Input>
           </FormItem>
 
           <Row>
               <Col span="10">
-                <FormItem label="开始时间" prop="gmtStart">
-                    <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm" placeholder="选择开始时间" style="width: 200px" @on-change="changeGmtStart"></DatePicker>
+                <FormItem label="Start" prop="gmtStart">
+                    <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm" style="width: 200px" @on-change="changeGmtStart"></DatePicker>
                 </FormItem>
               </Col>
               <Col span="14">
-                <FormItem label="时长（分钟）" prop="gmtLength">
+                <FormItem label="Duration" prop="gmtLength">
                     <InputNumber v-model="contestInfo.gmtLength" :min="0" @on-change="changeGmtLength"></InputNumber>
                 </FormItem>
               </Col>
           </Row>
 
-          <FormItem label="结束时间" prop="gmtEnd">
-            <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm" placeholder="选择结束时间" style="width: 200px" @on-change="changeGmtEnd"></DatePicker>
+          <FormItem label="End" prop="gmtEnd">
+            <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm" style="width: 200px" @on-change="changeGmtEnd"></DatePicker>
           </FormItem>
 
-          <FormItem label="比赛来源" prop="source">
+          <FormItem label="Source" prop="source">
             <Input v-model="contestInfo.source" :placeholder="contestInfo.source"></Input>
           </FormItem>
 
-          <FormItem label="比赛公告" prop="markdownDescription">
+          <FormItem label="Announcement" prop="markdownDescription">
             <Input class="problemDatileMarkdownBox" v-model="contestInfo.markdownDescription" type="textarea"
             :autosize="{minRows: 3,maxRows: 6}"/>
           </FormItem>
 
-          <FormItem label="比赛用户" prop="participants">
-            <Input class="problemDatileMarkdownBox" v-model="contestInfo.participants" type="textarea" placeholder="以逗号分隔用户"
+          <FormItem label="Participants" prop="participants">
+            <Input class="problemDatileMarkdownBox" v-model="contestInfo.participants" type="textarea" placeholder="Separate user by a space"
             :autosize="{minRows: 3,maxRows: 6}"/>
           </FormItem>
 
@@ -240,29 +231,17 @@ export default {
       if (value) {
         callback();
       } else {
-        callback(new Error('日期不能为空'));
+        callback(new Error('Date can not be empty'));
       }
     };
     return {
       // 比赛列表 - 列类型
       contestTableColumns: [
+        { type: 'selection', width: 60, align: 'center' },
+        { key: 'contestId', width: 80 },
+        { title: 'Title', key: 'contestTitle', minWidth: 110 },
         {
-          type: 'selection',
-          width: 60,
-          align: 'center'
-        },
-        {
-          title: '编号',
-          key: 'contestId',
-          width: 80
-        },
-        {
-          title: '标题',
-          key: 'contestTitle',
-          minWidth: 110
-        },
-        {
-          title: '开始时间',
+          title: 'Start',
           key: 'gmtStart',
           sortable: 'custom',
           width: 180,
@@ -276,8 +255,7 @@ export default {
           }
         },
         {
-          title: '比赛时长',
-          key: 'gmtEnd',
+          title: 'Duration',
           sortable: 'custom',
           width: 120,
           render: (h, params) => {
@@ -287,7 +265,7 @@ export default {
           }
         },
         {
-          title: '类型',
+          title: 'Mode',
           key: 'mode',
           sortable: 'custom',
           width: 90,
@@ -296,7 +274,7 @@ export default {
           }
         },
         {
-          title: '人数',
+          title: 'Participants',
           key: 'participantNum',
           sortable: 'custom',
           width: 90
@@ -331,6 +309,7 @@ export default {
       // 模态框加题 - 列类型
       addProblemTableColumns: [
         {
+          title: '\b',
           key: 'operations',
           width: 40,
           align: 'center',
@@ -340,9 +319,7 @@ export default {
                 color: 'green',
                 cursor: 'pointer'
               },
-              props: {
-                type: 'md-add'
-              },
+              props: { type: 'md-add' },
               on: {
                 click: () => {
                   this.handleContestProblemAdd();
@@ -353,7 +330,6 @@ export default {
           slot: 'deleteProblem'
         },
         {
-          title: '题号',
           key: 'index',
           width: 80,
           align: 'center',
@@ -362,34 +338,34 @@ export default {
           }
         },
         {
-          title: '题目编码',
+          title: 'Problem',
           key: 'problemCode',
           width: 150,
           align: 'center',
           slot: 'problemCode'
         },
         {
-          title: '别名',
+          title: 'Alias',
           key: 'problemTitle',
           align: 'center',
           slot: 'problemTitle'
         },
         {
-          title: '题面',
+          title: 'Description',
           align: 'center',
           width: 200,
           key: 'problemDescriptionId',
           slot: 'problemDescriptionId'
         },
         {
-          title: '权重',
+          title: 'Weight',
           key: 'problemWeight',
           width: 100,
           align: 'center',
           slot: 'problemWeight'
         },
         {
-          title: '合法',
+          title: '\b',
           key: 'problemSearch',
           width: 70,
           align: 'center',
@@ -445,31 +421,18 @@ export default {
         gmtEnd: '',
         source: '',
         markdownDescription: '',
-        problems: [{
-          problemCode: 'SDUOJ-1000',
-          problemTitle: '假的题目标题3',
-          problemWeight: 50,
-          problemSearch: 0,
-          problemDescriptionId: '3',
-          problemDescriptionList: [{
-            id: '3',
-            title: '东东的俄文描述'
-          }, {
-            id: '5',
-            title: '东东的日文描述'
-          }]
-        }],
+        problems: [],
         participants: '',
         password: '',
         gmtLength: 0
       },
       // 比赛字段规则
       contestInfoRule: {
-        contestTitle: [{ required: true, message: '比赛标题不能为空', trigger: 'blur' }],
+        contestTitle: [{ required: true, trigger: 'blur' }],
         gmtStart: [{ required: true, trigger: 'change', validator: validateDatetime }],
         gmtEnd: [{ required: true, trigger: 'change', validator: validateDatetime }],
-        gmtLength: [{ type: 'number', required: true, message: '时长不能为空', trigger: 'blur' }],
-        password: [{ required: true, message: '比赛密码不能为空', trigger: 'blur' }],
+        gmtLength: [{ type: 'number', required: true, trigger: 'blur' }],
+        password: [{ required: true, trigger: 'blur' }],
         source: [{ required: false, trigger: 'blur' }],
         markdownDescription: [{ required: false, trigger: 'blur' }],
         problems: [{ required: false, trigger: 'blur' }],
@@ -480,7 +443,7 @@ export default {
   methods: {
     // 二十六进制转换
     number2A: function (number) {
-      var str = '';
+      let str = '';
       while (1) {
         var v = (number % 26) + 65;
         str = String.fromCharCode(v) + str;
@@ -502,7 +465,7 @@ export default {
       this.getContestList();
     },
     // 表格列排序
-    handleContestSort: function ({ column, key, order }) {
+    handleContestSort: function ({ key, order }) {
       if (order === 'normal') {
         this.sortBy = '';
         this.ascending = false
@@ -523,7 +486,7 @@ export default {
       this.contestInfo.gmtStart = moment(new Date(parseInt(params.row.gmtStart))).format('yyy-MM-DD hh:mm:ss');
       this.contestInfo.gmtEnd = moment(new Date(parseInt(params.row.gmtEnd))).format('yyy-MM-DD hh:mm:ss');
       this.contestInfo.source = params.row.source;
-      this.contestInfo.gmtLength = parseInt((parseInt(params.row.gmtEnd) - parseInt(params.row.gmtStart)) / 60 / 1000).toString();
+      this.contestInfo.gmtLength = parseInt((parseInt(params.row.gmtEnd) - parseInt(params.row.gmtStart)) / 60 / 1000);
       // get 获取 password、problems、participants、markdownDescription
       api.getContest({ contestId: params.row.contestId }).then(ret => {
         this.contestInfo.password = ret.password;
@@ -669,7 +632,7 @@ export default {
         if (valid) {
           var problems = this.getValidProblems();
           if (problems.length === 0) {
-            this.$Message.error('至少添加一道题');
+            this.$Message.error('Add at least one problem');
             this.modalLoading = false;
             this.$nextTick(() => {
               this.modalLoading = true;
@@ -679,18 +642,17 @@ export default {
             data.contestId = this.contestInfo.contestId;
             data.problems = problems;
             api.updateContest(data).then(_ => {
-              this.$Message.success('修改成功');
+              this.$Message.success('Success');
               this.modalLoading = false;
               this.contestInfoModal = false;
               this.getContestList();
             }, _ => {
-              this.$Message.error('修改失败');
+              this.$Message.error('Falied');
               this.modalLoading = false;
-              this.contestInfoModal = false;
             });
           }
         } else {
-          this.$Message.error('格式不符');
+          this.$Message.error('Invalid format');
           this.modalLoading = false;
           this.$nextTick(() => {
             this.modalLoading = true;
@@ -723,7 +685,7 @@ export default {
         if (valid) {
           var problems = this.getValidProblems();
           if (problems.length === 0) {
-            this.$Message.error('至少添加一道题');
+            this.$Message.error('Add at least one problem');
             this.modalLoading = false;
             this.$nextTick(() => {
               this.modalLoading = true;
@@ -732,18 +694,17 @@ export default {
             var data = this.getValidFormData();
             data.problems = problems;
             api.createContest(data).then(_ => {
-              this.$Message.success('创建成功');
+              this.$Message.success('Success');
               this.modalLoading = false;
               this.addContestModal = false;
               this.getContestList();
             }, _ => {
-              this.$Message.error('创建失败');
+              this.$Message.error('Failed');
               this.modalLoading = false;
-              this.addContestModal = false;
             });
           }
         } else {
-          this.$Message.error('格式不符');
+          this.$Message.error('Invalid format');
           this.modalLoading = false;
           this.$nextTick(() => {
             this.modalLoading = true;
@@ -758,7 +719,7 @@ export default {
     // 比赛导出按钮
     exportContest() {
       if (this.selectedContest.length === 0) {
-        this.$Message.error('无用户被选中');
+        this.$Message.error('No selected contests');
       } else {
         var exportContestTableData = []
         this.selectedContest.forEach(function (item) {
@@ -780,7 +741,7 @@ export default {
           columns: this.exportContestTableColumns,
           data: exportContestTableData
         });
-        this.$Message.success('导出成功');
+        this.$Message.success('Success');
       }
     },
     // 获取比赛列表

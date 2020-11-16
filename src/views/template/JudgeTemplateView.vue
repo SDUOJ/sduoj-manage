@@ -1,12 +1,7 @@
 <template>
   <div>
     <Card :dis-hover="true">
-      <p slot="title">
-        评测模板管理
-      </p>
-      <Input placeholder="评测模板搜索" style="width: auto" slot="extra" v-model.lazy="searchTitle">
-        <Icon type="ios-search" slot="suffix"/>
-      </Input>
+      <p slot="title">Judge Template</p>
       <Table
         :columns="judgeTemplateColumns"
         :data="judgeTemplateData"
@@ -89,11 +84,10 @@
           </FormItem>
         </Form>
       </Modal>
-      <!-- 题目信息修改框 -->
 
     </Card>
     <div class="footer-tools">
-      <Button type="default" size="small" class="float-left footer-btn" @click="addJudgeTemplate">添加</Button>
+      <Button type="default" size="small" class="float-left footer-btn" @click="addJudgeTemplate">Add</Button>
       <Page
         class="float-right"
         size="small" show-elevator show-sizer
@@ -204,7 +198,6 @@ export default {
       this.fileList = [];
       this.$refs.upload.clearFiles()
     },
-    // 题目信息修改模态框确认
     commitTemplateInfo: function() {
       this.$refs.templateInfo.validate(async valid => {
         if (valid) {
