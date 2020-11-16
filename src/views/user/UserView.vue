@@ -184,6 +184,7 @@ export default {
     return {
       userTableColumns: [
         { type: 'selection', width: 60, align: 'center' },
+        { key: 'userId' },
         { title: 'Username', key: 'username' },
         {
           title: 'Sex',

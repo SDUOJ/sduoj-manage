@@ -233,12 +233,12 @@ export default {
       this.problemInfo = {
         problemCode: '',
         problemTitle: '',
-        isPublic: 0,
+        isPublic: 1,
         tagDTOList: [],
         judgeTemplateListDTOList: [],
         judgeTemplates: [],
-        timeLimit: '',
-        memoryLimit: '',
+        timeLimit: 1000,
+        memoryLimit: 262144,
         source: ''
       };
       this.isAddProblem = true;
