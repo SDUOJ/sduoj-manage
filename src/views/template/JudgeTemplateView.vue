@@ -23,41 +23,36 @@
         v-model="templateInfoModal"
         :loading="templateInfoModalLoading"
         :mask-closable="false"
-        :title="'Template #' + (templateInfo.id || '')"
-        width="80%"
+        :title="`Template #${(templateInfo.id || '')}`"
+        width="60%"
         @on-ok="commitTemplateInfo">
-        <Form ref="templateInfo" :model="templateInfo" :rules="templateInfoRule" label-position="top">
-          <FormItem label="ID">
-            <Input :placeholder="templateInfo.id || ''" disabled />
-          </FormItem>
-          <FormItem label="Title" prop="title">
+        <Form ref="templateInfo" :model="templateInfo" label-position="top">
+          <FormItem label="Title" prop="title" required>
             <Input v-model="templateInfo.title" />
           </FormItem>
           <FormItem label="Comment">
             <Input v-model="templateInfo.comment" />
           </FormItem>
-          <FormItem label="Type" prop="type">
+          <FormItem label="Type" prop="type" required>
             <Select v-model="templateInfo.type">
               <Option v-for="type in judgeTemplateType" :key="type" :value="type">
                 {{ judgeTemplateProperity[type].name }}
               </Option>
             </Select>
           </FormItem>
-          <FormItem label="File Extensions" prop="acceptFileExtensions">
+          <FormItem label="File Extensions" prop="acceptFileExtensions" required>
             <Select
               v-model="templateInfo.acceptFileExtensions"
               filterable
               multiple
               allow-create
-              :default-label="templateInfo.acceptFileExtensions"
               @on-create="handleCreateExtension">
               <Option v-for="item in fileExtensionList" :value="item" :key="item">{{ item }}</Option>
             </Select>
           </FormItem>
-          <FormItem label="Script" prop="shellScript">
-            <div style="border: 1px solid #dcdee2; border-radius: 4px">
-              <ShellEditor v-if="templateInfo.type === judgeTemplateType.ADVANCED" :code.sync="templateInfo.shellScript" />
-              <JsonEditor v-else :code.sync="templateInfo.shellScript" />
+          <FormItem label="Script" prop="shellScript" required>
+            <div style="">
+              <CodeEditor :mode="templateInfo.type === judgeTemplateType.ADVANCED ? 'shell' : 'json'" :code.sync="templateInfo.shellScript" />
             </div>
           </FormItem>
           <FormItem>
@@ -106,16 +101,14 @@
 <script>
 import api from '_u/api';
 import { judgeTemplateType, judgeTemplateProperity } from '_u/types';
-import JsonEditor from '_c/editor/JsonEditor';
-import ShellEditor from '_c/editor/ShellEditor';
+import CodeEditor from '_c/editor/CodeEditor';
 import Upload from '_c/upload/upload';
 
 import { Page } from '_c/mixins';
 
 export default {
   components: {
-    ShellEditor,
-    JsonEditor,
+    CodeEditor,
     Upload
   },
   mixins: [Page],
@@ -166,15 +159,10 @@ export default {
       templateInfoModal: false,
       templateInfoModalLoading: true,
       templateInfo: {},
-      templateInfoRule: {
-        title: [{ required: true, trigger: 'blur' }],
-        type: [{ type: 'number', required: true, trigger: 'change' }],
-        acceptFileExtensions: [{ type: 'array', required: true, trigger: 'change' }],
-        shellScript: [{ required: true, trigger: 'change' }]
-      },
       fileList: [],
       fileExtensionList: [],
-      searchTitle: ''
+      searchTitle: '',
+      total: 0
     }
   },
   filters: {

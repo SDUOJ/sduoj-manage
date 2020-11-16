@@ -1,5 +1,7 @@
 <template>
-  <codemirror :value="code" :options="cmOptions" @input="onEditorCodeChange" />
+  <div style="line-height: normal; font-size: 16px">
+    <codemirror :value="code" :options="cmOptions" @input="onEditorCodeChange" />
+  </div>
 </template>
 
 <script>
@@ -12,19 +14,17 @@ export default {
     codemirror
   },
   props: {
-    code: {
-      type: String,
-      default: ''
-    }
+    code: String,
+    mode: String
   },
   data: function() {
     return {
       cmOptions: {
         autoCloseBrackets: true,
         tabSize: 2,
-        line: true,
         theme: 'default',
-        mode: 'text/json'
+        mode: 'text/json',
+        lineNumbers: true
       }
     }
   },
@@ -32,6 +32,17 @@ export default {
     onEditorCodeChange: function(newCode) {
       this.$emit('update:code', newCode)
     }
+  },
+  mounted: function() {
+    this.cmOptions.mode = this.mode;
+  },
+  watch: {
+    mode: function () {
+      this.cmOptions.mode = this.mode;
+    }
   }
 }
 </script>
+
+<style lang="less" scoped>
+</style>
