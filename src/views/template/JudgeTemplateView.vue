@@ -20,10 +20,11 @@
 
       <!-- 评测模板修改框 -->
       <Modal
-        :mask-closable="false"
         v-model="templateInfoModal"
+        :loading="templateInfoModalLoading"
+        :mask-closable="false"
         :title="'Template #' + (templateInfo.id || '')"
-        width="1000"
+        width="80%"
         @on-ok="commitTemplateInfo">
         <Form ref="templateInfo" :model="templateInfo" :rules="templateInfoRule" label-position="top">
           <FormItem label="ID">
@@ -79,6 +80,7 @@
               <div style="padding: 20px 0">
                 <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
                 <p>Click or drag files here to upload</p>
+                <strong>Only support .zip</strong>
               </div>
             </Upload>
           </FormItem>
@@ -91,8 +93,10 @@
       <Page
         class="float-right"
         size="small" show-elevator show-sizer
-        :total="totalNum"
+        :total="total"
         :current.sync="pageNow"
+        :page-size="pageSize"
+        :page-size-opts="pageSizeOpts"
         @on-change="onPageChange"
         @on-page-size-change="onPageSizeChange"/>
     </div>
@@ -106,12 +110,15 @@ import JsonEditor from '_c/editor/JsonEditor';
 import ShellEditor from '_c/editor/ShellEditor';
 import Upload from '_c/upload/upload';
 
+import { Page } from '_c/mixins';
+
 export default {
   components: {
     ShellEditor,
     JsonEditor,
     Upload
   },
+  mixins: [Page],
   data: function() {
     return {
       judgeTemplateColumns: [
@@ -155,11 +162,9 @@ export default {
       ],
       judgeTemplateData: [],
       selectedTemplate: [],
-      totalNum: 100,
-      pageNow: 1,
-      pageSize: 10,
       isAddTemplate: false,
       templateInfoModal: false,
+      templateInfoModalLoading: true,
       templateInfo: {},
       templateInfoRule: {
         title: [{ required: true, trigger: 'blur' }],
@@ -225,6 +230,12 @@ export default {
               .then(_ => {
                 this.$Message.success('Success');
                 this.getTemplateList();
+                this.templateInfoModal = false;
+              }).catch(_ => {
+                this.templateInfoModalLoading = false;
+                this.$nextTick(() => {
+                  this.templateInfoModalLoading = true;
+                })
               }).finally(() => (loading()));
           } else {
             api.updateTemplate({
@@ -237,10 +248,20 @@ export default {
               comment: this.templateInfo.comment
             }).then(_ => {
               this.$Message.success('Updated');
+              this.templateInfoModal = false;
+            }).catch(_ => {
+              this.templateInfoModalLoading = false;
+              this.$nextTick(() => {
+                this.templateInfoModalLoading = true;
+              })
             }).finally(() => (loading()));
           }
         } else {
-          this.$Message.error('格式不符');
+          this.$Message.error('Invalid format');
+          this.templateInfoModalLoading = false;
+          this.$nextTick(() => {
+            this.templateInfoModalLoading = true;
+          })
         }
       })
     },
@@ -263,7 +284,7 @@ export default {
     handleDownload: function(zipFileId) {
       api.zipDownload([{
         id: zipFileId,
-        downloadFilename: Date.now() + '.zip'
+        downloadFilename: `${Date.now()}.zip`
       }]).catch(err => (this.$Message.error(err)));
     },
     // 获取评测模板列表
@@ -274,7 +295,7 @@ export default {
         title: this.searchTitle
       }).then(ret => {
         this.judgeTemplateData = ret.rows;
-        this.totalNum = parseInt(ret.total);
+        this.total = parseInt(ret.totalPage) * this.pageSize;
       }, err => (this.$Message.error(err.message)));
     }
   },
@@ -286,13 +307,10 @@ export default {
     this.getTemplateList()
   },
   watch: {
+    $route: function() {
+      this.getTemplateList();
+    },
     searchTitle: function() {
-      this.getTemplateList();
-    },
-    pageSize: function() {
-      this.getTemplateList();
-    },
-    pageNow: function() {
       this.getTemplateList();
     }
   }
