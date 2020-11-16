@@ -100,10 +100,10 @@
 
     <!--    upload modal-->
     <Modal
-      title="Batch Upload"
+      title="Checkpoint Upload"
       v-model="uploadModal"
       width="30%"
-      :loading="true"
+      :loading="uploadModalLoading"
       @on-ok="onCheckpointUpload">
       <CheckpointsUpload ref="CheckpointsUpload"/>
     </Modal>
@@ -112,7 +112,7 @@
       title="Checkpoint Preview"
       v-model="previewModal"
       width="30%"
-      :loading="true"
+      :loading="previewModalLoading"
       @on-ok="onCheckpointUpdate">
       <CheckpointPreview ref="CheckpointPreview"/>
     </Modal>
@@ -196,6 +196,8 @@ export default {
       previewModal: false,
       loading: false,
       downloadLoading: false,
+      previewModalLoading: true,
+      uploadModalLoading: true,
       totalCheckpoints: [],
       selectedCheckpoints: [],
       checkpointQuery: {},
@@ -278,8 +280,12 @@ export default {
     onCheckpointUpload: function () {
       this.$refs.CheckpointsUpload.save((uploadCheckpoints) => {
         this.totalCheckpoints = this.totalCheckpoints.concat(uploadCheckpoints);
-      }, () => {
         this.uploadModal = false;
+      }, () => {
+        this.uploadModalLoading = false;
+        this.$nextTick(() => {
+          this.uploadModalLoading = true;
+        })
       })
     },
     onDownload: function (checkpoints) {
@@ -310,12 +316,16 @@ export default {
             newCheckpoint.checkpointScore = this.totalCheckpoints[i].checkpointScore;
             newCheckpoint.caseIndex = this.totalCheckpoints[i].caseIndex;
             this.totalCheckpoints.splice(i, 1, newCheckpoint);
+            this.previewModal = false;
             return;
           }
         }
         throw new Error('No such checkpoint: ' + oldCheckpointId);
       }, () => {
-        this.previewModal = false;
+        this.previewModalLoading = false;
+        this.$nextTick(() => {
+          this.previewModalLoading = true;
+        })
       });
     },
     onPreview: function (row, column) {

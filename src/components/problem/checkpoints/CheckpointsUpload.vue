@@ -100,6 +100,7 @@ export default {
     },
     handleBatchSubmit: function (onSuccess, onFinally) {
       if (!this.validFile()) {
+        onFinally();
         return false;
       }
       const form = new FormData();
@@ -110,8 +111,8 @@ export default {
       });
       api.uploadCheckpointFiles(form)
         .then(ret => {
-          this.$Message.success('Upload successfully');
           onSuccess(ret);
+          this.$Message.success('Upload successfully');
           this.reset();
         }, err => (this.$Message.error(err)))
         .finally(() => {
@@ -120,20 +121,16 @@ export default {
         });
     },
     handleSingleSubmit: function (onSuccess, onFinally) {
-      this.onUploading = true;
       api.uploadSingleCheckpoint(this.singleCheckpoint)
         .then(ret => {
           this.$Message.success(`Upload successfully: ${ret.checkpointId}`);
           onSuccess([ret]);
           this.reset();
         }, err => (this.$Message.error(err)))
-        .finally(() => {
-          this.onUploading = false;
-          onFinally();
-        });
+        .finally(onFinally);
     },
     save: function (onSuccess, onFinally) {
-      if (this.singleCheckpoint.input !== '' && this.singleCheckpoint.output !== '') {
+      if (this.singleCheckpoint.input !== '' || this.singleCheckpoint.output !== '') {
         this.handleSingleSubmit(onSuccess, onFinally);
       } else {
         this.handleBatchSubmit(onSuccess, onFinally);
