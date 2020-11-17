@@ -98,14 +98,14 @@
         </FormItem>
 
         <Table
-          draggable
           disabled-hover
           :columns="addProblemTableColumns"
           :data="contestInfo.problems"
-          @on-drag-drop="contestProblemDrag"
           class="modal-form-problem">
           <template slot-scope="{ index }" slot="deleteProblem">
-            <Icon type="md-remove" color="#CD6155" class="hover" @click="handleContestProblemDelete(index)" />
+            <span class="hover" @click="move(index, 1)"><Icon type="md-arrow-down" /></span>
+            <span class="hover" @click="move(index, -1)" style="margin: 0 5px"><Icon type="md-arrow-up" /></span>
+            <span class="hover" @click="handleContestProblemDelete(index)"><Icon type="md-remove" color="#CD6155" /></span>
           </template>
           <template slot-scope="{ index }" slot="index">
             <span>{{ index | contestProblemId }}</span>
@@ -170,7 +170,8 @@ export default {
       addProblemTableColumns: [
         {
           title: '\b',
-          width: 40,
+          width: 100,
+          align: 'right',
           slot: 'deleteProblem',
           renderHeader: (h, params) =>
             h('Icon', {
@@ -296,24 +297,29 @@ export default {
       }
     },
     // 比赛表单中题目拖拽
-    contestProblemDrag: function (first, end) {
-      first = parseInt(first);
-      end = parseInt(end);
-      const problems = [];
-      for (let i = 0; i < this.contestInfo.problems.length; i++) {
-        if (i === end) {
-          problems.push(this.contestInfo.problems[first]);
-        }
-        if (i !== first) {
-          problems.push(this.contestInfo.problems[i]);
-        }
+    move: function (index, dir) {
+      if (index === 0 && dir === -1) {
+        return;
       }
-      this.$set(this.contestInfo, 'problems', problems);
+      if (index === this.contestInfo.problems.length - 1 && dir === 1) {
+        return;
+      }
+      const tmp = { ...this.contestInfo.problems[index] };
+      this.$set(this.contestInfo.problems, index, this.contestInfo.problems[index + dir]);
+      this.$set(this.contestInfo.problems, index + dir, tmp);
     },
     // 比赛信息修改模态框 - 加题按钮
     handleContestProblemAdd: function () {
+      let problemCode = '';
+      if (this.contestInfo.problems.length > 0) {
+        const tmp = this.contestInfo.problems[this.contestInfo.problems.length - 1].problemCode.split('-');
+        if (tmp.length === 2) {
+          tmp[1] = (parseInt(tmp[1]) + 1).toString();
+        }
+        problemCode = tmp.join('-');
+      }
       this.contestInfo.problems.push({
-        problemCode: '',
+        problemCode,
         problemTitle: '',
         problemWeight: 1,
         problemSearch: 0,
@@ -321,6 +327,7 @@ export default {
         problemDescriptionList: [],
         oldProblemCode: ''
       });
+      this.blurProblemCodeInput(this.contestInfo.problems.length - 1);
     },
     // 比赛信息修改模态框 - 删题按钮
     handleContestProblemDelete: function(index) {

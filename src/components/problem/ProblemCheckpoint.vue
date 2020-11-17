@@ -4,22 +4,21 @@
       <span>Case Checkpoints</span>
       <Table
         stripe
-        draggable
         class="list_div"
         :columns="caseColumns"
         :data="caseCheckpoints"
         :max-height="600"
-        :loading="loading"
-        @on-drag-drop="onCaseTableDrag">
-        <template slot="drag">
-          <Icon type="ios-menu-outline"/>
-        </template>
+        :loading="loading">
         <template slot-scope="{ row }" slot="actions">
           <Tag>{{ `Case ${row.caseIndex + 1}` }}</Tag>
           <Divider type="vertical" />
           <Tooltip content="Cancel" placement="right">
             <span class="hover" @click="setCaseCheckpoint(row.checkpointId, false)"><Icon type="md-remove" color="#19be6b" /></span>
           </Tooltip>
+        </template>
+        <template slot-scope="{ index }" slot="move">
+          <span class="hover" @click="caseMove(index, 1)"><Icon type="md-arrow-down" /></span>
+          <span class="hover" @click="caseMove(index, -1)" style="margin: 0 5px"><Icon type="md-arrow-up" /></span>
         </template>
       </Table>
     </div>
@@ -28,18 +27,13 @@
       <span>Total Checkpoints</span>
       <Table
         stripe
-        draggable
         class="list_div"
         :columns="totalColumns"
         :data="totalCheckpoints"
-        :max-height="600"
+        :max-height="1000"
         :loading="loading"
         @on-cell-click="onPreview"
-        @on-drag-drop="onTotalTableDrag"
         @on-selection-change="onTableSelect">
-        <template slot="drag">
-          <Icon type="ios-menu-outline"/>
-        </template>
         <template slot-scope="{ row }" slot="checkpointId">
           <span class="hover" style="margin-right: 10px">{{ row.checkpointId }}</span>
         </template>
@@ -66,6 +60,10 @@
               <span><Icon type="md-add" disabled color="#c5c8ce"/></span>
             </Tooltip>
           </template>
+        </template>
+        <template slot-scope="{ index }" slot="move">
+          <span class="hover" @click="move(index, 1)"><Icon type="md-arrow-down" /></span>
+          <span class="hover" @click="move(index, -1)" style="margin: 0 5px"><Icon type="md-arrow-up" /></span>
         </template>
       </Table>
       <div class="clearfix" style="margin-top: 10px">
@@ -133,7 +131,6 @@ export default {
   data: function () {
     return {
       totalColumns: [
-        { slot: 'drag', title: ' ', maxWidth: 30 },
         { type: 'selection', width: 53 },
         { key: 'checkpointId', slot: 'checkpointId' },
         { title: 'Input Preview', key: 'inputPreview', className: 'hover', tooltip: true },
@@ -149,6 +146,7 @@ export default {
         {
           title: 'Upload Time',
           key: 'gmtCreate',
+          width: 200,
           render: (h, params) => h('Time', {
             props: {
               time: parseInt(params.row.gmtCreate),
@@ -158,6 +156,7 @@ export default {
         },
         {
           title: 'Score',
+          width: 150,
           slot: 'score',
           renderHeader: h => {
             let totScore = 0;
@@ -165,10 +164,10 @@ export default {
             return h('span', `Score (${totScore})`);
           }
         },
-        { title: 'Actions', slot: 'actions' }
+        { title: 'Actions', slot: 'actions', width: 200 },
+        { slot: 'move', title: ' ', width: 80 }
       ],
       caseColumns: [
-        { slot: 'drag', title: ' ', maxWidth: 30 },
         { key: 'checkpointId' },
         { title: 'Input Preview', key: 'inputPreview', tooltip: true },
         { title: 'Output Preview', key: 'outputPreview', tooltip: true },
@@ -183,6 +182,7 @@ export default {
         {
           title: 'Upload Time',
           key: 'gmtCreate',
+          width: 200,
           render: (h, params) => h('Time', {
             props: {
               time: parseInt(params.row.gmtCreate),
@@ -190,7 +190,8 @@ export default {
             }
           })
         },
-        { title: 'Actions', slot: 'actions' }
+        { title: 'Actions', slot: 'actions', width: 200 },
+        { slot: 'move', title: ' ', width: 80 }
       ],
       uploadModal: false,
       previewModal: false,
@@ -227,25 +228,24 @@ export default {
         }
       }
     },
-    onTotalTableDrag: function (from, to) {
-      from = parseInt(from);
-      to = parseInt(to);
-      const tmp = { ...this.totalCheckpoints[from] };
-      if (from > to) {
-        for (let i = from - 1; i >= to; --i) {
-          this.$set(this.totalCheckpoints, i + 1, this.totalCheckpoints[i]);
-        }
-      } else {
-        for (let i = from + 1; i <= to; ++i) {
-          this.$set(this.totalCheckpoints, i - 1, this.totalCheckpoints[i]);
-        }
+    move: function (index, dir) {
+      if (index === 0 && dir === -1) {
+        return;
       }
-      this.$set(this.totalCheckpoints, to, tmp);
+      if (index === this.totalCheckpoints.length - 1 && dir === 1) {
+        return;
+      }
+      const tmp = { ...this.totalCheckpoints[index] };
+      this.$set(this.totalCheckpoints, index, this.totalCheckpoints[index + dir]);
+      this.$set(this.totalCheckpoints, index + dir, tmp);
     },
-    onCaseTableDrag: function (from, to) {
-      from = parseInt(from);
-      to = parseInt(to);
-      console.log(from, to);
+    caseMove: function (index, dir) {
+      if (index === 0 && dir === -1) {
+        return;
+      }
+      if (index === this.caseCheckpoints.length - 1 && dir === 1) {
+        return;
+      }
       let caseCheckpointsIndex = [];
       this.totalCheckpoints.forEach((o, i) => {
         if (this.isCase(o)) {
@@ -254,16 +254,9 @@ export default {
       });
       caseCheckpointsIndex.sort((a, b) => a.caseIndex - b.caseIndex);
       caseCheckpointsIndex = caseCheckpointsIndex.map(o => o.index);
-      this.$set(this.totalCheckpoints[caseCheckpointsIndex[from]], 'caseIndex', to);
-      if (from > to) {
-        for (let i = from - 1; i >= to; --i) {
-          this.$set(this.totalCheckpoints[caseCheckpointsIndex[i]], 'caseIndex', i + 1);
-        }
-      } else {
-        for (let i = from + 1; i <= to; ++i) {
-          this.$set(this.totalCheckpoints[caseCheckpointsIndex[i]], 'caseIndex', i - 1);
-        }
-      }
+      const tmp = this.totalCheckpoints[caseCheckpointsIndex[index]].caseIndex;
+      this.$set(this.totalCheckpoints[caseCheckpointsIndex[index]], 'caseIndex', this.totalCheckpoints[caseCheckpointsIndex[index + dir]].caseIndex);
+      this.$set(this.totalCheckpoints[caseCheckpointsIndex[index + dir]], 'caseIndex', tmp);
     },
     onTableSelect: function (selection) {
       this.selectedCheckpoints = selection;
