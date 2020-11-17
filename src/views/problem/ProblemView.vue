@@ -8,6 +8,7 @@
         :columns="problemColumns"
         :data="problems"
         no-data-text=""
+        class="content-table"
         @on-sort-change="onSort">
         <template slot-scope="{ row }" slot="code">
           <Tooltip v-if="row.problemCode.length > 20" max-width="180">
@@ -20,6 +21,9 @@
         </template>
         <template slot-scope="{ row }" slot="title">
           <span class="hover">{{ row.problemTitle }}</span>
+        </template>
+        <template slot-scope="{ row }" slot="ratio">
+          <span>{{ `${row.acceptNum} / ${row.submitNum}` }}</span>
         </template>
         <template slot-scope="{ row }" slot="time">
           <span class="time">{{ row.timeLimit || 0 }}</span>
@@ -151,11 +155,7 @@ export default {
         { title: 'Title', key: 'problemTitle' },
         { title: 'Time Limit', key: 'timeLimit', sortable: 'custom', slot: 'time' },
         { title: 'Memory Limit', key: 'memoryLimit', sortable: 'custom', slot: 'mem' },
-        {
-          title: 'AC Ratio',
-          sortable: 'custom',
-          render: (h, params) => h('span', `${params.row.acceptNum} / ${params.row.submitNum}`)
-        },
+        { title: 'AC Ratio', sortable: 'custom', slot: 'ratio' },
         { title: 'Source', key: 'source' },
         { title: 'Owner', key: 'username' },
         { title: '\b', slot: 'tag' },

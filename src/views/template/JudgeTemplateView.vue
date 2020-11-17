@@ -1,11 +1,11 @@
 <template>
   <div>
-    <Card :dis-hover="true">
+    <Card dis-hover>
       <p slot="title">Judge Template</p>
       <Table
         :columns="judgeTemplateColumns"
         :data="judgeTemplateData"
-        class="template-set-content-table"
+        class="content-table"
         @on-selection-change="selectChange">
         <template slot-scope="{ row }" slot="type">
           <Tag :color="row.type | judgeTemplateTypeClass">{{ row.type | judgeTemplateTypeName }}</Tag>
@@ -16,15 +16,18 @@
         <template slot-scope="{ row }" slot="update-time">
           <Time slot="extra" :time="row.gmtModified | parseInt" type="datetime"/>
         </template>
+        <template slot-scope="{ row }" slot="action">
+          <span class="clickable" @click="initializeJudgeTemplateModal(row)">Edit</span>
+        </template>
       </Table>
 
       <!-- 评测模板修改框 -->
       <Modal
         v-model="templateInfoModal"
+        width="60%"
         :loading="templateInfoModalLoading"
         :mask-closable="false"
         :title="`Template #${(templateInfo.id || '')}`"
-        width="60%"
         @on-ok="commitTemplateInfo">
         <Form ref="templateInfo" :model="templateInfo" label-position="top">
           <FormItem label="Title" prop="title" required>
@@ -115,11 +118,7 @@ export default {
   data: function() {
     return {
       judgeTemplateColumns: [
-        {
-          type: 'selection',
-          width: 60,
-          align: 'center'
-        },
+        { type: 'selection', width: 60, align: 'center' },
         { key: 'id' },
         { title: 'Type', slot: 'type' },
         { title: 'Title', key: 'title' },
@@ -127,31 +126,7 @@ export default {
         { title: 'Remote OJ', key: 'remoteOj' },
         { title: 'Create', slot: 'create-time' },
         { title: 'Update', slot: 'update-time' },
-        {
-          title: '\b',
-          key: 'modify',
-          width: 80,
-          render: (h, params) => {
-            return h('div', [
-              h('Button', {
-                props: {
-                  type: 'primary',
-                  icon: 'ios-construct'
-                },
-                on: {
-                  click: () => {
-                    api.getOneTemplate(params.row.id).then(ret => {
-                      this.templateInfo = ret;
-                      this.fileExtensionList = this.templateInfo.acceptFileExtensions;
-                      this.isAddTemplate = false;
-                      this.templateInfoModal = true;
-                    });
-                  }
-                }
-              })
-            ])
-          }
-        }
+        { title: '\b', width: 80, slot: 'action' }
       ],
       judgeTemplateData: [],
       selectedTemplate: [],
@@ -215,7 +190,7 @@ export default {
                 this.$nextTick(() => {
                   this.templateInfoModalLoading = true;
                 })
-              }).finally(() => (loading()));
+              }).finally(loading);
           } else {
             api.updateTemplate({
               id: this.templateInfo.id,
@@ -233,7 +208,7 @@ export default {
               this.$nextTick(() => {
                 this.templateInfoModalLoading = true;
               })
-            }).finally(() => (loading()));
+            }).finally(loading);
           }
         } else {
           this.$Message.error('Invalid format');
@@ -264,7 +239,7 @@ export default {
       api.zipDownload([{
         id: zipFileId,
         downloadFilename: `${Date.now()}.zip`
-      }]).catch(err => (this.$Message.error(err)));
+      }]).catch(err => (this.$Message.error(err.message)));
     },
     // 获取评测模板列表
     getTemplateList: function() {
@@ -276,6 +251,14 @@ export default {
         this.judgeTemplateData = ret.rows;
         this.total = parseInt(ret.totalPage) * this.pageSize;
       }, err => (this.$Message.error(err.message)));
+    },
+    initializeJudgeTemplateModal: function (row) {
+      api.getOneTemplate(row.id).then(ret => {
+        this.templateInfo = ret;
+        this.fileExtensionList = this.templateInfo.acceptFileExtensions;
+        this.isAddTemplate = false;
+        this.templateInfoModal = true;
+      });
     }
   },
   computed: {
@@ -295,9 +278,3 @@ export default {
   }
 }
 </script>
-
-<style lang="less" scoped>
-  .none-float {
-    float: none;
-  }
-</style>
