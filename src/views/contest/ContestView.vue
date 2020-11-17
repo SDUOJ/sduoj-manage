@@ -173,7 +173,7 @@ export default {
           width: 100,
           align: 'right',
           slot: 'deleteProblem',
-          renderHeader: (h, params) =>
+          renderHeader: h =>
             h('Icon', {
               class: 'hover',
               props: { type: 'md-add', color: 'green' },
@@ -358,14 +358,15 @@ export default {
     },
     // 添加比赛按钮
     addContest: function() {
+      const datetime = Math.ceil(new Date().getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000);
       this.contestInfo = {
         contestTitle: '',
         features: {
           mode: 'acm',
           openness: 'public'
         },
-        gmtStart: moment(new Date().getTime()).format('yyyy-MM-DD HH:mm:ss'),
-        gmtEnd: moment(new Date().getTime()).format('yyyy-MM-DD HH:mm:ss'),
+        gmtStart: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
+        gmtEnd: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
         gmtLength: 0,
         source: '',
         markdownDescription: '',
