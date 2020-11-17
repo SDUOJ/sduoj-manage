@@ -62,6 +62,7 @@
             <div slot="label">
               <span>ZIP</span>
               <Divider type="vertical" />
+              <span class="clickable" @click="clearFileList">Clear</span>
               <Tooltip content="Download" placement="right" v-if="!!templateInfo.zipFileId" >
                 <Tag class="hover" closable @on-close="templateInfo.zipFileId=''" @click.native="handleDownload(templateInfo.zipFileId)">
                   {{ templateInfo.zipFileId }}
@@ -77,8 +78,8 @@
               ref="upload">
               <div style="padding: 20px 0">
                 <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-                <p>Click or drag files here to upload</p>
                 <strong>Only support .zip</strong>
+                <p>Click or drag files here to upload</p>
               </div>
             </Upload>
           </FormItem>

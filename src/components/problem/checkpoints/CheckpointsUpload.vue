@@ -14,6 +14,7 @@
     </div>
     <div>
       <span class="subtitle">Batch Upload</span>
+      <span class="clickable" style="margin-left: 10px" @click="clearFiles">Clear</span>
       <Upload
         multiple
         paste
