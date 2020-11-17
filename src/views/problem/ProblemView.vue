@@ -137,7 +137,7 @@ import ProblemCode from '_c/ProblemCode';
 import ProblemCheckpoint from '_c/problem/ProblemCheckpoint';
 import ProblemDescription from '_c/problem/ProblemDescription';
 import api from '_u/api';
-import { judgeTemplateProperity } from '_u/types';
+import { JUDGE_TEMPLATE_PROPERTY } from '_u/constants';
 import { Page } from '_c/mixins';
 export default {
   name: 'ProblemView',
@@ -269,7 +269,7 @@ export default {
               value: o.id,
               label: `${o.id}: ${o.title}`,
               comment: o.comment,
-              type: judgeTemplateProperity[o.type].name
+              type: JUDGE_TEMPLATE_PROPERTY[o.type].name
             }
           });
           this.judgeTemplateQueryLoading = false;
@@ -284,7 +284,7 @@ export default {
           value: o.id,
           label: `${o.id}: ${o.title}`,
           comment: o.comment,
-          type: judgeTemplateProperity[o.type].name
+          type: JUDGE_TEMPLATE_PROPERTY[o.type].name
         }
       });
     },

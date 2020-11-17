@@ -38,8 +38,8 @@
           </FormItem>
           <FormItem label="Type" prop="type" required>
             <Select v-model="templateInfo.type">
-              <Option v-for="type in judgeTemplateType" :key="type" :value="type">
-                {{ judgeTemplateProperity[type].name }}
+              <Option v-for="type in JUDGE_TEMPLATE_TYPE" :key="type" :value="type">
+                {{ JUDGE_TEMPLATE_PROPERTY[type].name }}
               </Option>
             </Select>
           </FormItem>
@@ -55,7 +55,7 @@
           </FormItem>
           <FormItem label="Script" prop="shellScript" required>
             <div style="">
-              <CodeEditor :mode="templateInfo.type === judgeTemplateType.ADVANCED ? 'shell' : 'json'" :code.sync="templateInfo.shellScript" />
+              <CodeEditor :mode="templateInfo.type === JUDGE_TEMPLATE_TYPE.ADVANCED ? 'shell' : 'json'" :code.sync="templateInfo.shellScript" />
             </div>
           </FormItem>
           <FormItem>
@@ -103,7 +103,7 @@
 
 <script>
 import api from '_u/api';
-import { judgeTemplateType, judgeTemplateProperity } from '_u/types';
+import { JUDGE_TEMPLATE_TYPE, JUDGE_TEMPLATE_PROPERTY } from '_u/constants';
 import CodeEditor from '_c/editor/CodeEditor';
 import Upload from '_c/upload/upload';
 
@@ -142,10 +142,10 @@ export default {
   filters: {
     parseInt: (val) => parseInt(val),
     judgeTemplateTypeClass: type => {
-      return judgeTemplateProperity[type].color;
+      return JUDGE_TEMPLATE_PROPERTY[type].color;
     },
     judgeTemplateTypeName: type => {
-      return judgeTemplateProperity[type].name;
+      return JUDGE_TEMPLATE_PROPERTY[type].name;
     }
   },
   methods: {
@@ -262,8 +262,8 @@ export default {
     }
   },
   computed: {
-    judgeTemplateProperity: () => judgeTemplateProperity,
-    judgeTemplateType: () => judgeTemplateType
+    JUDGE_TEMPLATE_PROPERTY: () => JUDGE_TEMPLATE_PROPERTY,
+    JUDGE_TEMPLATE_TYPE: () => JUDGE_TEMPLATE_TYPE
   },
   mounted: function () {
     this.getTemplateList()
