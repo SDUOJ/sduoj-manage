@@ -42,29 +42,23 @@
      <Modal
       v-model="contentModal"
       width="80%"
+      :mask-closable="false"
       :loading="true"
       :title="curDescription.title"
       @on-ok="updateDescriptionContent">
-       <Row class="markdown-box">
-         <Col span="12" class="markdown-editor">
-           <Input v-model="curDescription.markdownDescription" type="textarea" :autosize="{minRows: 40,maxRows: 60}"/>
-         </Col>
-         <Col span="12" class="markdown-editor">
-           <markdown-it-vue-light :content="curDescription.markdownDescription || ''"/>
-         </Col>
-       </Row>
+       <mavon-editor v-model="curDescription.markdownDescription" style="min-height: 600px"/>
      </Modal>
    </div>
 </template>
 
 <script>
 import api from '_u/api';
-import MarkdownItVueLight from 'markdown-it-vue/dist/markdown-it-vue-light.umd.min.js'
-import 'markdown-it-vue/dist/markdown-it-vue-light.css'
+import { mavonEditor } from 'mavon-editor'
+import 'mavon-editor/dist/css/index.css'
 
 export default {
   name: 'ProblemDescription',
-  components: { MarkdownItVueLight },
+  components: { mavonEditor },
   directives: {
     focus: {
       inserted: function (el) {

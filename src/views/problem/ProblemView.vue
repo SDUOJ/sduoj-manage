@@ -8,7 +8,8 @@
         :columns="problemColumns"
         :data="problems"
         no-data-text=""
-        @on-sort-change="handleProblemSort">
+        class="content-table"
+        @on-sort-change="onSort">
         <template slot-scope="{ row }" slot="code">
           <Tooltip v-if="row.problemCode.length > 20" max-width="180">
             <span slot="content" style="white-space: normal; word-break: break-all">
@@ -20,6 +21,9 @@
         </template>
         <template slot-scope="{ row }" slot="title">
           <span class="hover">{{ row.problemTitle }}</span>
+        </template>
+        <template slot-scope="{ row }" slot="ratio">
+          <span>{{ `${row.acceptNum} / ${row.submitNum}` }}</span>
         </template>
         <template slot-scope="{ row }" slot="time">
           <span class="time">{{ row.timeLimit || 0 }}</span>
@@ -133,7 +137,7 @@ import ProblemCode from '_c/ProblemCode';
 import ProblemCheckpoint from '_c/problem/ProblemCheckpoint';
 import ProblemDescription from '_c/problem/ProblemDescription';
 import api from '_u/api';
-import { judgeTemplateProperity } from '_u/types';
+import { JUDGE_TEMPLATE_PROPERTY } from '_u/constants';
 import { Page } from '_c/mixins';
 export default {
   name: 'ProblemView',
@@ -151,11 +155,7 @@ export default {
         { title: 'Title', key: 'problemTitle' },
         { title: 'Time Limit', key: 'timeLimit', sortable: 'custom', slot: 'time' },
         { title: 'Memory Limit', key: 'memoryLimit', sortable: 'custom', slot: 'mem' },
-        {
-          title: 'AC Ratio',
-          sortable: 'custom',
-          render: (h, params) => h('span', `${params.row.acceptNum} / ${params.row.submitNum}`)
-        },
+        { title: 'AC Ratio', sortable: 'custom', slot: 'ratio' },
         { title: 'Source', key: 'source' },
         { title: 'Owner', key: 'username' },
         { title: '\b', slot: 'tag' },
@@ -167,7 +167,6 @@ export default {
       problems: [],
       problemInfo: {},
       judgeTemplateSet: [],
-      total: 0,
       loading: false,
       problemInfoModalLoading: true,
       uploadModalLoading: true,
@@ -179,12 +178,6 @@ export default {
     }
   },
   methods: {
-    onPageChange: function(pageNow) {
-      this.pageNow = pageNow;
-    },
-    onPageSizeChange: function(pageSize) {
-      this.pageSize = pageSize;
-    },
     getProblemList: function() {
       this.loading = true;
       api.getProblemList({
@@ -233,12 +226,12 @@ export default {
       this.problemInfo = {
         problemCode: '',
         problemTitle: '',
-        isPublic: 0,
+        isPublic: 1,
         tagDTOList: [],
         judgeTemplateListDTOList: [],
         judgeTemplates: [],
-        timeLimit: '',
-        memoryLimit: '',
+        timeLimit: 1000,
+        memoryLimit: 262144,
         source: ''
       };
       this.isAddProblem = true;
@@ -267,14 +260,6 @@ export default {
         });
       })
     },
-    handleProblemSort: function ({ key, order }) {
-      if (order === 'normal') {
-        this.ascending = false
-      } else {
-        this.sortBy = key;
-        this.ascending = order === 'asc';
-      }
-    },
     queryTemplateOptions: function(query) {
       if (query !== '') {
         this.judgeTemplateQueryLoading = true;
@@ -284,7 +269,7 @@ export default {
               value: o.id,
               label: `${o.id}: ${o.title}`,
               comment: o.comment,
-              type: judgeTemplateProperity[o.type].name
+              type: JUDGE_TEMPLATE_PROPERTY[o.type].name
             }
           });
           this.judgeTemplateQueryLoading = false;
@@ -299,7 +284,7 @@ export default {
           value: o.id,
           label: `${o.id}: ${o.title}`,
           comment: o.comment,
-          type: judgeTemplateProperity[o.type].name
+          type: JUDGE_TEMPLATE_PROPERTY[o.type].name
         }
       });
     },

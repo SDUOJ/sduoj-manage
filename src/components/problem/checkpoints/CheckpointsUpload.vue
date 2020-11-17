@@ -2,7 +2,7 @@
   <div class="clearfix">
     <div>
       <span class="subtitle">Single Upload</span>
-      <Button @click="reset" size="small" style="float: right" type="text">Reset</Button>
+      <Button @click="reset" size="small" style="float: right" type="text">Clear All</Button>
       <Form :model="singleCheckpoint">
         <FormItem label="Standard Input">
           <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.input" :rows="5"/>
@@ -58,6 +58,7 @@ export default {
       this.clearFiles();
     },
     clearFiles: function () {
+      this.fileList = [];
       this.$refs.upload.clearFiles();
     },
 
@@ -100,6 +101,7 @@ export default {
     },
     handleBatchSubmit: function (onSuccess, onFinally) {
       if (!this.validFile()) {
+        onFinally();
         return false;
       }
       const form = new FormData();
@@ -110,8 +112,8 @@ export default {
       });
       api.uploadCheckpointFiles(form)
         .then(ret => {
-          this.$Message.success('Upload successfully');
           onSuccess(ret);
+          this.$Message.success('Upload successfully');
           this.reset();
         }, err => (this.$Message.error(err)))
         .finally(() => {
@@ -120,20 +122,16 @@ export default {
         });
     },
     handleSingleSubmit: function (onSuccess, onFinally) {
-      this.onUploading = true;
       api.uploadSingleCheckpoint(this.singleCheckpoint)
         .then(ret => {
           this.$Message.success(`Upload successfully: ${ret.checkpointId}`);
           onSuccess([ret]);
           this.reset();
         }, err => (this.$Message.error(err)))
-        .finally(() => {
-          this.onUploading = false;
-          onFinally();
-        });
+        .finally(onFinally);
     },
     save: function (onSuccess, onFinally) {
-      if (this.singleCheckpoint.input !== '' && this.singleCheckpoint.output !== '') {
+      if (this.singleCheckpoint.input !== '' || this.singleCheckpoint.output !== '') {
         this.handleSingleSubmit(onSuccess, onFinally);
       } else {
         this.handleBatchSubmit(onSuccess, onFinally);
