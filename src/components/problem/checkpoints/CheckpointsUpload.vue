@@ -2,7 +2,7 @@
   <div class="clearfix">
     <div>
       <span class="subtitle">Single Upload</span>
-      <Button @click="reset" size="small" style="float: right" type="text">Reset</Button>
+      <Button @click="reset" size="small" style="float: right" type="text">Clear All</Button>
       <Form :model="singleCheckpoint">
         <FormItem label="Standard Input">
           <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.input" :rows="5"/>
@@ -14,7 +14,6 @@
     </div>
     <div>
       <span class="subtitle">Batch Upload</span>
-      <span class="clickable" style="margin-left: 10px" @click="clearFiles">Clear</span>
       <Upload
         multiple
         paste
@@ -59,6 +58,7 @@ export default {
       this.clearFiles();
     },
     clearFiles: function () {
+      this.fileList = [];
       this.$refs.upload.clearFiles();
     },
 

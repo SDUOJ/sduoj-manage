@@ -62,12 +62,12 @@
             <div slot="label">
               <span>ZIP</span>
               <Divider type="vertical" />
-              <span class="clickable" @click="clearFileList">Clear</span>
               <Tooltip content="Download" placement="right" v-if="!!templateInfo.zipFileId" >
                 <Tag class="hover" closable @on-close="templateInfo.zipFileId=''" @click.native="handleDownload(templateInfo.zipFileId)">
                   {{ templateInfo.zipFileId }}
                 </Tag>
               </Tooltip>
+              <span class="clickable" style="margin-left: 5px" v-if="fileList.length > 0" @click="clearFileList">Clear</span>
             </div>
             <Upload
               paste
