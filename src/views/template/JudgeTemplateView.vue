@@ -161,8 +161,7 @@ export default {
       templateInfo: {},
       fileList: [],
       fileExtensionList: [],
-      searchTitle: '',
-      total: 0
+      searchTitle: ''
     }
   },
   filters: {
@@ -175,14 +174,6 @@ export default {
     }
   },
   methods: {
-    // 切换页面
-    onPageChange: function (pageNow) {
-      this.pageNow = pageNow;
-    },
-    // 更改页面大小
-    onPageSizeChange: function (pageSize) {
-      this.pageSize = pageSize;
-    },
     // 表格全选
     selectChange: function (selection) {
       this.selectedTemplate = selection;

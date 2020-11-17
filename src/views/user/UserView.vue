@@ -5,9 +5,9 @@
       <Table
         :columns="userTableColumns"
         :data="userTableData"
-        class="user-set-content-table"
+        class="content-table"
         @on-selection-change="selectChange"
-        @on-sort-change="handleUserSort">
+        @on-sort-change="onSort">
       </Table>
 
       <div style="display: none;">
@@ -28,9 +28,9 @@
 
           <FormItem label="Sex" prop="gender">
             <RadioGroup v-model="userInfo.gender">
-              <Radio :label='1'><Icon type="md-male" /></Radio>
-              <Radio :label='0'><Icon type="md-female" /></Radio>
-              <Radio :label='2'><Icon type="md-help" /></Radio>
+              <Radio :label='1'><Icon type="md-male"/></Radio>
+              <Radio :label='0'><Icon type="md-female"/></Radio>
+              <Radio :label='2'><Icon type="md-help"/></Radio>
             </RadioGroup>
           </FormItem>
 
@@ -79,16 +79,18 @@
       <!-- 用户密码修改框 -->
 
     </Card>
-    <div class="user-set-content-footer">
-      <Button type="default" size="small" class="user-set-content-button" @click="addUser">Add</Button>
-      <Button type="default" size="small" class="user-set-content-button" @click="deleteUser">Delete</Button>
-      <Button type="default" size="small" class="user-set-content-button" @click="batchUser">Batch Import</Button>
-      <Button type="default" size="small" class="user-set-content-button" @click="exportUser">Export</Button>
+    <div class="footer-tools">
+      <Button type="default" size="small" class="float-left footer-btn" @click="addUser">Add</Button>
+      <Button type="default" size="small" class="float-left footer-btn" @click="deleteUser">Delete</Button>
+      <Button type="default" size="small" class="float-left footer-btn" @click="batchUser">Batch Import</Button>
+      <Button type="default" size="small" class="float-left footer-btn" @click="exportUser">Export</Button>
       <Page
-        class="user-set-content-page"
+        class="float-right"
         size="small" show-elevator show-sizer
-        :total="totalNum"
+        :total="total"
         :current.sync="pageNow"
+        :page-size="pageSize"
+        :page-size-opts="pageSizeOpts"
         @on-change="onPageChange"
         @on-page-size-change="onPageSizeChange"/>
     </div>
@@ -109,9 +111,9 @@
 
         <FormItem label="Sex" prop="gender">
           <RadioGroup v-model="userInfo.gender">
-            <Radio :label='1'><Icon type="md-male" /></Radio>
-            <Radio :label='0'><Icon type="md-female" /></Radio>
-            <Radio :label='2'><Icon type="md-help" /></Radio>
+            <Radio :label='1'><Icon type="md-male"/></Radio>
+            <Radio :label='0'><Icon type="md-female"/></Radio>
+            <Radio :label='2'><Icon type="md-help"/></Radio>
           </RadioGroup>
         </FormItem>
 
@@ -165,9 +167,11 @@
 
 <script>
 import api from '@/utils/api'
+import { Page } from '_c/mixins';
 
 export default {
-  data() {
+  mixins: [Page],
+  data: function () {
     const validatePass = (rule, value, callback) => {
       if (value === '') {
         callback(new Error('Password can not be empty'));
@@ -272,29 +276,11 @@ export default {
       // 表格源数据
       userTableData: [],
       selectedUsers: [],
-      totalNum: 100,
-      pageNow: 1,
-      pageSize: 10,
-      sortBy: '',
-      ascending: false,
       userInfoModal: false,
       userPasswordModal: false,
       addUserModal: false,
       batchUserModal: false,
-      userInfo: {
-        username: '',
-        nickname: '',
-        gender: 2, // 0-女, 1-男, 2-?
-        studentId: '',
-        phone: '',
-        email: '',
-        roles: [],
-        password: '',
-        passwordCheck: '',
-        infoArea: '',
-        userId: '',
-        emailVerified: 0
-      },
+      userInfo: {},
       userInfoRule: {
         username: [
           {
@@ -394,24 +380,6 @@ export default {
     }
   },
   methods: {
-    // 分页按钮
-    onPageChange: function (pageNow) {
-      this.pageNow = pageNow;
-      this.getUserList();
-    },
-    onPageSizeChange: function (pageSize) {
-      this.pageSize = pageSize;
-      this.getUserList();
-    },
-    handleUserSort: function ({ key, order }) {
-      if (order === 'normal') {
-        this.sortBy = '';
-        this.ascending = false
-      } else {
-        this.sortBy = key;
-        this.ascending = order === 'asc';
-      }
-    },
     // 表格全选
     selectChange: function (selection) {
       this.selectedUsers = selection;
@@ -555,96 +523,31 @@ export default {
       }
     },
     getUserList() {
-      var params = {
+      api.getUserList({
         pageNow: this.pageNow,
         pageSize: this.pageSize
-      }
-      api.getUserList(params).then(ret => {
-        this.totalNum = parseInt(ret.totalPage) * this.pageSize;
+      }).then(ret => {
+        this.total = parseInt(ret.totalPage) * this.pageSize;
         this.userTableData = ret.rows;
       });
     }
   },
   mounted: function () {
     this.getUserList();
+  },
+  watch: {
+    $route: function () {
+      this.getUserList();
+    }
   }
 }
 </script>
 
 <style lang="less" scoped>
-  /deep/ .ivu-card {
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-
-    .ivu-card-head {
-      background-color: #F4F6F6;
-    }
-
-    .ivu-card-body {
-      padding: 0;
-    }
-
-    .ivu-input-wrapper {
-      top: -5px;
-    }
-
-    .user-set-content-table {
-      // ivu 表格头部
-      .ivu-table-header {
-        padding-right: 0;
-
-        th {
-          background-color: #fff;
-        }
-      }
-
-      .ivu-table::before {
-        height: 0;
-      }
-
-      // ivu 表格内部
-      .ivu-table-body {
-        padding-right: 0;
-      }
-
-      .ivu-table-tbody {
-        width: 100%;
-        padding: 0;
-        margin: 0;
-        border-spacing: 0;
-      }
-
-      .ivu-table-row-hover td {
-        background-color: #fbfcfc;
-      }
-
-      // ivu 数据内容
-      .user-set-name {
-        float: left;
-      }
-    }
-  }
-
-  .ivu-card-bordered {
+  /deep/ .ivu-card-bordered {
     border-bottom: none !important;
   }
 
-  // 分页栏
-  .user-set-content-footer {
-    margin-top: 12px;
-
-    .user-set-content-page {
-      float: right;
-    }
-
-    .user-set-content-button {
-      float: left;
-      margin-right: 5px;
-    }
-  }
-</style>
-
-<style lang="less">
   // 权限标签
   .user-set-roles {
     float: right;
@@ -663,7 +566,7 @@ export default {
   }
 
   // 修改按钮
-  .ivu-table-row {
+  /deep/ .ivu-table-row {
     .ivu-btn {
       margin-left: 4px;
       margin-right: 4px;

@@ -1,7 +1,35 @@
+/*
+ * Copyright 2020-2020 the original author or authors.
+ *
+ * Licensed under the General Public License, Version 3.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.gnu.org/licenses/gpl-3.0.en.html
+ */
+
 export default {
   data: function() {
     return {
-      pageSizeOpts: [20, 40, 100]
+      pageSizeOpts: [20, 40, 60, 800],
+      total: 0
+    }
+  },
+  methods: {
+    onPageChange: function (pageNow) {
+      this.pageNow = pageNow;
+    },
+    onPageSizeChange: function (pageSize) {
+      this.pageSize = pageSize;
+    },
+    onSort: function({ key, order }) {
+      if (order === 'normal') {
+        this.sortBy = '';
+        this.ascending = false;
+      }  else {
+        this.sortBy = key;
+        this.ascending = (order === 'asc');
+      }
     }
   },
   computed: {
@@ -15,9 +43,10 @@ export default {
     },
     pageSize: {
       get: function() {
-        return parseInt(this.$route.query.pageSize) || 20;
+        return Math.min(parseInt(this.$route.query.pageSize) || 20, this.pageSizeOpts[this.pageSizeOpts.length - 1]);
       },
       set: function(pageSize) {
+        pageSize = Math.min(pageSize, this.pageSizeOpts[this.pageSizeOpts.length - 1]);
         this.$router.push({ query: { ...this.$route.query, pageSize } });
       }
     },

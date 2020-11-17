@@ -8,7 +8,7 @@
         :columns="problemColumns"
         :data="problems"
         no-data-text=""
-        @on-sort-change="handleProblemSort">
+        @on-sort-change="onSort">
         <template slot-scope="{ row }" slot="code">
           <Tooltip v-if="row.problemCode.length > 20" max-width="180">
             <span slot="content" style="white-space: normal; word-break: break-all">
@@ -167,7 +167,6 @@ export default {
       problems: [],
       problemInfo: {},
       judgeTemplateSet: [],
-      total: 0,
       loading: false,
       problemInfoModalLoading: true,
       uploadModalLoading: true,
@@ -179,12 +178,6 @@ export default {
     }
   },
   methods: {
-    onPageChange: function(pageNow) {
-      this.pageNow = pageNow;
-    },
-    onPageSizeChange: function(pageSize) {
-      this.pageSize = pageSize;
-    },
     getProblemList: function() {
       this.loading = true;
       api.getProblemList({
@@ -266,14 +259,6 @@ export default {
           this.uploadModalLoading = true;
         });
       })
-    },
-    handleProblemSort: function ({ key, order }) {
-      if (order === 'normal') {
-        this.ascending = false
-      } else {
-        this.sortBy = key;
-        this.ascending = order === 'asc';
-      }
     },
     queryTemplateOptions: function(query) {
       if (query !== '') {
