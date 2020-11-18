@@ -17,7 +17,9 @@
           <Time slot="extra" :time="row.gmtModified | parseInt" type="datetime"/>
         </template>
         <template slot-scope="{ row }" slot="action">
-          <span class="clickable" @click="initializeJudgeTemplateModal(row)">Edit</span>
+          <span class="clickable" @click="initializeJudgeTemplateModal(row, false)">Edit</span>
+          <Divider type="vertical" />
+          <span class="clickable" @click="initializeJudgeTemplateModal(row, true)">Fork</span>
         </template>
       </Table>
 
@@ -27,7 +29,7 @@
         width="60%"
         :loading="templateInfoModalLoading"
         :mask-closable="false"
-        :title="`Template #${(templateInfo.id || '')}`"
+        :title="isAddTemplate ? 'Add Judge Template' : `Template #${templateInfo.id}`"
         @on-ok="commitTemplateInfo">
         <Form ref="templateInfo" :model="templateInfo" label-position="top">
           <FormItem label="Title" prop="title" required>
@@ -127,7 +129,7 @@ export default {
         { title: 'Remote OJ', key: 'remoteOj' },
         { title: 'Create', slot: 'create-time' },
         { title: 'Update', slot: 'update-time' },
-        { title: '\b', width: 80, slot: 'action' }
+        { title: '\b', slot: 'action' }
       ],
       judgeTemplateData: [],
       selectedTemplate: [],
@@ -253,11 +255,11 @@ export default {
         this.total = parseInt(ret.totalPage) * this.pageSize;
       }, err => (this.$Message.error(err.message)));
     },
-    initializeJudgeTemplateModal: function (row) {
+    initializeJudgeTemplateModal: function (row, fork) {
       api.getOneTemplate(row.id).then(ret => {
         this.templateInfo = ret;
         this.fileExtensionList = this.templateInfo.acceptFileExtensions;
-        this.isAddTemplate = false;
+        this.isAddTemplate = fork;
         this.templateInfoModal = true;
       });
     }

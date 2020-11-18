@@ -20,7 +20,8 @@
           <ProblemCode v-else :problemCode="row.problemCode" />
         </template>
         <template slot-scope="{ row }" slot="title">
-          <span class="hover">{{ row.problemTitle }}</span>
+          <span>{{ row.problemTitle }}</span>
+          <Tag v-if="row.isPublic === 0" style="margin-left: 5px" color="volcano">Private</Tag>
         </template>
         <template slot-scope="{ row }" slot="ratio">
           <span>{{ `${row.acceptNum} / ${row.submitNum}` }}</span>
@@ -37,7 +38,7 @@
           </div>
         </template>
         <template slot-scope="{ row }" slot="edit">
-          <span class="clickable" @click="onEditProblem(row)">Edit</span>
+          <span class="clickable" @click="onEditProblem(row, false)">Edit</span>
           <Divider type="vertical" />
           <span class="clickable" @click="showProblemDescriptions(row)">Description</span>
           <Divider type="vertical" />
@@ -64,8 +65,8 @@
       :loading="problemInfoModalLoading"
       @on-ok="handleUpdateProblem">
       <template slot="header">
-        <ProblemCode v-if="problemInfo.problemCode" :problemCode="problemInfo.problemCode"/>
-        <div v-else class="ivu-modal-header-inner">Add Problem</div>
+        <div v-if="isAddProblem" class="ivu-modal-header-inner">Add Problem</div>
+        <ProblemCode v-else :problemCode="problemInfo.problemCode"/>
       </template>
 
       <Form :model="problemInfo" :rules="problemColumnRules" ref="problemInfo">
@@ -73,7 +74,7 @@
           <Input v-model="problemInfo.problemTitle" />
         </FormItem>
         <FormItem label="Public" required>
-          <i-switch :value="problemInfo.isPublic" :true-value="1" :false-value="0" />
+          <i-switch v-model="problemInfo.isPublic" :true-value="1" :false-value="0" />
         </FormItem>
         <FormItem label="Time Limit" required>
           <Input v-model.number="problemInfo.timeLimit">
@@ -82,7 +83,7 @@
         </FormItem>
         <FormItem label="Memory Limit" required>
           <Input v-model.number="problemInfo.memoryLimit">
-            <span slot="append">KB</span>
+            <span slot="append">KiB</span>
           </Input>
         </FormItem>
         <FormItem label="Juidge Template" v-if="problemInfoModal">
@@ -152,13 +153,13 @@ export default {
       problemColumns: [
         { title: 'Id', key: 'problemId', maxWidth: 80 },
         { key: 'problemCode', maxWidth: 130, slot: 'code' },
-        { title: 'Title', key: 'problemTitle' },
+        { title: 'Title', slot: 'title' },
         { title: 'Time Limit', key: 'timeLimit', sortable: 'custom', slot: 'time' },
         { title: 'Memory Limit', key: 'memoryLimit', sortable: 'custom', slot: 'mem' },
         { title: 'AC Ratio', sortable: 'custom', slot: 'ratio' },
         { title: 'Source', key: 'source' },
         { title: 'Owner', key: 'username' },
-        { title: '\b', slot: 'tag' },
+        // { title: '\b', slot: 'tag' },
         { title: '\b', slot: 'edit', minWidth: 150 }
       ],
       problemColumnRules: {
@@ -237,9 +238,9 @@ export default {
       this.isAddProblem = true;
       this.problemInfoModal = true;
     },
-    onEditProblem: function(problem) {
-      this.problemInfo = problem;
-      this.isAddProblem = false;
+    onEditProblem: function(problem, fork) {
+      this.problemInfo = { ...problem };
+      this.isAddProblem = fork;
       this.problemInfoModal = true;
     },
     showProblemDescriptions: function(problem) {

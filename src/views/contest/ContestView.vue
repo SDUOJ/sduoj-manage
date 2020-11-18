@@ -8,6 +8,11 @@
         class="content-table"
         @on-selection-change="selectChange"
         @on-sort-change="onSort">
+        <template slot-scope="{ row }" slot="title">
+          <span>{{ row.contestTitle }}</span>
+          <Icon v-if="row.features.openness === CONTEST_OPENNESS.PRIVATE" type="md-lock" color="#d9534f" size="19" />
+          <Icon v-else-if="row.features.openness === CONTEST_OPENNESS.PROTECTED" type="md-lock" color="orange" size="19" />
+        </template>
         <template slot-scope="{ row }" slot="time">
           <Time :time="row.gmtStart | parseInt" type="datetime" />
         </template>
@@ -17,11 +22,10 @@
         <template slot-scope="{ row }" slot="mode">
           <span>{{ row.features.mode.toUpperCase() }}</span>
         </template>
-        <template slot-scope="{ row }" slot="openness">
-          <span>{{ row.features.openness }}</span>
-        </template>
         <template slot-scope="{ row }" slot="action">
-          <span class="clickable" @click="initialContestModal(row)">Edit</span>
+          <span class="clickable" @click="initialContestModal(row, false)">Edit</span>
+          <Divider type="vertical" />
+          <span class="clickable" @click="initialContestModal(row, true)">Fork</span>
         </template>
       </Table>
     </Card>
@@ -75,17 +79,17 @@
         <Row>
           <Col span="10">
             <FormItem label="Start" required>
-              <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtStart"></DatePicker>
+              <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtStart" :disabled="!isAddContest && now > contestInfo.gmtStart" />
             </FormItem>
           </Col>
           <Col span="14">
             <FormItem label="Duration" required>
-              <InputNumber v-model="contestInfo.gmtLength" :min="0" @on-change="changeGmtLength"></InputNumber>
+              <InputNumber v-model="contestInfo.gmtLength" :min="0" @on-change="changeGmtLength" />
             </FormItem>
           </Col>
         </Row>
         <FormItem label="End" required>
-          <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtEnd"></DatePicker>
+          <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtEnd" />
         </FormItem>
         <FormItem label="Source" prop="source">
           <Input v-model="contestInfo.source" />
@@ -155,14 +159,13 @@ export default {
       contestTableColumns: [
         { type: 'selection', width: 60, align: 'center' },
         { key: 'contestId' },
-        { title: 'Title', key: 'contestTitle' },
+        { title: 'Title', slot: 'title' },
         { title: 'Owner', key: 'username' },
         { title: 'Start', key: 'gmtStart', sortable: 'custom', slot: 'time' },
         { title: 'Duration', sortable: 'custom', slot: 'duration' },
         { title: 'Mode', key: 'mode', sortable: 'custom', slot: 'mode' },
-        { title: 'Openness', key: 'openness', slot: 'openness' },
         { title: 'Participants', key: 'participantNum', sortable: 'custom' },
-        { title: '\b', width: 80, slot: 'action' }
+        { title: '\b', slot: 'action' }
       ],
       // 比赛列表 - 列数据
       contestTableData: [],
@@ -209,7 +212,8 @@ export default {
       contestInfo: {
         features: {}
       },
-      oldProblemCode: ''
+      oldProblemCode: '',
+      now: 0
     }
   },
   filters: {
@@ -242,7 +246,8 @@ export default {
       this.selectedContest = selection;
     },
     // 打开比赛模态框
-    initialContestModal: function (row) {
+    initialContestModal: function (row, fork) {
+      this.now = moment.now();
       this.contestInfo = {
         ...row,
         gmtStart: moment(new Date(parseInt(row.gmtStart))).format('yyy-MM-DD HH:mm:ss'),
@@ -263,7 +268,7 @@ export default {
             })
           })
         }
-        this.isAddContest = false;
+        this.isAddContest = fork;
         this.contestInfoModal = true;
       }, err => {
         this.$Message.error(err.message);
