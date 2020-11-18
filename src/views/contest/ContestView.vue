@@ -8,6 +8,11 @@
         class="content-table"
         @on-selection-change="selectChange"
         @on-sort-change="onSort">
+        <template slot-scope="{ row }" slot="title">
+          <span>{{ row.contestTitle }}</span>
+          <Icon v-if="row.features.openness === CONTEST_OPENNESS.PRIVATE" type="md-lock" color="#d9534f" size="19" />
+          <Icon v-else-if="row.features.openness === CONTEST_OPENNESS.PROTECTED" type="md-lock" color="orange" size="19" />
+        </template>
         <template slot-scope="{ row }" slot="time">
           <Time :time="row.gmtStart | parseInt" type="datetime" />
         </template>
@@ -17,11 +22,10 @@
         <template slot-scope="{ row }" slot="mode">
           <span>{{ row.features.mode.toUpperCase() }}</span>
         </template>
-        <template slot-scope="{ row }" slot="openness">
-          <span>{{ row.features.openness }}</span>
-        </template>
         <template slot-scope="{ row }" slot="action">
-          <span class="clickable" @click="initialContestModal(row)">Edit</span>
+          <span class="clickable" @click="initialContestModal(row, false)">Edit</span>
+          <Divider type="vertical" />
+          <span class="clickable" @click="initialContestModal(row, true)">Fork</span>
         </template>
       </Table>
     </Card>
@@ -62,6 +66,9 @@
             <Radio label="ioi">IOI</Radio>
           </RadioGroup>
         </FormItem>
+        <FormItem label="Public" required>
+          <i-switch v-model="contestInfo.isPublic" :true-value="1" :false-value="0" />
+        </FormItem>
         <FormItem label="Openness" required>
           <Select v-model="contestInfo.features.openness" :placeholder="contestInfo.features.openness">
             <Option value="public">公开 - 任何人可以看题与提交</Option>
@@ -75,17 +82,17 @@
         <Row>
           <Col span="10">
             <FormItem label="Start" required>
-              <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtStart"></DatePicker>
+              <DatePicker v-model="contestInfo.gmtStart" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtStart" :disabled="!isAddContest && now > contestInfo.gmtStart" />
             </FormItem>
           </Col>
           <Col span="14">
             <FormItem label="Duration" required>
-              <InputNumber v-model="contestInfo.gmtLength" :min="0" @on-change="changeGmtLength"></InputNumber>
+              <InputNumber v-model="contestInfo.gmtLength" :min="0" @on-change="changeGmtLength" />
             </FormItem>
           </Col>
         </Row>
         <FormItem label="End" required>
-          <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtEnd"></DatePicker>
+          <DatePicker v-model="contestInfo.gmtEnd" type="datetime" format="yyyy-MM-dd HH:mm:ss" style="width: 200px" @on-change="changeGmtEnd" />
         </FormItem>
         <FormItem label="Source" prop="source">
           <Input v-model="contestInfo.source" />
@@ -97,6 +104,22 @@
           <Input v-model="contestInfo.participants" type="textarea" placeholder="Separated user by a space" :autosize="{minRows: 3,maxRows: 6}"/>
         </FormItem>
 
+        <FormItem label="Forzen" required>
+          <InputNumber v-model="contestInfo.features.frozenTime" :min="0" />
+        </FormItem>
+
+        <FormItem label="While Running">
+          <Checkbox v-model="contestInfo.features.contestRunning.displayPeerSubmission" :true-value="1" :false-value="0">Show Peer Submission</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestRunning.displayRank" :true-value="1" :false-value="0">Show Rank</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestRunning.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestRunning.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
+        </FormItem>
+        <FormItem label="After Finished">
+          <Checkbox v-model="contestInfo.features.contestEnd.displayPeerSubmission" :true-value="1" :false-value="0">Show Peer Submission</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestEnd.displayRank" :true-value="1" :false-value="0">Show Rank</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestEnd.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestEnd.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
+        </FormItem>
         <Table
           disabled-hover
           :columns="addProblemTableColumns"
@@ -155,14 +178,13 @@ export default {
       contestTableColumns: [
         { type: 'selection', width: 60, align: 'center' },
         { key: 'contestId' },
-        { title: 'Title', key: 'contestTitle' },
+        { title: 'Title', slot: 'title' },
         { title: 'Owner', key: 'username' },
         { title: 'Start', key: 'gmtStart', sortable: 'custom', slot: 'time' },
         { title: 'Duration', sortable: 'custom', slot: 'duration' },
         { title: 'Mode', key: 'mode', sortable: 'custom', slot: 'mode' },
-        { title: 'Openness', key: 'openness', slot: 'openness' },
         { title: 'Participants', key: 'participantNum', sortable: 'custom' },
-        { title: '\b', width: 80, slot: 'action' }
+        { title: '\b', slot: 'action' }
       ],
       // 比赛列表 - 列数据
       contestTableData: [],
@@ -207,7 +229,10 @@ export default {
       modalLoading: true,
       // 比赛字段
       contestInfo: {
-        features: {}
+        features: {
+          contestRunning: {},
+          contestEnd: {}
+        }
       },
       oldProblemCode: ''
     }
@@ -242,7 +267,8 @@ export default {
       this.selectedContest = selection;
     },
     // 打开比赛模态框
-    initialContestModal: function (row) {
+    initialContestModal: function (row, fork) {
+      this.now = moment.now();
       this.contestInfo = {
         ...row,
         gmtStart: moment(new Date(parseInt(row.gmtStart))).format('yyy-MM-DD HH:mm:ss'),
@@ -263,7 +289,7 @@ export default {
             })
           })
         }
-        this.isAddContest = false;
+        this.isAddContest = fork;
         this.contestInfoModal = true;
       }, err => {
         this.$Message.error(err.message);
@@ -363,7 +389,21 @@ export default {
         contestTitle: '',
         features: {
           mode: 'acm',
-          openness: 'public'
+          isPublic: 1,
+          openness: 'public',
+          frozenTime: 60,
+          contestRunning: {
+            displayPeerSubmission: 1,
+            displayRank: 1,
+            displayJudgeScore: 1,
+            displayCheckpointResult: 1
+          },
+          contestEnd: {
+            displayPeerSubmission: 1,
+            displayRank: 1,
+            displayJudgeScore: 1,
+            displayCheckpointResult: 1
+          }
         },
         gmtStart: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
         gmtEnd: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
@@ -407,15 +447,10 @@ export default {
         }
 
         const data = {
-          features: this.contestInfo.features,
-          contestTitle: this.contestInfo.contestTitle,
+          ...this.contestInfo,
           gmtStart: new Date(this.contestInfo.gmtStart).getTime(),
           gmtEnd: new Date(this.contestInfo.gmtEnd).getTime(),
-          password: this.contestInfo.password,
-          source: this.contestInfo.source,
-          markdownDescription: this.contestInfo.markdownDescription,
           participants: this.contestInfo.participants.split(','),
-          contestId: this.contestInfo.contestId,
           problems
         }
         api[this.isAddContest ? 'createContest' : 'updateContest'](data).then(_ => {

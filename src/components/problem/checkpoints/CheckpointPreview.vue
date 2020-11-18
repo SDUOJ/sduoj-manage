@@ -29,7 +29,6 @@ export default {
       this.oldCheckpoint = { ...checkpoint };
     },
     save: function (onSuccess, onFinally) {
-      console.log(this.oldCheckpoint);
       if (this.checkpoint.input === this.oldCheckpoint.input && this.checkpoint.output === this.oldCheckpoint.output) {
         onFinally();
         return;
