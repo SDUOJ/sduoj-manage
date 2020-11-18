@@ -66,6 +66,9 @@
             <Radio label="ioi">IOI</Radio>
           </RadioGroup>
         </FormItem>
+        <FormItem label="Public" required>
+          <i-switch v-model="contestInfo.isPublic" :true-value="1" :false-value="0" />
+        </FormItem>
         <FormItem label="Openness" required>
           <Select v-model="contestInfo.features.openness" :placeholder="contestInfo.features.openness">
             <Option value="public">公开 - 任何人可以看题与提交</Option>
@@ -101,6 +104,22 @@
           <Input v-model="contestInfo.participants" type="textarea" placeholder="Separated user by a space" :autosize="{minRows: 3,maxRows: 6}"/>
         </FormItem>
 
+        <FormItem label="Forzen" required>
+          <InputNumber v-model="contestInfo.features.frozenTime" :min="0" />
+        </FormItem>
+
+        <FormItem label="While Running">
+          <Checkbox v-model="contestInfo.features.contestRunning.displayPeerSubmission" :true-value="1" :false-value="0">Show Peer Submission</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestRunning.displayRank" :true-value="1" :false-value="0">Show Rank</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestRunning.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestRunning.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
+        </FormItem>
+        <FormItem label="After Finished">
+          <Checkbox v-model="contestInfo.features.contestEnd.displayPeerSubmission" :true-value="1" :false-value="0">Show Peer Submission</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestEnd.displayRank" :true-value="1" :false-value="0">Show Rank</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestEnd.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
+          <Checkbox v-model="contestInfo.features.contestEnd.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
+        </FormItem>
         <Table
           disabled-hover
           :columns="addProblemTableColumns"
@@ -210,10 +229,12 @@ export default {
       modalLoading: true,
       // 比赛字段
       contestInfo: {
-        features: {}
+        features: {
+          contestRunning: {},
+          contestEnd: {}
+        }
       },
-      oldProblemCode: '',
-      now: 0
+      oldProblemCode: ''
     }
   },
   filters: {
@@ -368,7 +389,21 @@ export default {
         contestTitle: '',
         features: {
           mode: 'acm',
-          openness: 'public'
+          isPublic: 1,
+          openness: 'public',
+          frozenTime: 60,
+          contestRunning: {
+            displayPeerSubmission: 1,
+            displayRank: 1,
+            displayJudgeScore: 1,
+            displayCheckpointResult: 1
+          },
+          contestEnd: {
+            displayPeerSubmission: 1,
+            displayRank: 1,
+            displayJudgeScore: 1,
+            displayCheckpointResult: 1
+          }
         },
         gmtStart: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
         gmtEnd: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
@@ -412,15 +447,10 @@ export default {
         }
 
         const data = {
-          features: this.contestInfo.features,
-          contestTitle: this.contestInfo.contestTitle,
+          ...this.contestInfo,
           gmtStart: new Date(this.contestInfo.gmtStart).getTime(),
           gmtEnd: new Date(this.contestInfo.gmtEnd).getTime(),
-          password: this.contestInfo.password,
-          source: this.contestInfo.source,
-          markdownDescription: this.contestInfo.markdownDescription,
           participants: this.contestInfo.participants.split(','),
-          contestId: this.contestInfo.contestId,
           problems
         }
         api[this.isAddContest ? 'createContest' : 'updateContest'](data).then(_ => {
