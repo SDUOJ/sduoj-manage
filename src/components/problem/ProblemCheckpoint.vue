@@ -89,7 +89,7 @@
         <div style="float: right">
           <div class="clearfix">
             <Button style="float: right" type="primary" @click="setScores($refs.totalScore.currentValue)">Average</Button>
-            <Input style="width: 100px; margin-right: 10px; float: right" @on-enter="setScores($refs.totalScore.currentValue)" ref="totalScore" placeholder="Sum score"/>
+            <Input style="width: 100px; margin-right: 10px; float: right" @on-enter="setScores($refs.totalScore.currentValue)" ref="totalScore" :value="100"/>
           </div>
           <div style="color: #ccc;">You can set average score for each checkpoint</div>
         </div>
@@ -202,7 +202,6 @@ export default {
       totalCheckpoints: [],
       selectedCheckpoints: [],
       checkpointQuery: {},
-      totalScore: '',
       problemCode: ''
     }
   },
