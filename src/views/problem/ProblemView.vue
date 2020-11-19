@@ -115,10 +115,10 @@
     <Modal
       v-model="descriptionModel"
       width="80%"
-      footer-hide
-      :mask-closable="false">
+      footer-hide>
       <template slot="header">
         <ProblemCode :problemCode="problemInfo.problemCode"/>
+        <span>{{ problemInfo.problemTitle }}</span>
       </template>
       <ProblemDescription ref="ProblemDescription" />
     </Modal>
@@ -132,6 +132,7 @@
       @on-ok="saveCheckpoints">
       <template slot="header">
         <ProblemCode :problemCode="problemInfo.problemCode"/>
+        <span>{{ problemInfo.problemTitle }}</span>
       </template>
       <ProblemCheckpoint ref="ProblemCheckpoint" />
     </Modal>

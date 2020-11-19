@@ -97,7 +97,7 @@ export default {
       const problemCode = this.problem.problemCode;
       api.createDescription({
         problemCode,
-        title: `New ${this.descriptions.length}`,
+        title: this.descriptions.length === 0 ? 'Default' : `New ${this.descriptions.length}`,
         markdownDescription: ''
       }).then(async (ret) => {
         this.$Message.success('Success');
@@ -203,22 +203,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-  .markdown-box {
-    margin-top: 10px;
-  }
-  .markdown-editor {
-    padding: 10px;
-
-    /deep/ .ivu-input:hover {
-      border-color: #dcdee2;
-    }
-
-    /deep/ .ivu-input:focus {
-      border-color: #dcdee2;
-      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-    }
-  }
-
   .editable:hover {
     cursor: pointer;
     border: #ccc 1px solid;
