@@ -176,7 +176,7 @@
           <p>Click or drag files here to upload</p>
         </div>
       </UploadExcel>
-      <span class="float-right"><a href="/excel/user.xlsx" target="_blank" download="user.xlsx">Sample</a></span>
+      <span class="float-right"><a href="/excel/user.xlsx" target="_blank" download="user.xlsx">Download</a> the sample excel</span>
       <br />
       <Table :max-height="600" :columns="excelColumns" :data="excelData" v-if="excelData.length > 0" />
     </Modal>
