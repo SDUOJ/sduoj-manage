@@ -7,7 +7,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    copyright: '2020-2020 &copy; Shandong University',
+    copyright: '',
     pathComponents: []
   },
   mutations: {
