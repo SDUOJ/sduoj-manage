@@ -47,6 +47,10 @@ function get(url, params, options) {
 }
 
 export default {
+  // 配置相关
+  getCopyright: function() {
+    return get('/site/getCopyright');
+  },
   // ---------------------- 用户相关 ----------------------
   getProfile: function (success, error) {
     axios.get('/user/getProfile')

@@ -7,19 +7,15 @@ const state = {
 const getters = {
   profile: state => state.profile || {},
   username: state => state.profile.username || '',
-  avatar: state => 'https://www.gravatar.com/avatar/' + md5(state.profile.email || '') + '?s=200&d=mp&r=g',
-  isLogin: state => !!state.profile.userId,
-  isVerified: state => !!state.profile.emailVerified
+  avatar: state => `https://www.gravatar.com/avatar/${md5(state.profile.email || '')}?s=200&d=mp&r=g`
 }
 
 const mutations = {
   setProfile: function (state, profile) {
-    state.profile = Object.assign({}, profile);
-    window.localStorage.setItem('isLogin', !!profile.userId);
+    state.profile = profile;
   },
   clearProfile: function (state) {
     state.profile = {};
-    window.localStorage.clear();
   }
 }
 
