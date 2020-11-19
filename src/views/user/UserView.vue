@@ -28,7 +28,7 @@
     <div class="footer-tools">
       <Button type="default" size="small" class="float-left footer-btn" @click="addUser">Add</Button>
       <Button type="default" size="small" class="float-left footer-btn" @click="deleteUser">Delete</Button>
-      <Button type="default" size="small" class="float-left footer-btn" @click="batchUser">Batch Import</Button>
+      <Button type="default" size="small" class="float-left footer-btn" @click="batchUser">Import</Button>
       <Button type="default" size="small" class="float-left footer-btn" @click="exportUser">Export</Button>
       <Page
         class="float-right"
@@ -139,6 +139,9 @@
         <FormItem label="Email" prop="email">
           <Input v-model="userInfo.email" />
         </FormItem>
+        <FormItem label="Email Verify" prop="email">
+          <i-switch v-model="userInfo.emailVerified" :true-value="1" :false-value="0" />
+        </FormItem>
 
         <FormItem label="Role">
           <Select v-model="userInfo.roles" multiple>
@@ -162,31 +165,40 @@
     <!-- 批量导入模态框 -->
     <Modal
       v-model="batchUserModal"
-      title="Batch Import"
+      title="Import"
+      width="80%"
+      :loading="loading"
       @on-ok="commitBatchUser">
-      <Form :model="userInfo" :rules="userInfoRule" :label-width="80">
-        <FormItem label="Users">
-          <Input v-model="userInfo.infoArea" type="textarea" :autosize="{minRows: 5,maxRows: 20}"
-                 placeholder="/* username, password, email, separated by a space in each line. */">
-          </Input>
-        </FormItem>
-      </Form>
+      <UploadExcel :on-success="handleSuccess" :before-upload="beforeUpload">
+        <div style="padding: 20px 0">
+          <Icon type="ios-cloud-upload" size="52" style="color: #3399ff" />
+          <strong>Only support .xlsx and .xls</strong>
+          <p>Click or drag files here to upload</p>
+        </div>
+      </UploadExcel>
+      <span class="float-right"><a href="/excel/user.xlsx" target="_blank" download="user.xlsx">Sample</a></span>
+      <br />
+      <Table :max-height="600" :columns="excelColumns" :data="excelData" v-if="excelData.length > 0" />
     </Modal>
     <!-- 批量导入模态框 -->
 
     <div style="display: none;">
-      <Table :columns="exportUserTableColumns" ref="exportUserTable" />
+      <Table ref="exportUserTable" />
     </div>
   </div>
 </template>
 
 <script>
 import api from '@/utils/api'
-import { Page } from '_c/mixins';
-import { USER_ROLE } from '../../utils/constants';
+import { USER_ROLE } from '_u/constants';
+import { Page, Excel } from '_c/mixins';
+import UploadExcel from '_c/upload/UploadExcel';
 
 export default {
-  mixins: [Page],
+  mixins: [Page, Excel],
+  components: {
+    UploadExcel
+  },
   data: function () {
     const validatePassCheck = (rule, value, callback) => {
       if (value !== this.userInfo.password) {
@@ -227,12 +239,10 @@ export default {
           { type: 'string', max: 30, message: 'Maximum 30 characters', trigger: 'blur' }
         ],
         studentId: [
-          { required: true, message: 'Student ID can not be empty', trigger: 'blur' },
           { type: 'string', pattern: /[0-9]*/, message: 'Only contain numbers' }
         ],
         phone: [
-          { required: false, trigger: 'blur' },
-          { type: 'string', pattern: /[0-9]*/, min: 11, max: 11, message: 'Phone with 11 numbers' }
+          { type: 'string', pattern: /[0-9]*/, min: 11, max: 16 }
         ],
         email: [
           { required: true, massage: 'Email can not be empty', trigger: 'blur' },
@@ -335,6 +345,7 @@ export default {
         studentId: '',
         phone: '',
         email: '',
+        emailVerified: 1,
         roles: [],
         password: '',
         passwordCheck: ''
@@ -370,36 +381,28 @@ export default {
     // 批量导入用户按钮
     batchUser() {
       this.batchUserModal = true;
-      // this.userInfo.infoArea = '';
     },
     commitBatchUser() {
-      // this.userInfo.infoArea.split('\n').forEach(o => {
-      //   const info = o.split(/[]/)
-      // })
-      // vr data = []
-      // this.userInfo.infoArea.split(/[\s,]+/).
-      // var flag = 1
-      // row_data.forEach(function (item) {
-      //   var tmp = item.split(' ')
-      //   if (tmp.length < 3) {
-      //     flag = 0
-      //   } else {
-      //     var tmp_json = {
-      //       username: tmp[0],
-      //       password: tmp[1],
-      //       email: tmp[2]
-      //     }
-      //     data.push(tmp_json);
-      //   }
-      // })
-      // if (flag === 0) {
-      //   this.$Message.error('Invalid format');
-      // } else {
-      //   api.addUsers(data).then(_ => {
-      //     this.$Message.success('Success');
-      //     this.getUserList();
-      //   }, _ => (this.$Message.error('Failed')));
-      // }
+      if (this.excelData.length === 0) {
+        this.$Message.error('No data');
+      } else {
+        this.excelData.forEach(o => {
+          o.emailVerified = parseInt(o.emailVerified) || 0;
+          o.gender = parseInt(o.gender) || 2;
+        });
+        api.addUsers(this.excelData).then(_ => {
+          this.$Message.success('Success');
+          this.getUserList();
+          this.clearExcel();
+          this.batchUserModal = false;
+        }, err => {
+          this.$Message.error(err.message);
+          this.loading = false;
+          this.$nextTick(() => {
+            this.loading = true;
+          })
+        });
+      }
     },
     // 删除用户按钮
     deleteUser() {
