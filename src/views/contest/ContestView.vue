@@ -98,10 +98,11 @@
           <Input v-model="contestInfo.source" />
         </FormItem>
         <FormItem label="Announcement">
-          <Input v-model="contestInfo.markdownDescription" type="textarea" :autosize="{minRows: 3,maxRows: 6}"/>
+          <Input v-model="contestInfo.markdownDescription" type="textarea" :autosize="{minRows: 3}"/>
         </FormItem>
         <FormItem label="Participants">
-          <Input v-model="contestInfo.participants" type="textarea" placeholder="Separated user by a space" :autosize="{minRows: 3,maxRows: 6}"/>
+          <Input v-model="contestInfo.participants" type="textarea" :autosize="{minRows: 3}"/>
+          <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
         </FormItem>
 
         <FormItem label="Forzen" required>
@@ -234,7 +235,8 @@ export default {
           contestEnd: {}
         }
       },
-      oldProblemCode: ''
+      oldProblemCode: '',
+      now: 0
     }
   },
   filters: {
@@ -391,7 +393,7 @@ export default {
           mode: 'acm',
           isPublic: 1,
           openness: 'public',
-          frozenTime: 60,
+          frozenTime: 0,
           contestRunning: {
             displayPeerSubmission: 1,
             displayRank: 1,
@@ -450,7 +452,7 @@ export default {
           ...this.contestInfo,
           gmtStart: new Date(this.contestInfo.gmtStart).getTime(),
           gmtEnd: new Date(this.contestInfo.gmtEnd).getTime(),
-          participants: this.contestInfo.participants.split(','),
+          participants: this.contestInfo.participants.split(/[\s,]+/),
           problems
         }
         api[this.isAddContest ? 'createContest' : 'updateContest'](data).then(_ => {
