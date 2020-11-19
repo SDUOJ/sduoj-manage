@@ -116,7 +116,10 @@
       v-model="descriptionModel"
       width="80%"
       footer-hide
-      :closable="false">
+      :mask-closable="false">
+      <template slot="header">
+        <ProblemCode :problemCode="problemInfo.problemCode"/>
+      </template>
       <ProblemDescription ref="ProblemDescription" />
     </Modal>
 
@@ -124,10 +127,12 @@
       v-model="checkpointModel"
       width="80%"
       ok-text="Save"
-      cancel-text="Unsave"
       :mask-closable="false"
       :loading="uploadModalLoading"
       @on-ok="saveCheckpoints">
+      <template slot="header">
+        <ProblemCode :problemCode="problemInfo.problemCode"/>
+      </template>
       <ProblemCheckpoint ref="ProblemCheckpoint" />
     </Modal>
   </div>
@@ -245,10 +250,12 @@ export default {
     },
     showProblemDescriptions: function(problem) {
       this.$refs.ProblemDescription.query(problem);
+      this.problemInfo = problem;
       this.descriptionModel = true;
     },
     showProblemCheckpoints: function(problem) {
       this.$refs.ProblemCheckpoint.query(problem.problemCode);
+      this.problemInfo = problem;
       this.checkpointModel = true;
     },
     saveCheckpoints: function() {

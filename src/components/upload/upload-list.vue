@@ -1,5 +1,5 @@
 <template>
-  <div style="max-height:500px;overflow-y:auto;overflow-x:hidden;">
+  <div style="max-height:200px;overflow-y:auto;overflow-x:hidden;">
     <ul :class="[prefixCls + '-list']">
       <li
         v-for="file in files"

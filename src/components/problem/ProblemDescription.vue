@@ -36,7 +36,7 @@
        </template>
      </Table>
      <div class="footer-tools">
-       <Button type="default" size="small" class="float-left footer-btn" @click="onAddDescription">Add</Button>
+       <Button type="primary" size="small" class="float-right footer-btn" @click="onAddDescription">Add</Button>
      </div>
 
      <Modal
