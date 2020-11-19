@@ -16,7 +16,7 @@
         </Header>
         <Content :style="{padding: '16px 16px 16px'}" class="layoutContent">
           <router-view></router-view>
-          <div class="footer" v-once v-html='footerInfo'></div>
+          <div class="footer" v-once v-html="copyright"></div>
         </Content>
       </Layout>
     </Layout>
@@ -26,6 +26,8 @@
 <script>
 import NavBar from '@/components/NavBar';
 import { mapGetters, mapState } from 'vuex';
+
+import api from '_u/api';
 
 export default {
   data: function () {
@@ -40,7 +42,7 @@ export default {
   },
   components: { NavBar },
   computed: {
-    ...mapState(['footerInfo']),
+    ...mapState(['copyright']),
     ...mapGetters('user', ['username', 'avatar']),
     menuitemClasses: function () {
       return [
@@ -56,7 +58,10 @@ export default {
       }
     }
   },
-  mounted: function () {
+  created: async function () {
+    this.$store.commit('updateCopyright', {
+      copyright: await api.getCopyright()
+    });
   }
 };
 </script>

@@ -7,22 +7,12 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    footerInfo: '2020-2020 &copy; Shandong University',
+    copyright: '',
     pathComponents: []
   },
   mutations: {
-    updateFooterInfo(state, info) {
-      state.footerInfo = info;
-    },
-    updatePathComponents(state, route) {
-      let matched = route.matched;
-      if (matched.length === 0 || matched[0].name !== 'home') {
-        matched = [{
-          path: '/home',
-          meta: { title: '首页' }
-        }].concat(matched);
-      }
-      state.pathComponents = matched;
+    updateCopyright(state, payload) {
+      state.copyright = payload.copyright;
     }
   },
   actions: {},
