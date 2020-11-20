@@ -55,7 +55,7 @@
       :title="isAddContest ? 'Create Contest' : contestInfo.contestId"
       :loading="modalLoading"
       @on-ok="commitContestInfo">
-      <Form ref="contestInfoModal" :model="contestInfo" :label-width="115" class="modal-form">
+      <Form ref="contestInfoModal" :model="contestInfo" :rules="contestInfoRules" class="modal-form">
         <FormItem label="Title" prop="contestTitle" required>
           <Input v-model="contestInfo.contestTitle" :placeholder="contestInfo.contestTitle"></Input>
         </FormItem>
@@ -105,7 +105,12 @@
           <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
         </FormItem>
 
-        <FormItem label="Forzen" required>
+        <FormItem label="Unofficial Participants" prop="unofficialParticipants">
+          <Input v-model="contestInfo.unofficialParticipants" type="textarea" :autosize="{minRows: 3}"/>
+          <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
+        </FormItem>
+
+        <FormItem label="Frozen" required>
           <InputNumber v-model="contestInfo.features.frozenTime" :min="0" />
         </FormItem>
 
@@ -121,41 +126,47 @@
           <Checkbox v-model="contestInfo.features.contestEnd.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
           <Checkbox v-model="contestInfo.features.contestEnd.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
         </FormItem>
-        <Table
-          disabled-hover
-          :columns="addProblemTableColumns"
-          :data="contestInfo.problems"
-          class="modal-form-problem">
-          <template slot-scope="{ index }" slot="deleteProblem">
-            <span class="hover" @click="move(index, 1)"><Icon type="md-arrow-down" /></span>
-            <span class="hover" @click="move(index, -1)" style="margin: 0 5px"><Icon type="md-arrow-up" /></span>
-            <span class="hover" @click="handleContestProblemDelete(index)"><Icon type="md-remove" color="#CD6155" /></span>
-          </template>
-          <template slot-scope="{ index }" slot="index">
-            <span>{{ index | contestProblemId }}</span>
-          </template>
-          <template slot-scope="{ index }" slot="problemCode">
-            <Input
-              v-model="contestInfo.problems[index].problemCode"
-              @on-focus="contestInfo.problems[index].oldProblemCode = contestInfo.problems[index].problemCode"
-              @on-blur="blurProblemCodeInput(index)" />
-          </template>
-          <template slot-scope="{ index }" slot="problemTitle">
-            <Input v-model="contestInfo.problems[index].problemTitle" />
-          </template>
-          <template slot-scope="{ index }" slot="problemWeight">
-            <InputNumber v-model="contestInfo.problems[index].problemWeight" :min="0" />
-          </template>
-          <template slot-scope="{ index }" slot="problemDescriptionId">
-            <Select v-model="contestInfo.problems[index].problemDescriptionId" transfer>
-              <Option v-for="item in contestInfo.problems[index].problemDescriptionList" :key="item.id" :value="item.id" :label="item.title" />
-            </Select>
-          </template>
-          <template slot-scope="{ index }" slot="check">
-            <Icon v-if="contestInfo.problems[index].problemSearch === 1" type="md-checkmark" color="#50ad56" />
-            <Icon v-else type="md-close" color="#CD6155" />
-          </template>
-        </Table>
+        <FormItem prop="problems">
+          <Table
+            disabled-hover
+            :max-height="600"
+            :columns="addProblemTableColumns"
+            :data="contestInfo.problems"
+            class="modal-form-problem">
+            <template slot-scope="{ index }" slot="deleteProblem">
+              <span class="hover" @click="move(index, 1)"><Icon type="md-arrow-down" /></span>
+              <span class="hover" @click="move(index, -1)" style="margin: 0 5px"><Icon type="md-arrow-up" /></span>
+              <span class="hover" @click="handleContestProblemDelete(index)"><Icon type="md-remove" color="#CD6155" /></span>
+            </template>
+            <template slot-scope="{ index }" slot="index">
+              <span>{{ index | contestProblemId }}</span>
+            </template>
+            <template slot-scope="{ index }" slot="problemCode">
+              <Input
+                v-model="contestInfo.problems[index].problemCode"
+                @on-focus="contestInfo.problems[index].oldProblemCode = contestInfo.problems[index].problemCode"
+                @on-blur="blurProblemCodeInput(index)" />
+            </template>
+            <template slot-scope="{ index }" slot="problemTitle">
+              <Input v-model="contestInfo.problems[index].problemTitle" />
+            </template>
+            <template slot-scope="{ index }" slot="problemWeight">
+              <InputNumber v-model="contestInfo.problems[index].problemWeight" :min="0" />
+            </template>
+            <template slot-scope="{ index }" slot="problemDescriptionId">
+              <Select v-model="contestInfo.problems[index].problemDescriptionId" transfer>
+                <Option v-for="item in contestInfo.problems[index].problemDescriptionList" :key="item.id" :value="item.id" :label="item.title" />
+              </Select>
+            </template>
+            <template slot-scope="{ index }" slot="color">
+              <ColorPicker v-model="contestInfo.problems[index].problemColor" transfer />
+            </template>
+            <template slot-scope="{ index }" slot="check">
+              <Icon v-if="contestInfo.problems[index].problemSearch === 1" type="md-checkmark" color="#50ad56" />
+              <Icon v-else type="md-close" color="#CD6155" />
+            </template>
+          </Table>
+        </FormItem>
       </Form>
     </Modal>
     <!-- 比赛信息修改框 -->
@@ -170,10 +181,35 @@ import { mapGetters, mapState } from 'vuex';
 
 import { Page } from '_c/mixins';
 import { CONTEST_OPENNESS } from '_u/constants';
+function contestProblemId(problemCode) {
+  problemCode = parseInt(problemCode);
+  const str = [];
+  do {
+    const ch = problemCode % 26;
+    if (str.length === 0) {
+      str.push(String.fromCharCode(65 + ch));
+    } else {
+      str.push(String.fromCharCode(64 + ch));
+    }
+    problemCode = parseInt(problemCode / 26);
+  } while (problemCode > 0)
+  return str.reverse().join('');
+}
 
 export default {
   mixins: [Page],
   data: function() {
+    const validateUnofficialParticipants = (rule, value, callback) => {
+      const participants = this.contestInfo.participants.split(/[\s,]+/);
+      const observers = this.contestInfo.unofficialParticipants.split(/[\s,]+/);
+      for (let i = 0; i < observers.length; ++i) {
+        if (observers[i] && !participants.includes(observers[i])) {
+          callback(new Error('Unofficial participants must be the subset of participants'));
+          return;
+        }
+      }
+      callback();
+    };
     return {
       // 比赛列表 - 列类型
       contestTableColumns: [
@@ -208,6 +244,7 @@ export default {
         { title: 'Alias', slot: 'problemTitle' },
         { title: 'Description', width: 200, slot: 'problemDescriptionId' },
         { title: 'Weight', width: 100, slot: 'problemWeight' },
+        { title: 'Color', slot: 'color' },
         { title: '\b', width: 70, slot: 'check' }
       ],
       selectedContest: [],
@@ -222,6 +259,11 @@ export default {
         { title: 'participantNum', key: 'participantNum' },
         { title: 'source', key: 'source' }
       ],
+      contestInfoRules: {
+        unofficialParticipants: [
+          { validator: validateUnofficialParticipants, trigger: 'blur' }
+        ]
+      },
       // 比赛信息修改模态框标记
       contestInfoModal: false,
       // 添加比赛模态框标记
@@ -248,20 +290,7 @@ export default {
       return [Math.floor(duration.asHours()), minutes, seconds].join(':');
     },
     // 二十六进制转换
-    contestProblemId: problemCode => {
-      problemCode = parseInt(problemCode);
-      const str = [];
-      do {
-        const ch = problemCode % 26;
-        if (str.length === 0) {
-          str.push(String.fromCharCode(65 + ch));
-        } else {
-          str.push(String.fromCharCode(64 + ch));
-        }
-        problemCode = parseInt(problemCode / 26);
-      } while (problemCode > 0)
-      return str.reverse().join('');
-    }
+    contestProblemId: problemCode => contestProblemId(problemCode)
   },
   methods: {
     // 表格全选
@@ -282,6 +311,7 @@ export default {
         this.$set(this.contestInfo, 'password', ret.password);
         this.$set(this.contestInfo, 'problems', ret.problems);
         this.$set(this.contestInfo, 'participants', ret.participants.join(','));
+        this.$set(this.contestInfo, 'unofficialParticipants', ret.unofficialParticipants.join(','));
         this.$set(this.contestInfo, 'markdownDescription', ret.markdownDescription);
         if (this.contestInfo.problems) {
           this.contestInfo.problems.forEach(item => {
@@ -353,6 +383,7 @@ export default {
         problemSearch: 0,
         problemDescriptionId: '',
         problemDescriptionList: [],
+        problemColor: '',
         oldProblemCode: ''
       });
       this.blurProblemCodeInput(this.contestInfo.problems.length - 1);
@@ -414,6 +445,7 @@ export default {
         markdownDescription: '',
         problems: [],
         participants: '',
+        unofficialParticipants: '',
         password: ''
       }
       this.isAddContest = true;
@@ -421,26 +453,26 @@ export default {
     },
     commitContestInfo: function() {
       this.$refs.contestInfoModal.validate(valid => {
+        let ready = true;
         if (!valid) {
           this.$Message.error('Invalid format');
-          this.modalLoading = false;
-          this.$nextTick(() => {
-            this.modalLoading = true;
-          });
-          return;
+          ready = false;
         }
-        const problems = this.contestInfo.problems
-          .filter(item => item.problemSearch === 1)
-          .map(item => {
-            return {
-              problemCode: item.problemCode,
-              problemTitle: item.problemTitle,
-              problemDescriptionId: item.problemDescriptionId,
-              problemWeight: item.problemWeight
+        if (ready) {
+          if (this.contestInfo.problems.length === 0) {
+            this.$Message.error('Add at least one problem');
+            ready = false;
+          }
+        }
+        if (ready) {
+          this.contestInfo.problems.forEach((o, i) => {
+            if (!o.problemSearch || !o.problemDescriptionId || !o.problemTitle) {
+              this.$Message.error(`Problem ${contestProblemId(i)} is not ready`);
+              ready = false;
             }
           });
-        if (problems.length === 0) {
-          this.$Message.error('Add at least one problem');
+        }
+        if (!ready) {
           this.modalLoading = false;
           this.$nextTick(() => {
             this.modalLoading = true;
@@ -453,7 +485,16 @@ export default {
           gmtStart: new Date(this.contestInfo.gmtStart).getTime(),
           gmtEnd: new Date(this.contestInfo.gmtEnd).getTime(),
           participants: this.contestInfo.participants.split(/[\s,]+/),
-          problems
+          unofficialParticipants: this.contestInfo.unofficialParticipants.split(/[\s,]+/),
+          problems: this.contestInfo.problems.map(o => {
+            return {
+              problemColor: o.problemColor,
+              problemCode: o.problemCode,
+              problemTitle: o.problemTitle,
+              problemDescriptionId: o.problemDescriptionId,
+              problemWeight: o.problemWeight
+            };
+          })
         }
         api[this.isAddContest ? 'createContest' : 'updateContest'](data).then(_ => {
           this.$Message.success('Success');
