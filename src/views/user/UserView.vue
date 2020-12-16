@@ -1,13 +1,3 @@
-<!--
-   Copyright 2020-2020 the original author or authors.
-
-   Licensed under the General Public License, Version 3.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-        https://www.gnu.org/licenses/gpl-3.0.en.html
- -->
-
 <template>
   <div>
     <Card dis-hover title="User">
@@ -433,13 +423,28 @@ export default {
       if (this.selectedUsers.length === 0) {
         this.$Message.error('No selected users');
       } else {
-        this.$refs.exportUserTable.exportCsv({
-          quoted: true,
-          filename: 'users',
-          columns: this.exportUserTableColumns,
-          data: this.selectedUsers
+        import('_u/excel').then(excel => {
+          const header = ['userId', 'username', 'nickname', 'email', 'phone', 'studentId', 'gender', 'emailVerified', 'roles'];
+          const data = this.selectedUsers.map(o => {
+            return [
+              o.userId,
+              o.username,
+              o.nickname,
+              o.email,
+              o.phone.toString(),
+              o.studentId.toString(),
+              o.gender,
+              o.emailVerified,
+              (o.roles || []).join(',')
+            ];
+          })
+          excel.export_json_to_excel({
+            header,
+            data,
+            filename: 'user'
+          });
+          this.$Message.success('Success');
         });
-        this.$Message.success('Success');
       }
     },
     getUserList() {
