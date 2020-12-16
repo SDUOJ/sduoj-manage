@@ -11,7 +11,7 @@
 export default {
   data: function() {
     return {
-      pageSizeOpts: [20, 40, 60, 80],
+      pageSizeOpts: [20, 40, 60, 80, 150],
       total: 0
     }
   },
