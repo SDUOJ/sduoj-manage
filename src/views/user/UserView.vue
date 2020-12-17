@@ -181,10 +181,6 @@
       <Table :max-height="600" :columns="excelColumns" :data="excelData" v-if="excelData.length > 0" />
     </Modal>
     <!-- 批量导入模态框 -->
-
-    <div style="display: none;">
-      <Table ref="exportUserTable" />
-    </div>
   </div>
 </template>
 
@@ -212,23 +208,12 @@ export default {
         { type: 'selection', width: 60, align: 'center' },
         { key: 'userId' },
         { title: 'Username', key: 'username' },
-        { title: 'Sex', slot: 'gender' },
+        { title: 'Nickname', key: 'nickname' },
+        { title: 'Sex', slot: 'gender', width: 80 },
         { title: 'Student ID', key: 'studentId', sortable: 'true' },
         { title: 'Email', key: 'email' },
         { title: 'Roles', slot: 'role' },
         { title: '\b', slot: 'action' }
-      ],
-      // 表格导出格式
-      exportUserTableColumns: [
-        { title: 'userId', key: 'userId' },
-        { title: 'username', key: 'username' },
-        { title: 'nickname', key: 'nickname' },
-        { title: 'email', key: 'email' },
-        { title: 'emailVerified', key: 'emailVerified' },
-        { title: 'phone', key: 'phone' },
-        { title: 'gender', key: 'gender' },
-        { title: 'studentId', key: 'studentId' },
-        { title: 'roles', key: 'roles' }
       ],
       userInfoRule: {
         username: [
