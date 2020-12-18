@@ -55,24 +55,48 @@
       :mask-closable="false"
       :loading="true"
       :title="curDescription.title"
-      @on-ok="updateDescriptionContent">
-       <mavon-editor v-model="curDescription.markdownDescription" style="min-height: 600px"/>
+      @on-ok="updateDescriptionContent"
+      @on-cancel="closeContestModal">
+        <!-- <span @click="attachmentModal = true">attachment</span> -->
+        <details>
+          <summary>Upload File Attachment</summary>
+          <Upload
+            multiple
+            paste
+            type="drag"
+            :max-size="102400"
+            :file-list.sync="fileList"
+            ref="upload">
+            <div style="padding: 20px 0">
+              <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+              <p>Click or drag files here to upload</p>
+            </div>
+          </Upload>
+          <div style="width: 100%; margin: 5px 0" class="clearfix">
+            <Button style="float: right;" size="small" @click="$attachAdd">Add</Button>
+          </div>
+        </details>
+        <mavon-editor ref="md" @imgAdd="$imgAdd" v-model="curDescription.markdownDescription" style="min-height: 600px"/>
      </Modal>
    </div>
 </template>
 
 <script>
-import api from '_u/api';
 import { mavonEditor } from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
 
+import api from '_u/api';
+import { overrideFunction } from '_u/override';
+
+import Upload from '_c/upload/upload';
+
 export default {
   name: 'ProblemDescription',
-  components: { mavonEditor },
+  components: { mavonEditor, Upload },
   directives: {
     focus: {
       inserted: function (el) {
-        el.querySelector('input').focus()
+        el.querySelector('input').focus();
       }
     }
   },
@@ -95,7 +119,8 @@ export default {
       },
       problem: {},
       loading: false,
-      contentModal: false
+      contentModal: false,
+      fileList: []
     }
   },
   methods: {
@@ -129,9 +154,8 @@ export default {
       }).then(_ => {
         this.$Message.success('Success');
         this.contentModal = false;
-      }, err => {
-        this.$Message.error(err);
-      })
+        this.clear();
+      });
     },
     onMousedown: function(id, isPublic) {
       this.curDescription.id = id;
@@ -190,6 +214,8 @@ export default {
       }).then(ret => {
         this.curDescription = ret;
         this.contentModal = true;
+      }, err => {
+        this.$Message.error(err.message);
       });
     },
     getProblemDescriptions: function(problemCode) {
@@ -207,7 +233,56 @@ export default {
     query: function(problem) {
       this.problem = problem;
       this.getProblemDescriptions(problem.problemCode);
+    },
+    $imgAdd: function(pos, file) {
+      const formdata = new FormData();
+      formdata.append('files', file);
+      api.multiUpload(formdata).then(ret => {
+        const $vm = this.$refs.md;
+        $vm.$img2Url(pos, `/api/filesys/download/${ret[0].id}/${ret[0].name}`);
+        $vm.$refs.toolbar_left.img_file = [[0, null]];
+        $vm.$refs.toolbar_left.num = 0;
+      }, err => {
+        this.$Message.error(err.message);
+      })
+    },
+    $attachAdd: function() {
+      const formdata = new FormData();
+      this.fileList.forEach(file => {
+        formdata.append('files', file.file)
+      });
+      api.multiUpload(formdata).then(ret => {
+        ret.forEach(o => {
+          const $vm = this.$refs.md;
+          // 去除特殊字符
+          /* eslint-disable no-useless-escape */
+          const _name = o.name.replace(/[\[\]\(\)\+\{\}&\|\\\*^%$#@\-]/g, '');
+          $vm.insertText($vm.getTextareaDom(),
+            {
+              prefix: '[' + _name + '](' + `/api/filesys/download/${o.id}/${o.name.replace(' ', '_')}` + ')',
+              subfix: '',
+              str: ''
+            }
+          );
+        });
+        this.$refs.upload.clearFiles();
+      }, err => {
+        this.$Message.error(err.message);
+      });
+    },
+    clear: function() {
+      this.$refs.upload.clearFiles();
+      const $vm = this.$refs.md;
+      $vm.$refs.toolbar_left.img_file = [[0, null]];
+      $vm.$refs.toolbar_left.num = 0;
+    },
+    closeContestModal: function() {
+      this.clear();
+      this.contentModal = false;
     }
+  },
+  mounted: function() {
+    overrideFunction(this.$refs.md);
   }
 }
 </script>
