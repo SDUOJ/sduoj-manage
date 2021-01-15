@@ -7,13 +7,14 @@
  *
  *      https://www.gnu.org/licenses/gpl-3.0.en.html
  */
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const resolve = dir => require('path').join(__dirname, dir);
 
-const path = require('path');
 module.exports = {
   chainWebpack: config => config.resolve.alias
-    .set('@', path.join(__dirname, 'src'))
-    .set('_c', path.join(__dirname, 'src/components'))
-    .set('_u', path.join(__dirname, 'src/utils')),
+    .set('@', resolve('src'))
+    .set('_c', resolve('src/components'))
+    .set('_u', resolve('src/utils')),
   configureWebpack: {
     module: {
       rules: [
@@ -27,7 +28,24 @@ module.exports = {
           ]
         }
       ]
-    }
+    },
+    plugins: [
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: 'node_modules/mavon-editor/dist/highlightjs',
+            to: resolve('dist/highlightjs'), // 插件将会把文件导出于/dist/highlightjs之下
+          },
+          {
+            from: 'node_modules/mavon-editor/dist/markdown',
+            to: resolve('dist/markdown'), // 插件将会把文件导出于/dist/markdown之下
+          },
+          {
+            from: 'node_modules/mavon-editor/dist/katex', // 插件将会把文件导出
+            to: resolve('dist/katex')
+          }]
+      })
+    ]
   },
   devServer: {
     disableHostCheck: true,

@@ -1,6 +1,11 @@
 <template>
   <div>
-    <mavon-editor ref="md" @imgAdd="$imgAdd" v-model="description.markdownDescription" style="min-height: 600px"/>
+    <mavon-editor
+      ref="md"
+      @imgAdd="$imgAdd"
+      v-model="description.markdownDescription"
+      :externalLink="externalLink"
+      style="min-height: 600px"/>
   </div>
 </template>
 
@@ -8,6 +13,7 @@
 import { mavonEditor } from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
 import api from '_u/api';
+import { SDUOJ_ENV } from '_u/env';
 
 // 替换 mavonEditor 的 $img2Url 方法
 // 占位符识别 <img src="fileIndex" ...
@@ -61,7 +67,34 @@ export default {
   name: 'MarkdownEditor',
   components: {mavonEditor},
   data: function() {
+    const externalLink = SDUOJ_ENV.PROD ? {
+      markdown_css: function () {
+        // 这是你的markdown css文件路径
+        return '/markdown/github-markdown.min.css';
+      },
+      hljs_js: function () {
+        // 这是你的hljs文件路径
+        return '/highlightjs/highlight.min.js';
+      },
+      hljs_css: function (css) {
+        // 这是你的代码高亮配色文件路径
+        return '/highlightjs/styles/' + css + '.min.css';
+      },
+      hljs_lang: function (lang) {
+        // 这是你的代码高亮语言解析路径
+        return '/highlightjs/languages/' + lang + '.min.js';
+      },
+      katex_css: function () {
+        // 这是你的katex配色方案路径路径
+        return '/katex/katex.min.css';
+      },
+      katex_js: function () {
+        // 这是你的katex.js路径
+        return '/katex/katex.min.js';
+      }
+    } : true;
     return {
+      externalLink,
       description: {
         markdownDescription: ''
       }
