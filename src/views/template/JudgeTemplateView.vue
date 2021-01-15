@@ -132,13 +132,14 @@ export default {
     return {
       judgeTemplateColumns: [
         { type: 'selection', width: 60, align: 'center' },
-        { key: 'id' },
+        { key: 'id', maxWidth: 50 },
         { title: 'Type', slot: 'type' },
+        { title: 'Owner', key: 'username' },
         { title: 'Title', key: 'title' },
         { title: 'Comment', key: 'comment' },
         { title: 'Remote OJ', key: 'remoteOj' },
-        { title: 'Create', slot: 'create-time' },
-        { title: 'Update', slot: 'update-time' },
+        { title: 'Create', slot: 'create-time', minWidth: 50 },
+        { title: 'Update', slot: 'update-time', minWidth: 50 },
         { title: '\b', slot: 'action' }
       ],
       judgeTemplateData: [],
