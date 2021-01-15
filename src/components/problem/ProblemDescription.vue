@@ -57,7 +57,6 @@
       :title="curDescription.title"
       @on-ok="updateDescriptionContent"
       @on-cancel="closeContestModal">
-        <!-- <span @click="attachmentModal = true">attachment</span> -->
         <details>
           <summary>Upload File Attachment</summary>
           <Upload
@@ -73,26 +72,23 @@
             </div>
           </Upload>
           <div style="width: 100%; margin: 5px 0" class="clearfix">
-            <Button style="float: right;" size="small" @click="$attachAdd">Add</Button>
+            <Button style="float: right;" size="small" @click="attachAdd">Add</Button>
           </div>
         </details>
-        <mavon-editor ref="md" @imgAdd="$imgAdd" v-model="curDescription.markdownDescription" style="min-height: 600px"/>
+        <MarkdownEditor ref="md" />
      </Modal>
    </div>
 </template>
 
 <script>
-import { mavonEditor } from 'mavon-editor'
-import 'mavon-editor/dist/css/index.css'
-
 import api from '_u/api';
-import { overrideFunction } from '_u/override';
 
 import Upload from '_c/upload/upload';
+import MarkdownEditor from '_c/editor/MarkdownEditor';
 
 export default {
   name: 'ProblemDescription',
-  components: { mavonEditor, Upload },
+  components: { Upload, MarkdownEditor },
   directives: {
     focus: {
       inserted: function (el) {
@@ -124,9 +120,6 @@ export default {
     }
   },
   methods: {
-    selectionChange: function(selections) {
-      this.selectedDescriptions = selections;
-    },
     onAddDescription: function() {
       // 初始化描述内容为空
       const problemCode = this.problem.problemCode;
@@ -219,6 +212,7 @@ export default {
         descriptionId: row.id
       }).then(ret => {
         this.curDescription = ret;
+        this.$refs.md.setDescription(this.curDescription);
         this.contentModal = true;
       }, err => {
         this.$Message.error(err.message);
@@ -240,55 +234,21 @@ export default {
       this.problem = problem;
       this.getProblemDescriptions(problem.problemCode);
     },
-    $imgAdd: function(pos, file) {
-      const formdata = new FormData();
-      formdata.append('files', file);
-      api.multiUpload(formdata).then(ret => {
-        const $vm = this.$refs.md;
-        $vm.$img2Url(pos, `/api/filesys/download/${ret[0].id}/${ret[0].name}`);
-        $vm.$refs.toolbar_left.img_file = [[0, null]];
-        $vm.$refs.toolbar_left.num = 0;
-      }, err => {
+    attachAdd: function() {
+      this.$refs.md.$attachAdd(this.fileList).then(() => {
+        this.$refs.upload.clearFiles();
+      }).catch(err => {
         this.$Message.error(err.message);
       })
     },
-    $attachAdd: function() {
-      const formdata = new FormData();
-      this.fileList.forEach(file => {
-        formdata.append('files', file.file)
-      });
-      api.multiUpload(formdata).then(ret => {
-        ret.forEach(o => {
-          const $vm = this.$refs.md;
-          // 去除特殊字符
-          /* eslint-disable no-useless-escape */
-          const _name = o.name.replace(/[\[\]\(\)\+\{\}&\|\\\*^%$#@\-]/g, '');
-          $vm.insertText($vm.getTextareaDom(),
-            {
-              prefix: '[' + _name + '](' + `/api/filesys/download/${o.id}/${o.name.replace(' ', '_')}` + ')',
-              subfix: '',
-              str: ''
-            }
-          );
-        });
-        this.$refs.upload.clearFiles();
-      }, err => {
-        this.$Message.error(err.message);
-      });
-    },
     clear: function() {
       this.$refs.upload.clearFiles();
-      const $vm = this.$refs.md;
-      $vm.$refs.toolbar_left.img_file = [[0, null]];
-      $vm.$refs.toolbar_left.num = 0;
+      this.$refs.md.$clear();
     },
     closeContestModal: function() {
       this.clear();
       this.contentModal = false;
     }
-  },
-  mounted: function() {
-    overrideFunction(this.$refs.md);
   }
 }
 </script>
