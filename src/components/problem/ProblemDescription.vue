@@ -53,7 +53,7 @@
       v-model="contentModal"
       width="80%"
       :mask-closable="false"
-      :loading="true"
+      :loading="modalLoading"
       :title="curDescription.title"
       @on-ok="updateDescriptionContent"
       @on-cancel="closeContestModal">
@@ -114,7 +114,7 @@ export default {
         markdownDescription: ''
       },
       problem: {},
-      loading: false,
+      modalLoading: true,
       contentModal: false,
       fileList: []
     }
@@ -128,7 +128,6 @@ export default {
         title: this.descriptions.length === 0 ? 'Default' : `New ${this.descriptions.length}`,
         markdownDescription: ''
       }).then(async (ret) => {
-        this.$Message.success('Success');
         if (this.descriptions.length === 0) {
           this.curDescription.id = ret;
           try {
@@ -139,9 +138,10 @@ export default {
             return;
           }
         }
+        this.$Message.success('Success');
         this.getProblemDescriptions(problemCode);
       }, err => {
-        this.$Message.error(err);
+        this.$Message.error(err.message);
       });
     },
     onDeleteDescription: function(description) {
@@ -154,6 +154,12 @@ export default {
         this.$Message.success('Success');
         this.contentModal = false;
         this.clear();
+      }).catch(err => {
+        this.$Message.error(err.message);
+        this.modalLoading = false;
+        this.$nextTick(() => {
+          this.modalLoading = true;
+        })
       });
     },
     onMousedown: function(id, isPublic) {
@@ -220,18 +226,13 @@ export default {
     },
     getProblemDescriptions: function(problemCode) {
       return new Promise((resolve, reject) => {
-        this.loading = true;
         api.getProblemDescriptionList({ problemCode })
           .then(ret => {
             this.descriptions = ret.map(o => {
               return { ...o, isSelected: false }
             });
             resolve();
-          })
-          .catch(reject)
-          .finally(() => {
-            this.loading = false;
-          });
+          }).catch(reject)
       });
     },
     query: function(problem) {
