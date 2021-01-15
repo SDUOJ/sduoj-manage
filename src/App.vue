@@ -38,6 +38,7 @@ import NavBar from '@/components/NavBar';
 import { mapGetters, mapState } from 'vuex';
 
 import api from '_u/api';
+import { SDUOJ_ENV } from '_u/env';
 
 export default {
   data: function () {
@@ -54,18 +55,8 @@ export default {
   computed: {
     ...mapState(['copyright']),
     ...mapGetters('user', ['username', 'avatar']),
-    menuitemClasses: function () {
-      return [
-        'menu-item',
-        this.isCollapsed ? 'collapsed-menu' : ''
-      ]
-    },
     clientURL: function () {
-      if (process.env.NODE_ENV === 'production') {
-        return location.origin;
-      } else {
-        return process.env.VUE_APP_OJ_CLIENT;
-      }
+      return SDUOJ_ENV.PROD ? location.origin : process.env.VUE_APP_OJ_CLIENT;
     }
   },
   created: async function () {
