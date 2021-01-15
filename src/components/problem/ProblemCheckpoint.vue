@@ -308,8 +308,12 @@ export default {
       this.downloadLoading = true;
 
       api.zipDownload(data)
-        .catch(err => (this.$Message.error(err.message)))
-        .finally(() => (this.downloadLoading = false));
+        .catch(err => {
+          this.$Message.error(err.message);
+        })
+        .finally(() => {
+          this.downloadLoading = false;
+        });
     },
     onCheckpointUpdate: function () {
       this.$refs.CheckpointPreview.save((oldCheckpointId, newCheckpoint) => {
@@ -335,10 +339,14 @@ export default {
         return;
       }
       const checkpointId = row.checkpointId;
-      api.getCheckpointPreview(checkpointId).then(ret => {
-        this.$refs.CheckpointPreview.set(ret);
-        this.previewModal = true;
-      });
+      api.getCheckpointPreview(checkpointId)
+        .then(ret => {
+          this.$refs.CheckpointPreview.set(ret);
+          this.previewModal = true;
+        })
+        .catch(err => {
+          this.$Message.error(err.message);
+        })
     },
     setScores: function (score) {
       score = parseInt(score);
