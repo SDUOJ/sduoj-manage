@@ -394,13 +394,19 @@ export default {
       if (this.selectedUsers.length === 0) {
         this.$Message.error('No selected users');
       } else {
-        api.deleteUsers(this.selectedUsers.map(o => o.username))
-          .then(_ => {
-            this.$Message.success('Success');
-            this.getUserList();
-          }, err => {
-            this.$Message.error(err.message);
-          });
+        this.$Modal.confirm({
+          title: 'Confirm',
+          content: `Delete ${this.selectedUsers.length} selected users?`,
+          onOk: () => {
+            api.deleteUsers(this.selectedUsers.map(o => o.username))
+              .then(_ => {
+                this.$Message.success('Success');
+                this.getUserList();
+              }, err => {
+                this.$Message.error(err.message);
+              });
+          }
+        });
       }
     },
     // 文件导出按钮
