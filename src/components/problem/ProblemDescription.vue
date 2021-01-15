@@ -138,7 +138,13 @@ export default {
         this.$Message.success('Success');
         if (this.descriptions.length === 0) {
           this.curDescription.id = ret;
-          await this.updateDefaultDescription();
+          try {
+            await this.updateDefaultDescription(false, false);
+            await this.updateDescriptionVisibility(false, false);
+          } catch (err) {
+            this.$Message.error(err.message);
+            return;
+          }
         }
         this.getProblemDescriptions(problemCode);
       }, err => {
@@ -163,16 +169,16 @@ export default {
         this.curDescription.isPublic = isPublic === 1 ? 0 : 1;
       }
     },
-    updateDescriptionVisibility: function() {
+    updateDescriptionVisibility: function(showSuccess = true, showError = true) {
       return new Promise(resolve => {
         api.updateDescription({
           id: this.curDescription.id,
           isPublic: this.curDescription.isPublic
         }).then(_ => {
-          this.$Message.success('Success');
+          if (showSuccess) this.$Message.success('Success');
           resolve();
         }, err => {
-          this.$Message.error(err.message);
+          if (showError) this.$Message.error(err.message);
         });
       })
     },
@@ -189,7 +195,7 @@ export default {
         });
       }
     },
-    updateDefaultDescription: function() {
+    updateDefaultDescription: function(showSuccess = true, showError = true) {
       return new Promise(resolve => {
         if (this.problem.defaultDescriptionId === this.curDescription.id) {
           return;
@@ -198,13 +204,13 @@ export default {
           problemCode: this.problem.problemCode,
           defaultDescriptionId: this.curDescription.id
         }).then(_ => {
-          this.$Message.success('Success');
+          if (showSuccess) this.$Message.success('Success');
           resolve();
           this.$nextTick(() => {
             this.problem.defaultDescriptionId = this.curDescription.id;
           })
         }, err => {
-          this.$Message.error(err.message);
+          if (showError) this.$Message.error(err.message);
         })
       })
     },
