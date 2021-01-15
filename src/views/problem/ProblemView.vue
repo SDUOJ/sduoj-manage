@@ -50,6 +50,8 @@
         <template slot-scope="{ row }" slot="edit">
           <span class="clickable" @click="onEditProblem(row, false)">Edit</span>
           <Divider type="vertical" />
+          <span class="clickable" @click="onEditProblem(row, true)">Fork</span>
+          <Divider type="vertical" />
           <span class="clickable" @click="showProblemDescriptions(row)">Description</span>
           <Divider type="vertical" />
           <span class="clickable" @click="showProblemCheckpoints(row)">Checkpoints</span>
