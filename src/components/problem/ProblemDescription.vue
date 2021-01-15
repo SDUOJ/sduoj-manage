@@ -219,20 +219,24 @@ export default {
       });
     },
     getProblemDescriptions: function(problemCode) {
-      this.loading = true;
-      api.getProblemDescriptionList({ problemCode })
-        .then(ret => {
-          this.descriptions = ret.map(o => {
-            return { ...o, isSelected: false }
+      return new Promise((resolve, reject) => {
+        this.loading = true;
+        api.getProblemDescriptionList({ problemCode })
+          .then(ret => {
+            this.descriptions = ret.map(o => {
+              return { ...o, isSelected: false }
+            });
+            resolve();
           })
-        })
-        .finally(() => {
-          this.loading = false;
-        })
+          .catch(reject)
+          .finally(() => {
+            this.loading = false;
+          });
+      });
     },
     query: function(problem) {
       this.problem = problem;
-      this.getProblemDescriptions(problem.problemCode);
+      return this.getProblemDescriptions(problem.problemCode);
     },
     attachAdd: function() {
       this.$refs.md.$attachAdd(this.fileList).then(() => {

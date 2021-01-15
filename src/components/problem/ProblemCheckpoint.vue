@@ -362,12 +362,16 @@ export default {
       }
     },
     query: function(problemCode) {
-      this.problemCode = problemCode;
-      this.loading = true;
-      api.getCheckpointList(problemCode).then(ret => {
-        this.totalCheckpoints = [...ret];
-      }).finally(() => {
-        this.loading = false;
+      return new Promise((resolve, reject) => {
+        this.problemCode = problemCode;
+        this.loading = true;
+        api.getCheckpointList(problemCode).then(ret => {
+          this.totalCheckpoints = [...ret];
+          resolve();
+        }).catch(reject)
+          .finally(() => {
+            this.loading = false;
+          });
       });
     },
     save: function (onSuccess, onError, onFinally) {
