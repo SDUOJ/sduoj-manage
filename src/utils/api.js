@@ -136,6 +136,9 @@ export default {
   createDescription: function (data) {
     return post('/manage/problem/createDescription', data);
   },
+  deleteDescription: function(params) {
+    return get('/manage/problem/deleteDescription', params);
+  },
   // ---------------------- 测试点相关 ----------------------
   // checkpoint单点上传
   uploadSingleCheckpoint: function (data) {

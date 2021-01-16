@@ -46,7 +46,7 @@
        </template>
      </Table>
      <div class="footer-tools">
-       <Button type="primary" size="small" class="float-right footer-btn" @click="onAddDescription">Add</Button>
+       <Button type="primary" size="small" class="float-right footer-btn" @click="onAddDescription" :loading="addLoading">Add</Button>
      </div>
 
      <Modal
@@ -115,6 +115,7 @@ export default {
       },
       problem: {},
       modalLoading: true,
+      addLoading: false,
       contentModal: false,
       fileList: []
     }
@@ -122,6 +123,7 @@ export default {
   methods: {
     onAddDescription: function() {
       // 初始化描述内容为空
+      this.addLoading = true;
       const problemCode = this.problem.problemCode;
       api.createDescription({
         problemCode,
@@ -130,12 +132,14 @@ export default {
       }).then(async (ret) => {
         if (this.descriptions.length === 0) {
           this.curDescription.id = ret;
+          this.getProblemDescriptions(problemCode).catch(err => {
+            this.$Message.error(err.message);
+          });
           try {
             await this.updateDefaultDescription(false, false);
             await this.updateDescriptionVisibility(false, false);
           } catch (err) {
             this.$Message.error(err.message);
-            return;
           }
         }
         this.$Message.success('Success');
@@ -144,9 +148,30 @@ export default {
         });
       }, err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        this.addLoading = false;
       });
     },
     onDeleteDescription: function(description) {
+      this.$Modal.confirm({
+        title: 'Confirm',
+        content: `Delete #${description.id}-${description.title}?`,
+        loading: true,
+        onOk: () => {
+          api.deleteDescription({
+            id: description.id
+          }).then(_ => {
+            this.$Message.success('Deleted');
+            this.getProblemDescriptions(this.problem.problemCode).catch(err => {
+              this.$Message.error(err.message);
+            });
+          }).catch(err => {
+            this.$Message.error(err.message);
+          }).finally(() => {
+            this.$Modal.remove();
+          });
+        }
+      });
     },
     onMousedown: function(id, isPublic) {
       this.curDescription.id = id;
