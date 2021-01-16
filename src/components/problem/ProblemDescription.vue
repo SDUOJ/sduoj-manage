@@ -46,18 +46,17 @@
        </template>
      </Table>
      <div class="footer-tools">
-       <Button type="primary" size="small" class="float-right footer-btn" @click="onAddDescription">Add</Button>
+       <Button type="primary" size="small" class="float-right footer-btn" @click="onAddDescription" :loading="addLoading">Add</Button>
      </div>
 
      <Modal
       v-model="contentModal"
       width="80%"
       :mask-closable="false"
-      :loading="true"
+      :loading="modalLoading"
       :title="curDescription.title"
       @on-ok="updateDescriptionContent"
       @on-cancel="closeContestModal">
-        <!-- <span @click="attachmentModal = true">attachment</span> -->
         <details>
           <summary>Upload File Attachment</summary>
           <Upload
@@ -73,26 +72,23 @@
             </div>
           </Upload>
           <div style="width: 100%; margin: 5px 0" class="clearfix">
-            <Button style="float: right;" size="small" @click="$attachAdd">Add</Button>
+            <Button style="float: right;" size="small" @click="attachAdd">Add</Button>
           </div>
         </details>
-        <mavon-editor ref="md" @imgAdd="$imgAdd" v-model="curDescription.markdownDescription" style="min-height: 600px"/>
+        <MarkdownEditor ref="md" />
      </Modal>
    </div>
 </template>
 
 <script>
-import { mavonEditor } from 'mavon-editor'
-import 'mavon-editor/dist/css/index.css'
-
 import api from '_u/api';
-import { overrideFunction } from '_u/override';
 
 import Upload from '_c/upload/upload';
+import MarkdownEditor from '_c/editor/MarkdownEditor';
 
 export default {
   name: 'ProblemDescription',
-  components: { mavonEditor, Upload },
+  components: { Upload, MarkdownEditor },
   directives: {
     focus: {
       inserted: function (el) {
@@ -118,34 +114,70 @@ export default {
         markdownDescription: ''
       },
       problem: {},
-      loading: false,
+      modalLoading: true,
+      addLoading: false,
       contentModal: false,
       fileList: []
     }
   },
   methods: {
-    selectionChange: function(selections) {
-      this.selectedDescriptions = selections;
-    },
     onAddDescription: function() {
       // 初始化描述内容为空
+      this.addLoading = true;
       const problemCode = this.problem.problemCode;
       api.createDescription({
         problemCode,
         title: this.descriptions.length === 0 ? 'Default' : `New ${this.descriptions.length}`,
         markdownDescription: ''
       }).then(async (ret) => {
-        this.$Message.success('Success');
         if (this.descriptions.length === 0) {
           this.curDescription.id = ret;
-          await this.updateDefaultDescription();
+          this.getProblemDescriptions(problemCode).catch(err => {
+            this.$Message.error(err.message);
+          });
+          try {
+            await this.updateDefaultDescription(false, false);
+            await this.updateDescriptionVisibility(false, false);
+          } catch (err) {
+            this.$Message.error(err.message);
+          }
         }
-        this.getProblemDescriptions(problemCode);
+        this.$Message.success('Success');
+        this.getProblemDescriptions(problemCode).catch(err => {
+          this.$Message.error(err.message);
+        });
       }, err => {
-        this.$Message.error(err);
+        this.$Message.error(err.message);
+      }).finally(() => {
+        this.addLoading = false;
       });
     },
     onDeleteDescription: function(description) {
+      this.$Modal.confirm({
+        title: 'Confirm',
+        content: `Delete #${description.id}-${description.title}?`,
+        loading: true,
+        onOk: () => {
+          api.deleteDescription({
+            id: description.id
+          }).then(_ => {
+            this.$Message.success('Deleted');
+            this.getProblemDescriptions(this.problem.problemCode).catch(err => {
+              this.$Message.error(err.message);
+            });
+          }).catch(err => {
+            this.$Message.error(err.message);
+          }).finally(() => {
+            this.$Modal.remove();
+          });
+        }
+      });
+    },
+    onMousedown: function(id, isPublic) {
+      this.curDescription.id = id;
+      if (isPublic !== undefined) {
+        this.curDescription.isPublic = isPublic === 1 ? 0 : 1;
+      }
     },
     updateDescriptionContent: function() {
       api.updateDescription({
@@ -155,26 +187,13 @@ export default {
         this.$Message.success('Success');
         this.contentModal = false;
         this.clear();
-      });
-    },
-    onMousedown: function(id, isPublic) {
-      this.curDescription.id = id;
-      if (isPublic !== undefined) {
-        this.curDescription.isPublic = isPublic === 1 ? 0 : 1;
-      }
-    },
-    updateDescriptionVisibility: function() {
-      return new Promise(resolve => {
-        api.updateDescription({
-          id: this.curDescription.id,
-          isPublic: this.curDescription.isPublic
-        }).then(_ => {
-          this.$Message.success('Success');
-          resolve();
-        }, err => {
-          this.$Message.error(err.message);
+      }).catch(err => {
+        this.$Message.error(err.message);
+        this.modalLoading = false;
+        this.$nextTick(() => {
+          this.modalLoading = true;
         });
-      })
+      });
     },
     updateDescriptionTitle: function(row) {
       row.isSelected = !row.isSelected;
@@ -189,100 +208,85 @@ export default {
         });
       }
     },
-    updateDefaultDescription: function() {
-      return new Promise(resolve => {
+    updateDescriptionVisibility: function(showSuccess = true, showError = true) {
+      return new Promise((resolve, reject) => {
+        api.updateDescription({
+          id: this.curDescription.id,
+          isPublic: this.curDescription.isPublic
+        }).then(_ => {
+          resolve(_);
+          if (showSuccess) this.$Message.success('Success');
+        }, err => {
+          reject(err);
+          if (showError) this.$Message.error(err.message);
+        });
+      });
+    },
+    updateDefaultDescription: function(showSuccess = true, showError = true) {
+      return new Promise((resolve, reject) => {
         if (this.problem.defaultDescriptionId === this.curDescription.id) {
+          const err = {
+            message: 'Must have one default description'
+          };
+          // reject(err);
+          if (showError)  this.$Message.error(err.message);
           return;
         }
         api.updateProblemInfo({
           problemCode: this.problem.problemCode,
           defaultDescriptionId: this.curDescription.id
         }).then(_ => {
-          this.$Message.success('Success');
-          resolve();
+          resolve(_);
+          if (showSuccess) this.$Message.success('Success');
           this.$nextTick(() => {
             this.problem.defaultDescriptionId = this.curDescription.id;
           })
         }, err => {
-          this.$Message.error(err.message);
-        })
-      })
+          reject(err);
+          if (showError) this.$Message.error(err.message);
+        });
+      });
     },
     onEditDescription: function(row) {
       api.getProblemDescription({
         descriptionId: row.id
       }).then(ret => {
-        this.curDescription = ret;
+        this.$refs.md.setDescription(this.curDescription = ret);
         this.contentModal = true;
       }, err => {
         this.$Message.error(err.message);
       });
     },
     getProblemDescriptions: function(problemCode) {
-      this.loading = true;
-      api.getProblemDescriptionList({ problemCode })
-        .then(ret => {
-          this.descriptions = ret.map(o => {
-            return { ...o, isSelected: false }
-          })
-        })
-        .finally(() => {
-          this.loading = false;
-        })
+      return new Promise((resolve, reject) => {
+        api.getProblemDescriptionList({ problemCode })
+          .then(ret => {
+            this.descriptions = ret.map(o => {
+              return { ...o, isSelected: false }
+            });
+            resolve(ret);
+          }).catch(reject);
+      });
     },
     query: function(problem) {
       this.problem = problem;
-      this.getProblemDescriptions(problem.problemCode);
+      return this.getProblemDescriptions(problem.problemCode);
     },
-    $imgAdd: function(pos, file) {
-      const formdata = new FormData();
-      formdata.append('files', file);
-      api.multiUpload(formdata).then(ret => {
-        const $vm = this.$refs.md;
-        $vm.$img2Url(pos, `/api/filesys/download/${ret[0].id}/${ret[0].name}`);
-        $vm.$refs.toolbar_left.img_file = [[0, null]];
-        $vm.$refs.toolbar_left.num = 0;
-      }, err => {
-        this.$Message.error(err.message);
-      })
-    },
-    $attachAdd: function() {
-      const formdata = new FormData();
-      this.fileList.forEach(file => {
-        formdata.append('files', file.file)
-      });
-      api.multiUpload(formdata).then(ret => {
-        ret.forEach(o => {
-          const $vm = this.$refs.md;
-          // 去除特殊字符
-          /* eslint-disable no-useless-escape */
-          const _name = o.name.replace(/[\[\]\(\)\+\{\}&\|\\\*^%$#@\-]/g, '');
-          $vm.insertText($vm.getTextareaDom(),
-            {
-              prefix: '[' + _name + '](' + `/api/filesys/download/${o.id}/${o.name.replace(' ', '_')}` + ')',
-              subfix: '',
-              str: ''
-            }
-          );
-        });
+    attachAdd: function() {
+      this.$refs.md.$attachAdd(this.fileList).then(() => {
         this.$refs.upload.clearFiles();
-      }, err => {
+      }).catch(err => {
         this.$Message.error(err.message);
       });
     },
     clear: function() {
       this.$refs.upload.clearFiles();
-      const $vm = this.$refs.md;
-      $vm.$refs.toolbar_left.img_file = [[0, null]];
-      $vm.$refs.toolbar_left.num = 0;
+      this.$refs.md.$clear();
     },
     closeContestModal: function() {
       this.clear();
       this.contentModal = false;
     }
-  },
-  mounted: function() {
-    overrideFunction(this.$refs.md);
   }
 }
 </script>

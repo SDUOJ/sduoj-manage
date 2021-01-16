@@ -50,6 +50,8 @@
         <template slot-scope="{ row }" slot="edit">
           <span class="clickable" @click="onEditProblem(row, false)">Edit</span>
           <Divider type="vertical" />
+          <span class="clickable" @click="onEditProblem(row, true)">Fork</span>
+          <Divider type="vertical" />
           <span class="clickable" @click="showProblemDescriptions(row)">Description</span>
           <Divider type="vertical" />
           <span class="clickable" @click="showProblemCheckpoints(row)">Checkpoints</span>
@@ -260,14 +262,20 @@ export default {
       this.problemInfoModal = true;
     },
     showProblemDescriptions: function(problem) {
-      this.$refs.ProblemDescription.query(problem);
-      this.problemInfo = problem;
-      this.descriptionModel = true;
+      this.$refs.ProblemDescription.query(problem).then(() => {
+        this.problemInfo = problem;
+        this.descriptionModel = true;
+      }).catch(err => {
+        this.$Message.error(err.message);
+      });
     },
     showProblemCheckpoints: function(problem) {
-      this.$refs.ProblemCheckpoint.query(problem.problemCode);
-      this.problemInfo = problem;
-      this.checkpointModel = true;
+      this.$refs.ProblemCheckpoint.query(problem.problemCode).then(() => {
+        this.problemInfo = problem;
+        this.checkpointModel = true;
+      }).catch(err => {
+        this.$Message.error(err.message);
+      })
     },
     saveCheckpoints: function() {
       this.$refs.ProblemCheckpoint.save(() => {
