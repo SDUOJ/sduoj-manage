@@ -27,7 +27,7 @@
           <Time :time="row.gmtStart | parseInt" type="datetime" />
         </template>
         <template slot-scope="{ row }" slot="duration">
-          <span>{{ ((row.gmtEnd | parseInt) - (row.gmtStart | parseInt)) | s2hs }}</span>
+          <span>{{ row.gmtStart | getDuration(row.gmtEnd) }}</span>
         </template>
         <template slot-scope="{ row }" slot="mode">
           <span>{{ row.features.mode.toUpperCase() }}</span>
@@ -187,10 +187,11 @@
 <script>
 import api from '@/utils/api'
 import moment from 'moment';
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 
 import { Page } from '_c/mixins';
 import { CONTEST_OPENNESS } from '_u/constants';
+
 function contestProblemId(problemCode) {
   problemCode = parseInt(problemCode);
   const str = [];
@@ -292,13 +293,15 @@ export default {
     }
   },
   filters: {
-    parseInt: val => parseInt(val),
-    s2hs: diff => {
+    // 格式化比赛进行时长
+    getDuration: (start, end) => {
+      const diff = parseInt(end) - parseInt(start);
       const duration = moment.duration(diff, 'milliseconds');
       const minutes = duration.minutes() < 10 ? '0' + duration.minutes() : duration.minutes().toString();
       const seconds = duration.seconds() < 10 ? '0' + duration.seconds() : duration.seconds().toString();
       return [Math.floor(duration.asHours()), minutes, seconds].join(':');
     },
+    parseInt: val => parseInt(val),
     // 二十六进制转换
     contestProblemId: problemCode => contestProblemId(problemCode)
   },
@@ -563,7 +566,6 @@ export default {
     }
   },
   computed: {
-    ...mapState(['footerInfo']),
     ...mapGetters('user', ['username', 'avatar']),
     CONTEST_OPENNESS: () => CONTEST_OPENNESS
   },
