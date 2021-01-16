@@ -139,12 +139,20 @@ export default {
           }
         }
         this.$Message.success('Success');
-        this.getProblemDescriptions(problemCode);
+        this.getProblemDescriptions(problemCode).catch(err => {
+          this.$Message.error(err.message);
+        });
       }, err => {
         this.$Message.error(err.message);
       });
     },
     onDeleteDescription: function(description) {
+    },
+    onMousedown: function(id, isPublic) {
+      this.curDescription.id = id;
+      if (isPublic !== undefined) {
+        this.curDescription.isPublic = isPublic === 1 ? 0 : 1;
+      }
     },
     updateDescriptionContent: function() {
       api.updateDescription({
@@ -159,27 +167,8 @@ export default {
         this.modalLoading = false;
         this.$nextTick(() => {
           this.modalLoading = true;
-        })
-      });
-    },
-    onMousedown: function(id, isPublic) {
-      this.curDescription.id = id;
-      if (isPublic !== undefined) {
-        this.curDescription.isPublic = isPublic === 1 ? 0 : 1;
-      }
-    },
-    updateDescriptionVisibility: function(showSuccess = true, showError = true) {
-      return new Promise(resolve => {
-        api.updateDescription({
-          id: this.curDescription.id,
-          isPublic: this.curDescription.isPublic
-        }).then(_ => {
-          if (showSuccess) this.$Message.success('Success');
-          resolve();
-        }, err => {
-          if (showError) this.$Message.error(err.message);
         });
-      })
+      });
     },
     updateDescriptionTitle: function(row) {
       row.isSelected = !row.isSelected;
@@ -194,31 +183,50 @@ export default {
         });
       }
     },
+    updateDescriptionVisibility: function(showSuccess = true, showError = true) {
+      return new Promise((resolve, reject) => {
+        api.updateDescription({
+          id: this.curDescription.id,
+          isPublic: this.curDescription.isPublic
+        }).then(_ => {
+          resolve(_);
+          if (showSuccess) this.$Message.success('Success');
+        }, err => {
+          reject(err);
+          if (showError) this.$Message.error(err.message);
+        });
+      });
+    },
     updateDefaultDescription: function(showSuccess = true, showError = true) {
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         if (this.problem.defaultDescriptionId === this.curDescription.id) {
+          const err = {
+            message: 'Must have one default description'
+          };
+          // reject(err);
+          if (showError)  this.$Message.error(err.message);
           return;
         }
         api.updateProblemInfo({
           problemCode: this.problem.problemCode,
           defaultDescriptionId: this.curDescription.id
         }).then(_ => {
+          resolve(_);
           if (showSuccess) this.$Message.success('Success');
-          resolve();
           this.$nextTick(() => {
             this.problem.defaultDescriptionId = this.curDescription.id;
           })
         }, err => {
+          reject(err);
           if (showError) this.$Message.error(err.message);
-        })
-      })
+        });
+      });
     },
     onEditDescription: function(row) {
       api.getProblemDescription({
         descriptionId: row.id
       }).then(ret => {
-        this.curDescription = ret;
-        this.$refs.md.setDescription(this.curDescription);
+        this.$refs.md.setDescription(this.curDescription = ret);
         this.contentModal = true;
       }, err => {
         this.$Message.error(err.message);
@@ -231,8 +239,8 @@ export default {
             this.descriptions = ret.map(o => {
               return { ...o, isSelected: false }
             });
-            resolve();
-          }).catch(reject)
+            resolve(ret);
+          }).catch(reject);
       });
     },
     query: function(problem) {
@@ -244,7 +252,7 @@ export default {
         this.$refs.upload.clearFiles();
       }).catch(err => {
         this.$Message.error(err.message);
-      })
+      });
     },
     clear: function() {
       this.$refs.upload.clearFiles();
