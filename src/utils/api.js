@@ -229,5 +229,27 @@ export default {
         }
       }, err => (reject(err)));
     })
+  },
+  /* ************ group ****************** */
+  createGroup: function (data) {
+    return post('/manage/group/create', data);
+  },
+  updateGroup: function (data) {
+    return post('/manage/group/update', data);
+  },
+  getGroupDetail: function (params) {
+    return get('/manage/group/query', params);
+  },
+  getGroupList: function (params) {
+    return get('/manage/group/page', params);
+  },
+  updateUserStatus: function (data) {
+    return post('/manage/group/updateUserStatus', data);
+  },
+  addUsersToGroup: function (data) {
+    return post('/manage/group/addUser', data);
+  },
+  deleteGroup: function (params) {
+    return get('/manage/group/delete', params);
   }
 }

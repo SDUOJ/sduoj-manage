@@ -171,3 +171,31 @@ export const USER_ROLE = {
     isAdmin: true
   }
 };
+
+export const GROUP_OPENNESS_TYPE = {
+  PUBLIC: 0,
+  PROTECTED: 1,
+  PRIVATE: 2
+};
+
+export const GROUP_OPENNESS = {
+  [GROUP_OPENNESS_TYPE.PUBLIC]: {
+    title: 'Public',
+    description: 'Anybody can join in'
+  },
+  [GROUP_OPENNESS_TYPE.PROTECTED]: {
+    title: 'Apply',
+    description: 'Need the administrator audit'
+  },
+  [GROUP_OPENNESS_TYPE.PRIVATE]: {
+    title: 'Private',
+    description: 'Nobody can join in'
+  }
+}
+
+export const GROUP_STATUS_TYPE = {
+  NONE: 0,
+  APPLIED: 1,
+  JOINED: 2,
+  REJECTED: 3
+};
