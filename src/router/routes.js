@@ -36,6 +36,11 @@ const routes = [
     component: () => import('@/views/template/JudgeTemplateView')
   },
   {
+    path: '/group',
+    name: 'group',
+    component: () => import('@/views/group/GroupListView')
+  },
+  {
     path: '*',
     component: () => import('@/views/404/404View')
   }
