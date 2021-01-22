@@ -180,6 +180,7 @@ export default {
       }
     },
     updateDescriptionContent: function() {
+      this.curDescription.markdownDescription = this.$refs.md.getMarkdown();
       api.updateDescription({
         id: this.curDescription.id,
         markdownDescription: this.curDescription.markdownDescription
@@ -251,7 +252,8 @@ export default {
       api.getProblemDescription({
         descriptionId: row.id
       }).then(ret => {
-        this.$refs.md.setDescription(this.curDescription = ret);
+        this.curDescription = ret;
+        this.$refs.md.setMarkdown(this.curDescription.markdownDescription);
         this.contentModal = true;
       }, err => {
         this.$Message.error(err.message);

@@ -3,7 +3,7 @@
     <mavon-editor
       ref="md"
       @imgAdd="$imgAdd"
-      v-model="description.markdownDescription"
+      v-model="markdown"
       :externalLink="externalLink"
       style="min-height: 600px"/>
   </div>
@@ -95,9 +95,7 @@ export default {
     } : true;
     return {
       externalLink,
-      description: {
-        markdownDescription: ''
-      }
+      markdown: ''
     }
   },
   methods: {
@@ -142,8 +140,11 @@ export default {
       $vm.$refs.toolbar_left.img_file = [[0, null]];
       $vm.$refs.toolbar_left.num = 0;
     },
-    setDescription: function(description) {
-      this.description = description;
+    setMarkdown: function(markdown) {
+      this.markdown = markdown;
+    },
+    getMarkdown: function () {
+      return this.markdown;
     }
   },
   mounted: function() {
