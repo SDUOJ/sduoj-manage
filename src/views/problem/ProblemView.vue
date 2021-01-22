@@ -14,7 +14,7 @@
       <p slot="title">Problem</p>
       <!--      TODO: 题目列表和题面一样可以在table上直接修改-->
       <Table
-        :loading="loading"
+        :loading="tableLoading"
         :columns="problemColumns"
         :data="problems"
         no-data-text=""
@@ -186,7 +186,7 @@ export default {
       problems: [],
       problemInfo: {},
       judgeTemplateSet: [],
-      loading: false,
+      tableLoading: false,
       problemInfoModalLoading: true,
       uploadModalLoading: true,
       judgeTemplateQueryLoading: false,
@@ -198,7 +198,7 @@ export default {
   },
   methods: {
     getProblemList: function() {
-      this.loading = true;
+      this.tableLoading = true;
       api.getProblemList({
         pageNow: this.pageNow,
         pageSize: this.pageSize,
@@ -207,7 +207,11 @@ export default {
       }).then(ret => {
         this.problems = ret.rows;
         this.total = parseInt(ret.totalPage) * this.pageSize;
-      }).finally(() => (this.loading = false));
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        this.tableLoading = false;
+      });
     },
     handleUpdateProblem: function() {
       this.$refs.problemInfo.validate(valid => {
@@ -226,18 +230,18 @@ export default {
               this.$Message.success('Success');
               this.getProblemList();
               this.problemInfoModal = false;
-            }, err => {
+            }).catch(err => {
               this.$Message.error(err.message);
               this.problemInfoModalLoading = false;
               this.$nextTick(() => {
                 this.problemInfoModalLoading = true;
-              })
-            })
+              });
+            });
         } else {
           this.problemInfoModalLoading = false;
           this.$nextTick(() => {
             this.problemInfoModalLoading = true;
-          })
+          });
         }
       })
     },
@@ -262,20 +266,32 @@ export default {
       this.problemInfoModal = true;
     },
     showProblemDescriptions: function(problem) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       this.$refs.ProblemDescription.query(problem).then(() => {
         this.problemInfo = problem;
         this.descriptionModel = true;
       }).catch(err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     },
     showProblemCheckpoints: function(problem) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       this.$refs.ProblemCheckpoint.query(problem.problemCode).then(() => {
         this.problemInfo = problem;
         this.checkpointModel = true;
       }).catch(err => {
         this.$Message.error(err.message);
-      })
+      }).finally(() => {
+        removeLoading();
+      });
     },
     saveCheckpoints: function() {
       this.$refs.ProblemCheckpoint.save(() => {
@@ -285,7 +301,7 @@ export default {
         this.$nextTick(() => {
           this.uploadModalLoading = true;
         });
-      })
+      });
     },
     queryTemplateOptions: function(query) {
       if (query !== '') {

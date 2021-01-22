@@ -15,6 +15,7 @@
       <Table
         :columns="judgeTemplateColumns"
         :data="judgeTemplateData"
+        :loading="tableLoading"
         class="content-table"
         @on-selection-change="selectChange">
         <template slot-scope="{ row }" slot="type">
@@ -132,7 +133,7 @@ export default {
     return {
       judgeTemplateColumns: [
         { type: 'selection', width: 60, align: 'center' },
-        { key: 'id', maxWidth: 50 },
+        { key: 'id', maxWidth: 80 },
         { title: 'Type', slot: 'type' },
         { title: 'Owner', key: 'username' },
         { title: 'Title', key: 'title' },
@@ -150,7 +151,8 @@ export default {
       templateInfo: {},
       fileList: [],
       fileExtensionList: [],
-      searchTitle: ''
+      searchTitle: '',
+      tableLoading: false
     }
   },
   filters: {
@@ -174,7 +176,7 @@ export default {
     commitTemplateInfo: function() {
       this.$refs.templateInfo.validate(async valid => {
         if (valid) {
-          const loading = this.$Message.loading({
+          const removeLoading = this.$Message.loading({
             content: 'Uploading',
             duration: 0
           });
@@ -204,7 +206,9 @@ export default {
                 this.$nextTick(() => {
                   this.templateInfoModalLoading = true;
                 })
-              }).finally(loading);
+              }).finally(() => {
+                removeLoading();
+              });
           } else {
             api.updateTemplate({
               id: this.templateInfo.id,
@@ -222,7 +226,9 @@ export default {
               this.$nextTick(() => {
                 this.templateInfoModalLoading = true;
               })
-            }).finally(loading);
+            }).finally(() => {
+              removeLoading();
+            });
           }
         } else {
           this.$Message.error('Invalid format');
@@ -253,10 +259,13 @@ export default {
       api.zipDownload([{
         id: zipFileId,
         downloadFilename: `${Date.now()}.zip`
-      }]).catch(err => (this.$Message.error(err.message)));
+      }]).catch(err => {
+        this.$Message.error(err.message)
+      });
     },
     // 获取评测模板列表
     getTemplateList: function() {
+      this.tableLoading = true;
       api.getTemplateList({
         pageNow: this.pageNow,
         pageSize: this.pageSize,
@@ -264,14 +273,26 @@ export default {
       }).then(ret => {
         this.judgeTemplateData = ret.rows;
         this.total = parseInt(ret.totalPage) * this.pageSize;
-      }, err => (this.$Message.error(err.message)));
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        this.tableLoading = false;
+      });
     },
     initializeJudgeTemplateModal: function (row, fork) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       api.getOneTemplate(row.id).then(ret => {
         this.templateInfo = ret;
         this.fileExtensionList = this.templateInfo.acceptFileExtensions;
         this.isAddTemplate = fork;
         this.templateInfoModal = true;
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     }
   },

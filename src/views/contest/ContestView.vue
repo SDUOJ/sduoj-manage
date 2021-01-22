@@ -15,6 +15,7 @@
       <Table
         :columns="contestTableColumns"
         :data="contestTableData"
+        :loading="tableLoading"
         class="content-table"
         @on-selection-change="selectChange"
         @on-sort-change="onSort">
@@ -289,7 +290,8 @@ export default {
         }
       },
       oldProblemCode: '',
-      now: 0
+      now: 0,
+      tableLoading: false
     }
   },
   filters: {
@@ -319,6 +321,10 @@ export default {
         gmtEnd: moment(new Date(parseInt(row.gmtEnd))).format('yyy-MM-DD HH:mm:ss'),
         gmtLength: parseInt((parseInt(row.gmtEnd) - parseInt(row.gmtStart)) / 60000)
       };
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       // get 获取 password、problems、participants、markdownDescription
       api.getContest({ contestId: row.contestId }).then(ret => {
         this.$set(this.contestInfo, 'password', ret.password);
@@ -331,13 +337,17 @@ export default {
             item.problemSearch = 1;
             api.getProblemDescriptionList({ problemCode: item.problemCode }).then(ret2 => {
               this.$set(item, 'problemDescriptionList', ret2);
+            }).catch(err => {
+              this.$Message.error(err.message);
             })
           })
         }
         this.isAddContest = fork;
         this.contestInfoModal = true;
-      }, err => {
+      }).catch(err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     },
     // 修改比赛开始时间
@@ -554,6 +564,7 @@ export default {
     },
     // 获取比赛列表
     getContestList: function() {
+      this.tableLoading = true;
       api.getContestList({
         pageNow: this.pageNow,
         pageSize: this.pageSize,
@@ -562,6 +573,10 @@ export default {
       }).then(ret => {
         this.contestTableData = ret.rows;
         this.total = parseInt(ret.totalPage) * this.pageSize;
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        this.tableLoading = false;
       });
     }
   },

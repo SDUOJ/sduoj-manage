@@ -142,7 +142,7 @@ export default {
     return {
       totalColumns: [
         { type: 'selection', width: 53 },
-        { key: 'checkpointId', slot: 'checkpointId' },
+        { key: 'checkpointId', slot: 'checkpointId', minWidth: 150 },
         { title: 'Input Preview', key: 'inputPreview', className: 'hover', tooltip: true },
         { title: 'Output Preview', key: 'outputPreview', className: 'hover', tooltip: true },
         {

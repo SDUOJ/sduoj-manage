@@ -57,25 +57,23 @@
       :title="curDescription.title"
       @on-ok="updateDescriptionContent"
       @on-cancel="closeContestModal">
-        <details>
-          <summary>Upload File Attachment</summary>
-          <Upload
-            multiple
-            paste
-            type="drag"
-            :max-size="102400"
-            :file-list.sync="fileList"
-            ref="upload">
-            <div style="padding: 20px 0">
-              <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-              <p>Click or drag files here to upload</p>
-            </div>
-          </Upload>
-          <div style="width: 100%; margin: 5px 0" class="clearfix">
-            <Button style="float: right;" size="small" @click="attachAdd">Add</Button>
-          </div>
-        </details>
-        <MarkdownEditor ref="md" />
+         <details style="margin-bottom: 5px">
+           <summary>Upload File Attachment</summary>
+           <Upload
+             multiple
+             paste
+             type="drag"
+             :max-size="102400"
+             :file-list.sync="fileList"
+             ref="upload">
+             <div style="padding: 20px 0">
+               <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+               <p>Click or drag files here to upload</p>
+             </div>
+           </Upload>
+           <Button size="small" type="info" @click="attachAdd">Add</Button>
+         </details>
+         <MarkdownEditor ref="md" />
      </Modal>
    </div>
 </template>
@@ -249,14 +247,20 @@ export default {
       });
     },
     onEditDescription: function(row) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       api.getProblemDescription({
         descriptionId: row.id
       }).then(ret => {
         this.curDescription = ret;
         this.$refs.md.setMarkdown(this.curDescription.markdownDescription);
         this.contentModal = true;
-      }, err => {
+      }).catch(err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     },
     getProblemDescriptions: function(problemCode) {

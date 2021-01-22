@@ -62,7 +62,7 @@
           </RadioGroup>
         </FormItem>
         <FormItem label="Markdown">
-          <details>
+          <details style="margin-bottom: 5px">
             <summary>Upload File Attachment</summary>
             <Upload
               multiple
@@ -76,9 +76,7 @@
                 <p>Click or drag files here to upload</p>
               </div>
             </Upload>
-            <div style="width: 100%; margin: 5px 0" class="clearfix">
-              <Button style="float: right;" size="small" @click="attachAdd">Add</Button>
-            </div>
+            <Button size="small" type="info" @click="attachAdd">Add</Button>
           </details>
           <MarkdownEditor ref="md" />
         </FormItem>
@@ -87,7 +85,7 @@
     <Modal
       v-model="memberModal"
       width="80%"
-      :title="`Manage Group ID: ${group.groupId}`">
+      :title="`Members in ${group.title} (Group ID: ${group.groupId})`">
         <div v-if="applyMembers.length > 0">
           <Alert>
             <span style="margin-right: 16px">Apply List ({{ applyMembers.length }})</span>
@@ -118,11 +116,9 @@
               <Button v-if="allMembersWithoutOwner.length > 0" @click="rejectMembers(allMembers, 1)" type="warning" size="small">Remove All</Button>
             </div>
             <div v-if="addMembersInput" style="margin-top: 8px">
-              <Input v-model="membersAdd" type="textarea" :autosize="{minRows: 3}"/>
-              <div style="margin-top: 5px">
-                <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
-                <a href="#" class="float-right" @click.prevent="addMembers2Group">Add</a>
-              </div>
+              <span style="color: #808695">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
+              <Input style="margin: 5px 0" v-model="membersAdd" type="textarea" :autosize="{minRows: 3}"/>
+              <Button size="small" type="info" @click="addMembers2Group">Add</Button>
             </div>
           </Alert>
           <Table
@@ -239,6 +235,10 @@ export default {
       this.groupModal = true;
     },
     onEditGroup: function (groupId, type) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       api.getGroupDetail({ groupId })
         .then(ret => {
           this.group = ret;
@@ -254,6 +254,9 @@ export default {
         })
         .catch(err => {
           this.$Message.error(err.message);
+        })
+        .finally(() => {
+          removeLoading();
         });
     },
     onDeleteGroup: function (row) {
@@ -281,17 +284,23 @@ export default {
       });
     },
     attachAdd: function() {
+      const removeLoading = this.$Message.loading({
+        content: 'Uploading',
+        duration: 0
+      });
       this.$refs.md.$attachAdd(this.fileList).then(() => {
         this.$refs.upload.clearFiles();
       }).catch(err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     },
     clear: function() {
       this.group.title = '';
-      this.description = '';
-      this.markdown = '';
-      this.openness = GROUP_OPENNESS_TYPE.PUBLIC;
+      this.group.description = '';
+      this.group.markdown = '';
+      this.group.openness = GROUP_OPENNESS_TYPE.PUBLIC;
       this.$refs.upload.clearFiles();
       this.$refs.md.$clear();
       this.$refs.md.setMarkdown('');
@@ -363,28 +372,32 @@ export default {
           api.updateGroup({
             groupId: group.groupId,
             userId: user.userId
-          }).then(ret => {
+          }).then(_ => {
             this.$Message.success('Success');
             this.onEditGroup(group.groupId);
           }).catch(err => {
             this.$Message.error(err.message);
-          }).finally(() => {
-            this.$Modal.remove();
           });
         }
       });
     },
     addMembers2Group: function () {
+      const removeLoading = this.$Message.loading({
+        content: 'Updating',
+        duration: 0
+      });
       api.addUsersToGroup({
         groupId: this.group.groupId,
         usernames: this.membersAdd.split(/[\s,]+/),
         status: GROUP_STATUS_TYPE.JOINED
-      }).then(ret => {
+      }).then(_ => {
         this.$Message.success('Success');
         this.membersAdd = '';
         this.onEditGroup(this.group.groupId);
       }).catch(err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     }
   },
