@@ -1,3 +1,13 @@
+<!--
+   Copyright 2020-2021 the original author or authors.
+
+   Licensed under the General Public License, Version 3.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        https://www.gnu.org/licenses/gpl-3.0.en.html
+ -->
+
 <template>
   <div>
     <Card :dis-hover="true">
@@ -30,8 +40,7 @@
           <span>{{ row.features.mode.toUpperCase() }}</span>
         </template>
         <template slot-scope="{ row }" slot="group">
-          <span>{{ row.groupId }}</span>
-          <span v-if="row.groupTitle">{{ ` (${row.groupTitle})` }}</span>
+          <span v-if="row.managerGroupDTO">{{ `${row.managerGroupDTO.groupId} (${row.managerGroupDTO.title})` }}</span>
         </template>
         <template slot-scope="{ row }" slot="action">
           <a href="#" @click.prevent="onEditContest(row.contestId, false)">Edit</a>
@@ -145,13 +154,33 @@
               <Input v-model="contest.unofficialParticipants" type="textarea" :autosize="{minRows: 3}"/>
             </FormItem>
 
-            <FormItem label="Manager Group">
-              <Input v-model="contest.groupId" />
+            <FormItem label="Manager Group" v-if="contestModal">
+              <Select
+                transfer
+                clearable
+                filterable
+                style="width: 200px"
+                v-model="contest.groupId"
+                :loading="managerGroupQueryLoading"
+                :remote-method="queryManagerGroups"
+                :default-label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''"
+                @on-set-default-options="setManagerGroupSet">
+                <Option v-for="group in managerGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
+              </Select>
             </FormItem>
 
-            <FormItem label="Participating Groups">
-              <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
-              <Input v-model="contest.participatingGroups" type="textarea" :autosize="{minRows: 3}"/>
+            <FormItem label="Participating Groups" v-if="contestModal">
+              <Select
+                transfer
+                multiple
+                filterable
+                v-model="contest.participatingGroups"
+                :loading="participatingGroupQueryLoading"
+                :remote-method="queryParticipatingGroups"
+                :default-label="(contest.participatingGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"
+                @on-set-default-options="setParticipatingGroupSet">
+                <Option v-for="group in participatingGroupSet" :key="group.groupId" :value="group.groupId" :label="group.title" />
+              </Select>
             </FormItem>
           </TabPane>
           <TabPane :label="tabLabels.problem" name="problem">
@@ -217,6 +246,7 @@ import Loading from '_c/Loading';
 import MarkdownEditor from '_c/editor/MarkdownEditor';
 
 import api from '_u/api';
+import { split } from '_u/split';
 import { CONTEST_OPENNESS, CONTEST_MODE } from '_u/constants';
 
 function $contestProblemIdEncode(problemCode) {
@@ -234,10 +264,6 @@ function $contestProblemIdEncode(problemCode) {
   return str.reverse().join('');
 }
 
-function $split(str, splitter) {
-  return str.split(splitter).filter(o => o && o.trim());
-}
-
 export default {
   name: 'ContestListView',
   mixins: [Page],
@@ -248,12 +274,12 @@ export default {
         { type: 'selection', width: 60, align: 'center' },
         { key: 'contestId', maxWidth: 80 },
         { title: 'Title', slot: 'title', minWidth: 150 },
-        { title: 'Owner', key: 'username' },
         { title: 'Start', key: 'gmtStart', sortable: 'custom', width: 200, slot: 'time' },
         { title: 'Duration', sortable: 'custom', slot: 'duration' },
         { title: 'Mode', key: 'mode', sortable: 'custom', slot: 'mode' },
         { title: 'Participants', key: 'participantNum', width: 140, sortable: 'custom' },
         { title: 'Manager Group', slot: 'group', minWidth: 100 },
+        { title: 'Owner', key: 'username' },
         { title: '\b', slot: 'action' }
       ],
       problemColumns: [
@@ -283,6 +309,7 @@ export default {
           contestEnd: {},
           contestRunning: {}
         },
+        groupId: '',
         problems: []
       },
       selectedContests: [],
@@ -295,7 +322,11 @@ export default {
         manage: false,
         problem: true
       },
-      tabName: 'basic'
+      tabName: 'basic',
+      managerGroupQueryLoading: false,
+      participatingGroupQueryLoading: false,
+      managerGroupSet: [],
+      participatingGroupSet: []
     }
   },
   filters: {
@@ -353,6 +384,7 @@ export default {
             displayCheckpointResult: 1
           }
         },
+        managerGroupDTO: {},
         gmtStart: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
         gmtEnd: moment(datetime).format('yyyy-MM-DD HH:mm:ss'),
         source: '',
@@ -361,9 +393,10 @@ export default {
         participants: '',
         unofficialParticipants: '',
         password: '',
-        groupId: '',
-        participatingGroups: ''
+        participatingGroups: [],
+        groupId: ''
       };
+      this.$refs.md.setMarkdown('');
       this.isAddContest = true;
       this.openModal();
     },
@@ -378,7 +411,6 @@ export default {
         this.contest.gmtEnd = new Date(parseInt(ret.gmtEnd));
         this.contest.participants = ret.participants.join(',');
         this.contest.unofficialParticipants = ret.unofficialParticipants.join(',');
-        this.contest.participatingGroups = ret.participatingGroups.join(',');
 
         this.$refs.md.setMarkdown(this.contest.markdownDescription);
 
@@ -460,7 +492,6 @@ export default {
       }
       this.contest.problems[index] = row;
       this.contest.problems.splice(0, 0);
-      console.log(this.contest.problems);
     },
     updateContest: function () {
       if (!this.validateUnofficialParticipants() || !this.validateProblems()) {
@@ -476,9 +507,8 @@ export default {
         markdownDescription: this.$refs.md.getMarkdown(),
         gmtStart: new Date(this.contest.gmtStart).getTime(),
         gmtEnd: new Date(this.contest.gmtEnd).getTime(),
-        participants: $split(this.contest.participants, /[\s,]+/),
-        unofficialParticipants: $split(this.contest.unofficialParticipants,  /[\s,]+/),
-        participatingGroups: $split(this.contest.participatingGroups, /[\s,]+/),
+        participants: split(this.contest.participants, /[\s,]+/),
+        unofficialParticipants: split(this.contest.unofficialParticipants,  /[\s,]+/),
         problems: this.contest.problems.map(o => {
           return {
             problemColor: o.problemColor,
@@ -536,9 +566,41 @@ export default {
         this.tableLoading = false;
       });
     },
+    queryManagerGroups: function (title) {
+      if (title !== '') {
+        this.managerGroupQueryLoading = true;
+        api.queryGroupTitle({ title }).then(ret => {
+          this.managerGroupSet = ret;
+          this.managerGroupQueryLoading = false;
+        }).catch(err => {
+          this.$Message.error(err.message);
+        });
+      } else {
+        this.managerGroupSet = [];
+      }
+    },
+    queryParticipatingGroups: function (title) {
+      if (title !== '') {
+        this.participatingGroupQueryLoading = true;
+        api.queryGroupTitle({ title }).then(ret => {
+          this.participatingGroupSet = ret;
+          this.participatingGroupQueryLoading = false;
+        }).catch(err => {
+          this.$Message.error(err.message);
+        });
+      } else {
+        this.participatingGroupSet = [];
+      }
+    },
+    setManagerGroupSet: function () {
+      this.participatingGroupSet = [this.contest.managerGroupDTO || undefined];
+    },
+    setParticipatingGroupSet: function () {
+      this.participatingGroupSet = this.contest.participatingGroupDTOList;
+    },
     validateUnofficialParticipants: function () {
-      const participants = $split(this.contest.participants, /[\s,]+/);
-      const observers = $split(this.contest.unofficialParticipants, /[\s,]+/);
+      const participants = split(this.contest.participants, /[\s,]+/);
+      const observers = split(this.contest.unofficialParticipants, /[\s,]+/);
       for (let i = 0; i < observers.length; ++i) {
         if (!participants.includes(observers[i])) {
           this.$Message.error('Unofficial participants must be the subset of participants');
@@ -593,7 +655,7 @@ export default {
         labels.basic = (h) => {
           return h('div', [
             h('span', 'Basic'),
-            h('Badge', { props: { text: 'Err' } })
+            h('Badge', { props: { text: 'error' } })
           ]);
         };
       }
@@ -601,7 +663,7 @@ export default {
         labels.manage = (h) => {
           return h('div', [
             h('span', 'Management'),
-            h('Badge', { props: { text: 'Err' } })
+            h('Badge', { props: { text: 'error' } })
           ]);
         }
       }
@@ -609,7 +671,7 @@ export default {
         labels.problem = (h) => {
           return h('div', [
             h('span', 'Problem'),
-            h('Badge', { props: { text: 'Err' } })
+            h('Badge', { props: { text: 'error' } })
           ]);
         }
       }

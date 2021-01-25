@@ -73,39 +73,40 @@
     </div>
 
     <Modal
-      v-model="problemInfoModal"
+      v-model="problemModal"
       :loading="problemInfoModalLoading"
       @on-ok="handleUpdateProblem">
       <template slot="header">
         <div v-if="isAddProblem" class="ivu-modal-header-inner">Add Problem</div>
-        <ProblemCode v-else :problemCode="problemInfo.problemCode"/>
+        <ProblemCode v-else :problemCode="problem.problemCode"/>
       </template>
 
-      <Form :model="problemInfo" :rules="problemColumnRules" ref="problemInfo">
+      <Form :model="problem" :rules="problemColumnRules" ref="problem">
         <FormItem label="Title" prop="problemTitle">
-          <Input v-model="problemInfo.problemTitle" />
+          <Input v-model="problem.problemTitle" />
         </FormItem>
         <FormItem label="Public" required>
-          <i-switch v-model="problemInfo.isPublic" :true-value="1" :false-value="0" />
+          <i-switch v-model="problem.isPublic" :true-value="1" :false-value="0" />
         </FormItem>
         <FormItem label="Time Limit" required>
-          <Input v-model.number="problemInfo.timeLimit">
+          <Input v-model.number="problem.timeLimit">
             <span slot="append">ms</span>
           </Input>
         </FormItem>
         <FormItem label="Memory Limit" required>
-          <Input v-model.number="problemInfo.memoryLimit">
+          <Input v-model.number="problem.memoryLimit">
             <span slot="append">KiB</span>
           </Input>
         </FormItem>
-        <FormItem label="Juidge Template" v-if="problemInfoModal">
+        <FormItem label="Judge Template" v-if="problemModal">
           <Select
+            transfer
             multiple
             filterable
-            v-model="problemInfo.judgeTemplates"
+            v-model="problem.judgeTemplates"
             :loading="judgeTemplateQueryLoading"
             :remote-method="queryTemplateOptions"
-            :default-label="(this.problemInfo.judgeTemplateListDTOList || []).map(o => `${o.id}: ${o.title}`)"
+            :default-label="(problem.judgeTemplateListDTOList || []).map(o => `${o.id}: ${o.title}`)"
             @on-set-default-options="setJudgeTemplateSet">
             <Option v-for="template in judgeTemplateSet" :key="template.value" :value="template.value" :label="template.label">
               <span>{{ template.label }}</span>
@@ -118,8 +119,21 @@
         <!--        <FormItem label="Tags">-->
 
         <!--        </FormItem>-->
+        <FormItem label="Manager Groups" v-if="problemModal">
+          <Select
+            transfer
+            multiple
+            filterable
+            v-model="problem.managerGroups"
+            :loading="groupQueryLoading"
+            :remote-method="queryGroups"
+            :default-label="(problem.managerGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"
+            @on-set-default-options="setGroupSet">
+            <Option v-for="group in groupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
+          </Select>
+        </FormItem>
         <FormItem label="Source">
-          <Input v-model="problemInfo.source" />
+          <Input v-model="problem.source" />
         </FormItem>
       </Form>
     </Modal>
@@ -129,8 +143,8 @@
       width="80%"
       footer-hide>
       <template slot="header">
-        <ProblemCode :problemCode="problemInfo.problemCode"/>
-        <span>{{ problemInfo.problemTitle }}</span>
+        <ProblemCode :problemCode="problem.problemCode"/>
+        <span>{{ problem.problemTitle }}</span>
       </template>
       <ProblemDescription ref="ProblemDescription" />
     </Modal>
@@ -143,8 +157,8 @@
       :loading="uploadModalLoading"
       @on-ok="saveCheckpoints">
       <template slot="header">
-        <ProblemCode :problemCode="problemInfo.problemCode"/>
-        <span>{{ problemInfo.problemTitle }}</span>
+        <ProblemCode :problemCode="problem.problemCode"/>
+        <span>{{ problem.problemTitle }}</span>
       </template>
       <ProblemCheckpoint ref="ProblemCheckpoint" />
     </Modal>
@@ -158,6 +172,7 @@ import ProblemDescription from '_c/problem/ProblemDescription';
 import api from '_u/api';
 import { JUDGE_TEMPLATE_PROPERTY } from '_u/constants';
 import { Page } from '_c/mixins';
+
 export default {
   name: 'ProblemView',
   components: {
@@ -184,13 +199,15 @@ export default {
         problemTitle: [{ required: true, max: 96, trigger: 'blur' }]
       },
       problems: [],
-      problemInfo: {},
+      problem: {},
       judgeTemplateSet: [],
+      groupSet: [],
       tableLoading: false,
       problemInfoModalLoading: true,
       uploadModalLoading: true,
       judgeTemplateQueryLoading: false,
-      problemInfoModal: false,
+      groupQueryLoading: false,
+      problemModal: false,
       checkpointModel: false,
       descriptionModel: false,
       isAddProblem: false
@@ -214,22 +231,23 @@ export default {
       });
     },
     handleUpdateProblem: function() {
-      this.$refs.problemInfo.validate(valid => {
+      this.$refs.problem.validate(valid => {
         if (valid) {
           const data = {
-            problemCode: this.problemInfo.problemCode,
-            isPublic: this.problemInfo.isPublic,
-            problemTitle: this.problemInfo.problemTitle,
-            source: this.problemInfo.source,
-            judgeTemplates: this.problemInfo.judgeTemplates,
-            memoryLimit: parseInt(this.problemInfo.memoryLimit),
-            timeLimit: parseInt(this.problemInfo.timeLimit)
+            problemCode: this.problem.problemCode,
+            isPublic: this.problem.isPublic,
+            problemTitle: this.problem.problemTitle,
+            source: this.problem.source,
+            judgeTemplates: this.problem.judgeTemplates,
+            managerGroups: this.problem.managerGroups,
+            memoryLimit: parseInt(this.problem.memoryLimit),
+            timeLimit: parseInt(this.problem.timeLimit)
           }
           api[this.isAddProblem ? 'createProblem' : 'updateProblemInfo'](data)
             .then(_ => {
               this.$Message.success('Success');
               this.getProblemList();
-              this.problemInfoModal = false;
+              this.problemModal = false;
             }).catch(err => {
               this.$Message.error(err.message);
               this.problemInfoModalLoading = false;
@@ -246,7 +264,7 @@ export default {
       })
     },
     addProblem: function() {
-      this.problemInfo = {
+      this.problem = {
         problemCode: '',
         problemTitle: '',
         isPublic: 1,
@@ -255,15 +273,27 @@ export default {
         judgeTemplates: [],
         timeLimit: 1000,
         memoryLimit: 262144,
-        source: ''
+        source: '',
+        managerGroupDTOList: [],
+        managerGroups: []
       };
       this.isAddProblem = true;
-      this.problemInfoModal = true;
+      this.problemModal = true;
     },
-    onEditProblem: function(problem, fork) {
-      this.problemInfo = { ...problem };
-      this.isAddProblem = fork;
-      this.problemInfoModal = true;
+    onEditProblem: function(row, fork) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
+      api.getProblem({ problemCode: row.problemCode }).then(ret => {
+        this.problem = Object.assign(ret, row);
+        this.isAddProblem = fork;
+        this.problemModal = true;
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
+      });
     },
     showProblemDescriptions: function(problem) {
       const removeLoading = this.$Message.loading({
@@ -271,7 +301,7 @@ export default {
         duration: 0
       });
       this.$refs.ProblemDescription.query(problem).then(() => {
-        this.problemInfo = problem;
+        this.problem = problem;
         this.descriptionModel = true;
       }).catch(err => {
         this.$Message.error(err.message);
@@ -285,7 +315,7 @@ export default {
         duration: 0
       });
       this.$refs.ProblemCheckpoint.query(problem.problemCode).then(() => {
-        this.problemInfo = problem;
+        this.problem = problem;
         this.checkpointModel = true;
       }).catch(err => {
         this.$Message.error(err.message);
@@ -322,14 +352,30 @@ export default {
       }
     },
     setJudgeTemplateSet: function() {
-      this.judgeTemplateSet = this.problemInfo.judgeTemplateListDTOList.map(o => {
+      this.judgeTemplateSet = this.problem.judgeTemplateListDTOList.map(o => {
         return {
           value: o.id,
           label: `${o.id}: ${o.title}`,
           comment: o.comment,
           type: JUDGE_TEMPLATE_PROPERTY[o.type].name
-        }
+        };
       });
+    },
+    queryGroups: function (title) {
+      if (title !== '') {
+        this.groupQueryLoading = true;
+        api.queryGroupTitle({ title }).then(ret => {
+          this.groupSet = ret;
+          this.groupQueryLoading = false;
+        }).catch(err => {
+          this.$Message.error(err.message);
+        })
+      } else {
+        this.groupSet = [];
+      }
+    },
+    setGroupSet: function () {
+      this.groupSet = this.problem.managerGroupDTOList;
     },
     tagsManagement: function() {
     }

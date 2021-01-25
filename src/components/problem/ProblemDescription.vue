@@ -221,8 +221,8 @@ export default {
           if (showSuccess) this.$Message.success('Success');
           this.$nextTick(() => {
             this.problem.defaultDescriptionId = this.curDescription.id;
-          })
-        }, err => {
+          });
+        }).catch(err => {
           reject(err);
           if (showError) this.$Message.error(err.message);
         });

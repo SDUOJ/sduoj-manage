@@ -251,5 +251,8 @@ export default {
   },
   deleteGroup: function (params) {
     return get('/manage/group/delete', params);
+  },
+  queryGroupTitle: function (params) {
+    return get('/manage/group/listByTitle', params);
   }
 }
