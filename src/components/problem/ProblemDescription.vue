@@ -57,22 +57,6 @@
       :title="curDescription.title"
       @on-ok="updateDescriptionContent"
       @on-cancel="closeContestModal">
-         <details style="margin-bottom: 5px">
-           <summary>Upload File Attachment</summary>
-           <Upload
-             multiple
-             paste
-             type="drag"
-             :max-size="102400"
-             :file-list.sync="fileList"
-             ref="upload">
-             <div style="padding: 20px 0">
-               <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-               <p>Click or drag files here to upload</p>
-             </div>
-           </Upload>
-           <Button size="small" type="info" @click="attachAdd">Add</Button>
-         </details>
          <MarkdownEditor ref="md" />
      </Modal>
    </div>
@@ -81,12 +65,11 @@
 <script>
 import api from '_u/api';
 
-import Upload from '_c/upload/upload';
 import MarkdownEditor from '_c/editor/MarkdownEditor';
 
 export default {
   name: 'ProblemDescription',
-  components: { Upload, MarkdownEditor },
+  components: { MarkdownEditor },
   directives: {
     focus: {
       inserted: function (el) {
@@ -114,8 +97,7 @@ export default {
       problem: {},
       modalLoading: true,
       addLoading: false,
-      contentModal: false,
-      fileList: []
+      contentModal: false
     }
   },
   methods: {
@@ -278,15 +260,7 @@ export default {
       this.problem = problem;
       return this.getProblemDescriptions(problem.problemCode);
     },
-    attachAdd: function() {
-      this.$refs.md.$attachAdd(this.fileList).then(() => {
-        this.$refs.upload.clearFiles();
-      }).catch(err => {
-        this.$Message.error(err.message);
-      });
-    },
     clear: function() {
-      this.$refs.upload.clearFiles();
       this.$refs.md.$clear();
     },
     closeContestModal: function() {

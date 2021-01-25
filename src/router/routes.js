@@ -28,7 +28,7 @@ const routes = [
   {
     path: '/contest',
     name: 'contest',
-    component: () => import('@/views/contest/ContestView')
+    component: () => import('@/views/contest/ContestListView')
   },
   {
     path: '/template',

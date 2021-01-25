@@ -15,9 +15,20 @@ export const CONTEST_STATUS = {
 };
 
 export const CONTEST_OPENNESS = {
-  PUBLIC: 'public',
-  PROTECTED: 'protected',
-  PRIVATE: 'private'
+  PUBLIC: {
+    title: 'public',
+    hint: 'Public: Anyone can participate in'
+  },
+  PROTECTED: {
+    title: 'protected',
+    hint: 'Protected: Problems are public but password is needed for submissions',
+    lockColor: 'orange'
+  },
+  PRIVATE: {
+    title: 'private',
+    hint: 'Private: Password is needed for both problems and submissions',
+    lockColor: '#d9534f'
+  }
 };
 
 export const CONTEST_MODE = {

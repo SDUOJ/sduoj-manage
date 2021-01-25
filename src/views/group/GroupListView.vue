@@ -46,7 +46,7 @@
       :loading="groupModalLoading"
       :mask-closable="false"
       :title="addGroup ? 'Add Group' : `Edit Group ${group.title} (Group ID: ${group.groupId})`"
-      @on-ok="handleGroup">
+      @on-ok="updateGroup">
       <Form :model="group" ref="group" label-position="top" :rules="groupValidate">
         <FormItem label="Title" prop="title">
           <Input v-model="group.title" />
@@ -62,22 +62,6 @@
           </RadioGroup>
         </FormItem>
         <FormItem label="Markdown">
-          <details style="margin-bottom: 5px">
-            <summary>Upload File Attachment</summary>
-            <Upload
-              multiple
-              paste
-              type="drag"
-              :max-size="102400"
-              :file-list.sync="fileList"
-              ref="upload">
-              <div style="padding: 20px 0">
-                <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-                <p>Click or drag files here to upload</p>
-              </div>
-            </Upload>
-            <Button size="small" type="info" @click="attachAdd">Add</Button>
-          </details>
           <MarkdownEditor ref="md" />
         </FormItem>
       </Form>
@@ -145,12 +129,11 @@ import api from '_u/api';
 import { GROUP_OPENNESS, GROUP_OPENNESS_TYPE, GROUP_STATUS_TYPE } from '_u/constants';
 import { Page } from '_c/mixins';
 import MarkdownEditor from '_c/editor/MarkdownEditor';
-import Upload from '_c/upload/upload';
 
 export default {
   name: 'GroupListView',
   mixins: [Page],
-  components: { MarkdownEditor, Upload },
+  components: { MarkdownEditor },
   filters: {
     parseInt: val => parseInt(val)
   },
@@ -185,7 +168,6 @@ export default {
         markdown: '',
         members: []
       },
-      fileList: [],
       groupModalLoading: true,
       groupModal: false,
       addGroup: true,
@@ -210,7 +192,7 @@ export default {
         this.tableLoading = false;
       });
     },
-    handleGroup: function () {
+    updateGroup: function () {
       this.group.markdown = this.$refs.md.getMarkdown();
       this.$refs.group.validate(valid => {
         if (valid) {
@@ -283,25 +265,11 @@ export default {
         }
       });
     },
-    attachAdd: function() {
-      const removeLoading = this.$Message.loading({
-        content: 'Uploading',
-        duration: 0
-      });
-      this.$refs.md.$attachAdd(this.fileList).then(() => {
-        this.$refs.upload.clearFiles();
-      }).catch(err => {
-        this.$Message.error(err.message);
-      }).finally(() => {
-        removeLoading();
-      });
-    },
     clear: function() {
       this.group.title = '';
       this.group.description = '';
       this.group.markdown = '';
       this.group.openness = GROUP_OPENNESS_TYPE.PUBLIC;
-      this.$refs.upload.clearFiles();
       this.$refs.md.$clear();
       this.$refs.md.setMarkdown('');
     },
