@@ -28,9 +28,13 @@
         <Icon type="ios-keypad"></Icon>
         Contest
       </MenuItem>
-      <MenuItem name="undefined" :to="{ name: 'template' }">
+      <MenuItem name="template" :to="{ name: 'template' }">
         <Icon type="ios-paper"></Icon>
         Judge Template
+      </MenuItem>
+      <MenuItem name="group" :to="{ name: 'group' }">
+        <Icon type="ios-contacts"></Icon>
+        Group
       </MenuItem>
     </Menu>
   </div>

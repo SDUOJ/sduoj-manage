@@ -15,9 +15,20 @@ export const CONTEST_STATUS = {
 };
 
 export const CONTEST_OPENNESS = {
-  PUBLIC: 'public',
-  PROTECTED: 'protected',
-  PRIVATE: 'private'
+  PUBLIC: {
+    title: 'public',
+    hint: 'Public: Anyone can participate in'
+  },
+  PROTECTED: {
+    title: 'protected',
+    hint: 'Protected: Problems are public but password is needed for submissions',
+    lockColor: 'orange'
+  },
+  PRIVATE: {
+    title: 'private',
+    hint: 'Private: Password is needed for both problems and submissions',
+    lockColor: '#d9534f'
+  }
 };
 
 export const CONTEST_MODE = {
@@ -170,4 +181,32 @@ export const USER_ROLE = {
     color: 'volcano',
     isAdmin: true
   }
+};
+
+export const GROUP_OPENNESS_TYPE = {
+  PUBLIC: 0,
+  PROTECTED: 1,
+  PRIVATE: 2
+};
+
+export const GROUP_OPENNESS = {
+  [GROUP_OPENNESS_TYPE.PUBLIC]: {
+    title: 'Public',
+    description: 'Anybody can join in'
+  },
+  [GROUP_OPENNESS_TYPE.PROTECTED]: {
+    title: 'Apply',
+    description: 'Need the administrator audit'
+  },
+  [GROUP_OPENNESS_TYPE.PRIVATE]: {
+    title: 'Private',
+    description: 'Nobody can join in'
+  }
+}
+
+export const GROUP_STATUS_TYPE = {
+  NONE: 0,
+  APPLIED: 1,
+  JOINED: 2,
+  REJECTED: 3
 };

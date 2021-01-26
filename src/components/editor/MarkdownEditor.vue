@@ -1,9 +1,25 @@
 <template>
   <div>
+    <details style="margin-bottom: 5px">
+      <summary>Upload File Attachment</summary>
+      <Upload
+        multiple
+        paste
+        type="drag"
+        :max-size="102400"
+        :file-list.sync="fileList"
+        ref="upload">
+        <div style="padding: 20px 0">
+          <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+          <p>Click or drag files here to upload</p>
+        </div>
+      </Upload>
+      <Button size="small" type="info" @click="attachAdd">Add</Button>
+    </details>
     <mavon-editor
       ref="md"
       @imgAdd="$imgAdd"
-      v-model="description.markdownDescription"
+      v-model="markdown"
       :externalLink="externalLink"
       style="min-height: 600px"/>
   </div>
@@ -12,6 +28,9 @@
 <script>
 import { mavonEditor } from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
+
+import Upload from '_c/upload/upload';
+
 import api from '_u/api';
 import { SDUOJ_ENV } from '_u/env';
 
@@ -65,7 +84,7 @@ function $imgAdd(pos, $file, isinsert) {
 
 export default {
   name: 'MarkdownEditor',
-  components: {mavonEditor},
+  components: { mavonEditor, Upload },
   data: function() {
     const externalLink = SDUOJ_ENV.PROD ? {
       markdown_css: function () {
@@ -95,9 +114,8 @@ export default {
     } : true;
     return {
       externalLink,
-      description: {
-        markdownDescription: ''
-      }
+      markdown: '',
+      fileList: []
     }
   },
   methods: {
@@ -138,12 +156,29 @@ export default {
       })
     },
     $clear: function() {
+      this.$refs.upload.clearFiles();
       const $vm = this.$refs.md;
       $vm.$refs.toolbar_left.img_file = [[0, null]];
       $vm.$refs.toolbar_left.num = 0;
     },
-    setDescription: function(description) {
-      this.description = description;
+    attachAdd: function () {
+      const removeLoading = this.$Message.loading({
+        content: 'Uploading',
+        duration: 0
+      });
+      this.$attachAdd(this.fileList).then(() => {
+        this.$refs.upload.clearFiles();
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
+      });
+    },
+    setMarkdown: function(markdown) {
+      this.markdown = markdown;
+    },
+    getMarkdown: function () {
+      return this.markdown;
     }
   },
   mounted: function() {

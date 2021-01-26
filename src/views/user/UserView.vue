@@ -4,6 +4,7 @@
       <Table
         :columns="userTableColumns"
         :data="userTableData"
+        :loading="tableLoading"
         class="content-table"
         @on-selection-change="selectChange"
         @on-sort-change="onSort">
@@ -248,7 +249,8 @@ export default {
       addUserModal: false,
       batchUserModal: false,
       userInfo: {},
-      loading: true
+      loading: true,
+      tableLoading: false
     }
   },
   methods: {
@@ -279,19 +281,19 @@ export default {
             this.$Message.success('Success');
             this.getUserList();
             this.userInfoModal = false;
-          }, err => {
+          }).catch(err => {
             this.$Message.error(err.message);
             this.loading = false;
             this.$nextTick(() => {
               this.loading = true;
-            })
+            });
           });
         } else {
           this.$Message.error('Invalid format');
           this.loading = false;
           this.$nextTick(() => {
             this.loading = true;
-          })
+          });
         }
       })
     },
@@ -305,19 +307,19 @@ export default {
           }).then(_ => {
             this.$Message.success('Success');
             this.userPasswordModal = false;
-          }, err => {
+          }).catch(err => {
             this.$Message.error(err.message);
             this.loading = false;
             this.$nextTick(() => {
               this.loading = true;
-            })
+            });
           });
         } else {
           this.$Message.error('Invalid format');
           this.loading = false;
           this.$nextTick(() => {
             this.loading = true;
-          })
+          });
         }
       })
     },
@@ -347,19 +349,19 @@ export default {
             this.$Message.success('Success');
             this.getUserList();
             this.addUserModal = false;
-          }, err => {
+          }).catch(err => {
             this.$Message.error(err.message);
             this.loading = false;
             this.$nextTick(() => {
               this.loading = true;
-            })
+            });
           });
         } else {
           this.$Message.error('Invalid format');
           this.loading = false;
           this.$nextTick(() => {
             this.loading = true;
-          })
+          });
         }
       })
     },
@@ -380,12 +382,12 @@ export default {
           this.getUserList();
           this.clearExcel();
           this.batchUserModal = false;
-        }, err => {
+        }).catch(err => {
           this.$Message.error(err.message);
           this.loading = false;
           this.$nextTick(() => {
             this.loading = true;
-          })
+          });
         });
       }
     },
@@ -397,13 +399,16 @@ export default {
         this.$Modal.confirm({
           title: 'Confirm',
           content: `Delete ${this.selectedUsers.length} selected users?`,
+          loading: true,
           onOk: () => {
             api.deleteUsers(this.selectedUsers.map(o => o.username))
               .then(_ => {
                 this.$Message.success('Success');
                 this.getUserList();
-              }, err => {
+              }).catch(err => {
                 this.$Message.error(err.message);
+              }).finally(() => {
+                this.$Modal.remove();
               });
           }
         });
@@ -439,12 +444,17 @@ export default {
       }
     },
     getUserList() {
+      this.tableLoading = true;
       api.getUserList({
         pageNow: this.pageNow,
         pageSize: this.pageSize
       }).then(ret => {
         this.total = parseInt(ret.totalPage) * this.pageSize;
         this.userTableData = ret.rows;
+      }).catch(err => {
+        this.$Message.error(err.message);
+      }).finally(() => {
+        this.tableLoading = false;
       });
     }
   },

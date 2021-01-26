@@ -57,25 +57,7 @@
       :title="curDescription.title"
       @on-ok="updateDescriptionContent"
       @on-cancel="closeContestModal">
-        <details>
-          <summary>Upload File Attachment</summary>
-          <Upload
-            multiple
-            paste
-            type="drag"
-            :max-size="102400"
-            :file-list.sync="fileList"
-            ref="upload">
-            <div style="padding: 20px 0">
-              <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-              <p>Click or drag files here to upload</p>
-            </div>
-          </Upload>
-          <div style="width: 100%; margin: 5px 0" class="clearfix">
-            <Button style="float: right;" size="small" @click="attachAdd">Add</Button>
-          </div>
-        </details>
-        <MarkdownEditor ref="md" />
+         <MarkdownEditor ref="md" />
      </Modal>
    </div>
 </template>
@@ -83,12 +65,11 @@
 <script>
 import api from '_u/api';
 
-import Upload from '_c/upload/upload';
 import MarkdownEditor from '_c/editor/MarkdownEditor';
 
 export default {
   name: 'ProblemDescription',
-  components: { Upload, MarkdownEditor },
+  components: { MarkdownEditor },
   directives: {
     focus: {
       inserted: function (el) {
@@ -116,8 +97,7 @@ export default {
       problem: {},
       modalLoading: true,
       addLoading: false,
-      contentModal: false,
-      fileList: []
+      contentModal: false
     }
   },
   methods: {
@@ -180,6 +160,7 @@ export default {
       }
     },
     updateDescriptionContent: function() {
+      this.curDescription.markdownDescription = this.$refs.md.getMarkdown();
       api.updateDescription({
         id: this.curDescription.id,
         markdownDescription: this.curDescription.markdownDescription
@@ -240,21 +221,28 @@ export default {
           if (showSuccess) this.$Message.success('Success');
           this.$nextTick(() => {
             this.problem.defaultDescriptionId = this.curDescription.id;
-          })
-        }, err => {
+          });
+        }).catch(err => {
           reject(err);
           if (showError) this.$Message.error(err.message);
         });
       });
     },
     onEditDescription: function(row) {
+      const removeLoading = this.$Message.loading({
+        content: 'Loading',
+        duration: 0
+      });
       api.getProblemDescription({
         descriptionId: row.id
       }).then(ret => {
-        this.$refs.md.setDescription(this.curDescription = ret);
+        this.curDescription = ret;
+        this.$refs.md.setMarkdown(this.curDescription.markdownDescription);
         this.contentModal = true;
-      }, err => {
+      }).catch(err => {
         this.$Message.error(err.message);
+      }).finally(() => {
+        removeLoading();
       });
     },
     getProblemDescriptions: function(problemCode) {
@@ -272,15 +260,7 @@ export default {
       this.problem = problem;
       return this.getProblemDescriptions(problem.problemCode);
     },
-    attachAdd: function() {
-      this.$refs.md.$attachAdd(this.fileList).then(() => {
-        this.$refs.upload.clearFiles();
-      }).catch(err => {
-        this.$Message.error(err.message);
-      });
-    },
     clear: function() {
-      this.$refs.upload.clearFiles();
       this.$refs.md.$clear();
     },
     closeContestModal: function() {

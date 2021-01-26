@@ -22,18 +22,23 @@ const routes = [
   {
     path: '/problem',
     name: 'problem',
-    component: () => import('@/views/problem/ProblemView'),
+    component: () => import('@/views/problem/ProblemListView'),
     meta: { title: '题库' }
   },
   {
     path: '/contest',
     name: 'contest',
-    component: () => import('@/views/contest/ContestView')
+    component: () => import('@/views/contest/ContestListView')
   },
   {
     path: '/template',
     name: 'template',
     component: () => import('@/views/template/JudgeTemplateView')
+  },
+  {
+    path: '/group',
+    name: 'group',
+    component: () => import('@/views/group/GroupListView')
   },
   {
     path: '*',
