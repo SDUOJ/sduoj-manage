@@ -145,12 +145,12 @@
             </FormItem>
 
             <FormItem label="Participants">
-              <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
+              <span class="hint-text">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
               <Input v-model="contest.participants" type="textarea" :autosize="{minRows: 3}"/>
             </FormItem>
 
             <FormItem label="Unofficial Participants" prop="unofficialParticipants">
-              <span style="color: #bbb">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
+              <span class="hint-text">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
               <Input v-model="contest.unofficialParticipants" type="textarea" :autosize="{minRows: 3}"/>
             </FormItem>
 
@@ -170,6 +170,7 @@
             </FormItem>
 
             <FormItem label="Participating Groups" v-if="contestModal">
+              <span class="hint-text">Members of these groups can participate contest without password</span>
               <Select
                 transfer
                 multiple
@@ -179,7 +180,7 @@
                 :remote-method="queryParticipatingGroups"
                 :default-label="(contest.participatingGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"
                 @on-set-default-options="setParticipatingGroupSet">
-                <Option v-for="group in participatingGroupSet" :key="group.groupId" :value="group.groupId" :label="group.title" />
+                <Option v-for="group in participatingGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
               </Select>
             </FormItem>
           </TabPane>
@@ -271,7 +272,7 @@ export default {
   data: function () {
     return {
       contestColumns: [
-        { type: 'selection', width: 60, align: 'center' },
+        // { type: 'selection', width: 60, align: 'center' },
         { key: 'contestId', maxWidth: 80 },
         { title: 'Title', slot: 'title', minWidth: 150 },
         { title: 'Start', key: 'gmtStart', sortable: 'custom', width: 200, slot: 'time' },

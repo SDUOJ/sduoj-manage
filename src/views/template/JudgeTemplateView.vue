@@ -132,7 +132,7 @@ export default {
   data: function() {
     return {
       judgeTemplateColumns: [
-        { type: 'selection', width: 60, align: 'center' },
+        // { type: 'selection', width: 60, align: 'center' },
         { key: 'id', maxWidth: 80 },
         { title: 'Type', slot: 'type' },
         { title: 'Owner', key: 'username' },
