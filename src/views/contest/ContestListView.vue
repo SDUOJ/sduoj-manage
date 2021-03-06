@@ -367,9 +367,9 @@ export default {
       const datetime = Math.ceil(new Date().getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000);
       this.contest = {
         contestTitle: '',
+        isPublic: 1,
         features: {
           mode: CONTEST_MODE.ACM,
-          isPublic: 1,
           openness: CONTEST_OPENNESS.PUBLIC.title,
           frozenTime: 0,
           contestRunning: {
