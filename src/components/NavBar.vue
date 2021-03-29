@@ -32,10 +32,10 @@
         <Icon type="ios-paper"></Icon>
         Judge Template
       </MenuItem>
-      <MenuItem name="group" :to="{ name: 'group' }">
-        <Icon type="ios-contacts"></Icon>
-        Group
-      </MenuItem>
+<!--      <MenuItem name="group" :to="{ name: 'group' }">-->
+<!--        <Icon type="ios-contacts"></Icon>-->
+<!--        Group-->
+<!--      </MenuItem>-->
     </Menu>
   </div>
 </template>

@@ -119,19 +119,19 @@
         <!--        <FormItem label="Tags">-->
 
         <!--        </FormItem>-->
-        <FormItem label="Manager Groups" v-if="problemModal">
-          <Select
-            transfer
-            multiple
-            filterable
-            v-model="problem.managerGroups"
-            :loading="groupQueryLoading"
-            :remote-method="queryGroups"
-            :default-label="(problem.managerGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"
-            @on-set-default-options="setGroupSet">
-            <Option v-for="group in groupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
-          </Select>
-        </FormItem>
+<!--        <FormItem label="Manager Groups" v-if="problemModal">-->
+<!--          <Select-->
+<!--            transfer-->
+<!--            multiple-->
+<!--            filterable-->
+<!--            v-model="problem.managerGroups"-->
+<!--            :loading="groupQueryLoading"-->
+<!--            :remote-method="queryGroups"-->
+<!--            :default-label="(problem.managerGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"-->
+<!--            @on-set-default-options="setGroupSet">-->
+<!--            <Option v-for="group in groupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />-->
+<!--          </Select>-->
+<!--        </FormItem>-->
         <FormItem label="Source">
           <Input v-model="problem.source" />
         </FormItem>
@@ -201,12 +201,12 @@ export default {
       problems: [],
       problem: {},
       judgeTemplateSet: [],
-      groupSet: [],
+      // groupSet: [],
       tableLoading: false,
       problemInfoModalLoading: true,
       uploadModalLoading: true,
       judgeTemplateQueryLoading: false,
-      groupQueryLoading: false,
+      // groupQueryLoading: false,
       problemModal: false,
       checkpointModel: false,
       descriptionModel: false,
@@ -239,7 +239,7 @@ export default {
             problemTitle: this.problem.problemTitle,
             source: this.problem.source,
             judgeTemplates: this.problem.judgeTemplates,
-            managerGroups: this.problem.managerGroups,
+            // managerGroups: this.problem.managerGroups,
             memoryLimit: parseInt(this.problem.memoryLimit),
             timeLimit: parseInt(this.problem.timeLimit)
           }
@@ -273,9 +273,9 @@ export default {
         judgeTemplates: [],
         timeLimit: 1000,
         memoryLimit: 262144,
-        source: '',
-        managerGroupDTOList: [],
-        managerGroups: []
+        source: ''
+        // managerGroupDTOList: [],
+        // managerGroups: []
       };
       this.isAddProblem = true;
       this.problemModal = true;

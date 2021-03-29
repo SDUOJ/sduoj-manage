@@ -39,9 +39,9 @@
         <template slot-scope="{ row }" slot="mode">
           <span>{{ row.features.mode.toUpperCase() }}</span>
         </template>
-        <template slot-scope="{ row }" slot="group">
-          <span v-if="row.managerGroupDTO">{{ `${row.managerGroupDTO.groupId} (${row.managerGroupDTO.title})` }}</span>
-        </template>
+<!--        <template slot-scope="{ row }" slot="group">-->
+<!--          <span v-if="row.managerGroupDTO">{{ `${row.managerGroupDTO.groupId} (${row.managerGroupDTO.title})` }}</span>-->
+<!--        </template>-->
         <template slot-scope="{ row }" slot="action">
           <a href="#" @click.prevent="onEditContest(row.contestId, false)">Edit</a>
           <Divider type="vertical" />
@@ -154,35 +154,35 @@
               <Input v-model="contest.unofficialParticipants" type="textarea" :autosize="{minRows: 3}"/>
             </FormItem>
 
-            <FormItem label="Manager Group" v-if="contestModal">
-              <Select
-                transfer
-                clearable
-                filterable
-                style="width: 200px"
-                v-model="contest.groupId"
-                :loading="managerGroupQueryLoading"
-                :remote-method="queryManagerGroups"
-                :default-label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''"
-                @on-set-default-options="setManagerGroupSet">
-                <Option v-for="group in managerGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
-              </Select>
-            </FormItem>
+<!--            <FormItem label="Manager Group" v-if="contestModal">-->
+<!--              <Select-->
+<!--                transfer-->
+<!--                clearable-->
+<!--                filterable-->
+<!--                style="width: 200px"-->
+<!--                v-model="contest.groupId"-->
+<!--                :loading="managerGroupQueryLoading"-->
+<!--                :remote-method="queryManagerGroups"-->
+<!--                :default-label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''"-->
+<!--                @on-set-default-options="setManagerGroupSet">-->
+<!--                <Option v-for="group in managerGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />-->
+<!--              </Select>-->
+<!--            </FormItem>-->
 
-            <FormItem label="Participating Groups" v-if="contestModal">
-              <span class="hint-text">Members of these groups can participate contest without password</span>
-              <Select
-                transfer
-                multiple
-                filterable
-                v-model="contest.participatingGroups"
-                :loading="participatingGroupQueryLoading"
-                :remote-method="queryParticipatingGroups"
-                :default-label="(contest.participatingGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"
-                @on-set-default-options="setParticipatingGroupSet">
-                <Option v-for="group in participatingGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
-              </Select>
-            </FormItem>
+<!--            <FormItem label="Participating Groups" v-if="contestModal">-->
+<!--              <span class="hint-text">Members of these groups can participate contest without password</span>-->
+<!--              <Select-->
+<!--                transfer-->
+<!--                multiple-->
+<!--                filterable-->
+<!--                v-model="contest.participatingGroups"-->
+<!--                :loading="participatingGroupQueryLoading"-->
+<!--                :remote-method="queryParticipatingGroups"-->
+<!--                :default-label="(contest.participatingGroupDTOList || []).map(o => `${o.groupId}: ${o.title}`)"-->
+<!--                @on-set-default-options="setParticipatingGroupSet">-->
+<!--                <Option v-for="group in participatingGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />-->
+<!--              </Select>-->
+<!--            </FormItem>-->
           </TabPane>
           <TabPane :label="tabLabels.problem" name="problem">
             <FormItem prop="problems">
