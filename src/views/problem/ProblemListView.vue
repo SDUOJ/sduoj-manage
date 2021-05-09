@@ -98,6 +98,11 @@
             <span slot="append">KiB</span>
           </Input>
         </FormItem>
+        <FormItem label="Output Limit" required>
+          <Input v-model.number="problem.outputLimit">
+            <span slot="append">KiB</span>
+          </Input>
+        </FormItem>
         <FormItem label="Judge Template" v-if="problemModal">
           <Select
             transfer
@@ -241,6 +246,7 @@ export default {
             judgeTemplates: this.problem.judgeTemplates,
             managerGroups: this.problem.managerGroups,
             memoryLimit: parseInt(this.problem.memoryLimit),
+            outputLimit: parseInt(this.problem.outputLimit),
             timeLimit: parseInt(this.problem.timeLimit)
           }
           api[this.isAddProblem ? 'createProblem' : 'updateProblemInfo'](data)
@@ -273,6 +279,7 @@ export default {
         judgeTemplates: [],
         timeLimit: 1000,
         memoryLimit: 262144,
+        outputLimit: 102400,
         source: '',
         managerGroupDTOList: [],
         managerGroups: []
