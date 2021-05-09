@@ -210,3 +210,9 @@ export const GROUP_STATUS_TYPE = {
   JOINED: 2,
   REJECTED: 3
 };
+
+export const CONTEST_PROBLEM_STATUS = {
+  INIT: 0,
+  READY: 1,
+  FAILED: 2
+};
