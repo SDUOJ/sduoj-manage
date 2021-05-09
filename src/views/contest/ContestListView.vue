@@ -29,6 +29,7 @@
                 :color="CONTEST_OPENNESS.PROTECTED.lockColor"
                 type="md-lock"
                 size="19" />
+          <Tag v-if="row.isPublic === 0" style="margin-left: 5px" color="volcano">Private</Tag>
         </template>
         <template slot-scope="{ row }" slot="time">
           <Time :time="row.gmtStart | parseInt" type="datetime" />
