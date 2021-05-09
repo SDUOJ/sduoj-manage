@@ -164,8 +164,7 @@
                 v-model="contest.groupId"
                 :loading="managerGroupQueryLoading"
                 :remote-method="queryManagerGroups"
-                :default-label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''"
-                @on-set-default-options="setManagerGroupSet">
+                :label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''">
                 <Option v-for="group in managerGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
               </Select>
             </FormItem>
@@ -421,6 +420,11 @@ export default {
           this.$set(o, 'problemDescriptionList', []);
           this.getProblemDescriptionList(o);
         });
+
+        this.managerGroupSet = [];
+        if (this.contest.managerGroupDTO) {
+          this.managerGroupSet.push(this.contest.managerGroupDTO);
+        }
         this.isAddContest = fork;
         this.openModal();
       }).catch(err => {
@@ -604,9 +608,6 @@ export default {
       } else {
         this.participatingGroupSet = [];
       }
-    },
-    setManagerGroupSet: function () {
-      this.participatingGroupSet = [this.contest.managerGroupDTO || undefined];
     },
     setParticipatingGroupSet: function () {
       this.participatingGroupSet = this.contest.participatingGroupDTOList;
