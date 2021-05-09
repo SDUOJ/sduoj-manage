@@ -29,6 +29,7 @@
                 :color="CONTEST_OPENNESS.PROTECTED.lockColor"
                 type="md-lock"
                 size="19" />
+          <Tag v-if="row.isPublic === 0" style="margin-left: 5px" color="volcano">Private</Tag>
         </template>
         <template slot-scope="{ row }" slot="time">
           <Time :time="row.gmtStart | parseInt" type="datetime" />
@@ -163,8 +164,7 @@
                 v-model="contest.groupId"
                 :loading="managerGroupQueryLoading"
                 :remote-method="queryManagerGroups"
-                :default-label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''"
-                @on-set-default-options="setManagerGroupSet">
+                :label="contest.managerGroupDTO ? `${contest.managerGroupDTO.groupId}: ${contest.managerGroupDTO.title}` : ''">
                 <Option v-for="group in managerGroupSet" :key="group.groupId" :value="group.groupId" :label="`${group.groupId}: ${group.title}`" />
               </Select>
             </FormItem>
@@ -214,7 +214,7 @@
                   <InputNumber v-model="row.problemWeight" :min="0" @on-change="updateProblem(row, index, 'problemWeight')" />
                 </template>
                 <template slot-scope="{ row, index }" slot="problemDescriptionId">
-                  <div style="position: relative; top: 3px" v-if="!row.$ready">
+                  <div style="position: relative; top: 3px" v-if="row.$ready === CONTEST_PROBLEM_STATUS.INIT">
                     <Loading />
                   </div>
                   <Select v-else v-model="row.problemDescriptionId" transfer @on-change="updateProblem(row, index, 'problemDescriptionId')">
@@ -225,10 +225,10 @@
                   <ColorPicker v-model="row.problemColor" transfer @on-change="updateProblem(row, index, 'problemColor')" />
                 </template>
                 <template slot-scope="{ row }" slot="check">
-                  <div style="position: relative; top: 3px" v-if="row.$ready === 0">
+                  <div style="position: relative; top: 3px" v-if="row.$ready === CONTEST_PROBLEM_STATUS.INIT">
                     <Loading />
                   </div>
-                  <Icon v-else-if="row.$ready === 1" type="md-checkmark" color="#50ad56" />
+                  <Icon v-else-if="row.$ready === CONTEST_PROBLEM_STATUS.READY" type="md-checkmark" color="#50ad56" />
                   <Icon v-else type="md-close" color="#CD6155" />
                 </template>
               </Table>
@@ -248,7 +248,7 @@ import MarkdownEditor from '_c/editor/MarkdownEditor';
 
 import api from '_u/api';
 import { split } from '_u/split';
-import { CONTEST_OPENNESS, CONTEST_MODE } from '_u/constants';
+import { CONTEST_OPENNESS, CONTEST_MODE, CONTEST_PROBLEM_STATUS } from '_u/constants';
 
 function $contestProblemIdEncode(problemCode) {
   problemCode = parseInt(problemCode);
@@ -416,10 +416,15 @@ export default {
         this.$refs.md.setMarkdown(this.contest.markdownDescription);
 
         this.contest.problems.forEach(o => {
-          this.$set(o, '$ready', 0);
+          this.$set(o, '$ready', CONTEST_PROBLEM_STATUS.INIT);
           this.$set(o, 'problemDescriptionList', []);
           this.getProblemDescriptionList(o);
         });
+
+        this.managerGroupSet = [];
+        if (this.contest.managerGroupDTO) {
+          this.managerGroupSet.push(this.contest.managerGroupDTO);
+        }
         this.isAddContest = fork;
         this.openModal();
       }).catch(err => {
@@ -452,7 +457,8 @@ export default {
         problemDescriptionId: '',
         problemDescriptionList: [],
         problemColor: '',
-        oldProblemCode: ''
+        oldProblemCode: '',
+        $ready: CONTEST_PROBLEM_STATUS.INIT
       };
       const index = this.contest.problems.length;
       this.contest.problems.push(newProblem);
@@ -467,7 +473,8 @@ export default {
           if (!row.problemCode || row.oldProblemCode === row.problemCode) return;
           row.oldProblemCode = row.problemCode;
           api.getProblem({ problemCode: row.problemCode }).then(ret => {
-            row.$ready = 1;
+            row.$ready = CONTEST_PROBLEM_STATUS.INIT;
+            row.problemDescriptionId = '';
             row.problemWeight = 1;
             row.problemTitle = ret.problemTitle;
             this.getProblemDescriptionList(row).catch(_ => {
@@ -477,7 +484,7 @@ export default {
             });
           }).catch(err => {
             this.$Message.error(err.message);
-            row.$ready = 2;
+            row.$ready = CONTEST_PROBLEM_STATUS.FAILED;
             row.problemTitle = '';
             row.problemDescriptionId = '';
             row.problemDescriptionList = [];
@@ -536,17 +543,26 @@ export default {
       return new Promise((resolve, reject) => {
         api.getProblemDescriptionList({ problemCode: row.problemCode }).then(ret => {
           row.problemDescriptionList = ret;
-          if (ret.length > 0) {
-            row.problemDescriptionId = ret[0].id;
-            row.$ready = 1;
-          } else {
-            row.problemDescriptionId = '';
-            row.$ready = 2;
-          }
           resolve(ret);
+          if (row.problemDescriptionId === '') {
+            if (ret.length > 0) {
+              row.problemDescriptionId = ret[0].id;
+              row.$ready = CONTEST_PROBLEM_STATUS.READY;
+            } else {
+              row.problemDescriptionId = '';
+              row.$ready = CONTEST_PROBLEM_STATUS.FAILED;
+            }
+          } else {
+            const problemDescriptionIds = ret.map(o => o.id);
+            if (problemDescriptionIds.includes(row.problemDescriptionId)) {
+              row.$ready = CONTEST_PROBLEM_STATUS.READY;
+            } else {
+              row.$ready = CONTEST_PROBLEM_STATUS.FAILED;
+            }
+          }
         }).catch(err => {
           this.$Message.error(err.message);
-          row.$ready = 2;
+          row.$ready = CONTEST_PROBLEM_STATUS.FAILED;
           reject(err);
         });
       });
@@ -593,9 +609,6 @@ export default {
         this.participatingGroupSet = [];
       }
     },
-    setManagerGroupSet: function () {
-      this.participatingGroupSet = [this.contest.managerGroupDTO || undefined];
-    },
     setParticipatingGroupSet: function () {
       this.participatingGroupSet = this.contest.participatingGroupDTOList;
     },
@@ -620,7 +633,7 @@ export default {
       }
       for (let i = 0; i < this.contest.problems.length; ++i) {
         const o = this.contest.problems[i];
-        if (o.$ready !== 1 || !o.problemDescriptionId || !o.problemTitle) {
+        if (o.$ready !== CONTEST_PROBLEM_STATUS.READY || !o.problemDescriptionId || !o.problemTitle) {
           this.$Message.error(`Problem ${$contestProblemIdEncode(i)} is not ready`);
           this.tabErrors.problem = true;
           return false;
@@ -633,6 +646,7 @@ export default {
   computed: {
     CONTEST_OPENNESS: () => CONTEST_OPENNESS,
     CONTEST_MODE: () => CONTEST_MODE,
+    CONTEST_PROBLEM_STATUS: () => CONTEST_PROBLEM_STATUS,
     moment: () => moment,
     gmtLength: {
       get: function () {

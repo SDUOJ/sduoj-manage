@@ -374,7 +374,7 @@ export default {
         this.$Message.error('No data');
       } else {
         this.excelData.forEach(o => {
-          o.emailVerified = parseInt(o.emailVerified) || 0;
+          o.emailVerified = parseInt(o.emailVerified) || 1;
           o.gender = parseInt(o.gender) || 2;
         });
         api.addUsers(this.excelData).then(_ => {
