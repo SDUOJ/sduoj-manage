@@ -216,3 +216,24 @@ export const CONTEST_PROBLEM_STATUS = {
   READY: 1,
   FAILED: 2
 };
+
+export const NEWLINE_CONVERT_INDEX = {
+  DEFAULT: '',
+  DOS2UNIX: 'dos2unix',
+  UNIX2DOS: 'unix2dos'
+};
+
+export const NEWLINE_CONVERT = {
+  [NEWLINE_CONVERT_INDEX.DOS2UNIX]: {
+    name: NEWLINE_CONVERT_INDEX.DOS2UNIX,
+    description: 'Convert DOS(CR-LF) to UNIX(LF)'
+  },
+  [NEWLINE_CONVERT_INDEX.UNIX2DOS]: {
+    name: NEWLINE_CONVERT_INDEX.UNIX2DOS,
+    description: 'Convert UNIX(LF) to DOS(CR-LF)'
+  },
+  [NEWLINE_CONVERT_INDEX.DEFAULT]: {
+    name: NEWLINE_CONVERT_INDEX.DEFAULT,
+    description: 'Do not convert'
+  }
+};

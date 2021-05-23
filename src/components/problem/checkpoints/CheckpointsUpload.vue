@@ -11,8 +11,27 @@
 <template>
   <div class="clearfix">
     <div>
+      <span class="subtitle">Newline</span>
+      <div class="float-right">
+        <Dropdown transfer @on-click="onChangeConvertMode">
+          <a href="javascript:void(0)">
+            {{ NEWLINE_CONVERT[convertMode].description }}
+            <Icon type="ios-arrow-down"></Icon>
+          </a>
+          <DropdownMenu slot="list">
+            <DropdownItem
+              v-for="convert in NEWLINE_CONVERT" :key="convert.name"
+              :name="convert.name">{{ convert.description }}</DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      </div>
+    </div>
+
+    <div>
       <span class="subtitle">Single Upload</span>
-      <Button @click="reset" size="small" style="float: right" type="text">Clear All</Button>
+      <div class="float-right">
+        <Button @click="reset" size="small" type="text">Clear All</Button>
+      </div>
       <Form :model="singleCheckpoint">
         <FormItem label="Standard Input">
           <Input autocomplete="off" type="textarea" v-model="singleCheckpoint.input" :rows="5"/>
@@ -22,6 +41,7 @@
         </FormItem>
       </Form>
     </div>
+
     <div>
       <span class="subtitle">Batch Upload</span>
       <Upload
@@ -47,6 +67,7 @@
 <script>
 import api from '_u/api';
 import Upload from '_c/upload/upload';
+import { NEWLINE_CONVERT_INDEX, NEWLINE_CONVERT } from '_u/constants';
 
 export default {
   name: 'CheckpointsUpload',
@@ -58,20 +79,24 @@ export default {
         output: ''
       },
       fileList: [],
+      convertMode: NEWLINE_CONVERT_INDEX.DOS2UNIX,
       onUploading: false
     }
+  },
+  computed: {
+    NEWLINE_CONVERT: () => NEWLINE_CONVERT
   },
   methods: {
     reset: function () {
       this.singleCheckpoint.input = '';
       this.singleCheckpoint.output = '';
+      this.convertMode = NEWLINE_CONVERT_INDEX.DOS2UNIX;
       this.clearFiles();
     },
     clearFiles: function () {
       this.fileList = [];
       this.$refs.upload.clearFiles();
     },
-
     validFile: function () {
       if (this.fileList.length === 0) {
         this.$Message.warning('Select files');
@@ -109,13 +134,19 @@ export default {
       }
       return true;
     },
-    handleBatchSubmit: function (onSuccess, onFinally) {
+    onChangeConvertMode: function(name) {
+      this.convertMode = name;
+    },
+    handleBatchSubmit: function(onSuccess, onFinally) {
       if (!this.validFile()) {
         onFinally();
         return false;
       }
+
       const form = new FormData();
       this.fileList.forEach(file => form.append('files', file.file));
+      form.append('mode', this.convertMode);
+
       const loading = this.$Message.loading({
         content: `Uploading ${this.fileList.length} files`,
         duration: 0
@@ -125,20 +156,31 @@ export default {
           onSuccess(ret);
           this.$Message.success('Upload successfully');
           this.reset();
-        }, err => (this.$Message.error(err)))
-        .finally(() => {
+        }).catch(err => {
+          this.$Message.error(err);
+        }).finally(() => {
           loading();
           onFinally();
         });
     },
     handleSingleSubmit: function (onSuccess, onFinally) {
-      api.uploadSingleCheckpoint(this.singleCheckpoint)
-        .then(ret => {
-          this.$Message.success(`Upload successfully: ${ret.checkpointId}`);
-          onSuccess([ret]);
-          this.reset();
-        }, err => (this.$Message.error(err)))
-        .finally(onFinally);
+      const loading = this.$Message.loading({
+        content: 'Uploading',
+        duration: 0
+      });
+      api.uploadSingleCheckpoint({
+        ...this.singleCheckpoint,
+        mode: this.convertMode
+      }).then(ret => {
+        this.$Message.success(`Upload successfully: ${ret.checkpointId}`);
+        onSuccess([ret]);
+        this.reset();
+      }).catch(err => {
+        this.$Message.error(err);
+      }).finally(() => {
+        loading();
+        onFinally();
+      });
     },
     save: function (onSuccess, onFinally) {
       if (this.singleCheckpoint.input !== '' || this.singleCheckpoint.output !== '') {
