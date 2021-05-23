@@ -39,7 +39,7 @@
 
 <script>
 import api from '_u/api';
-import { NEWLINE_CONVERT } from '_u/constants';
+import { NEWLINE_CONVERT_INDEX, NEWLINE_CONVERT } from '_u/constants';
 
 export default {
   name: 'CheckpointPreview',
@@ -48,7 +48,7 @@ export default {
       onUploading: false,
       checkpoint: {},
       oldCheckpoint: {},
-      convertMode: 'dos2unix'
+      convertMode: NEWLINE_CONVERT_INDEX.DOS2UNIX
     }
   },
   computed: {
@@ -59,7 +59,7 @@ export default {
       this.convertMode = name;
     },
     reset: function() {
-      this.convertMode = 'dos2unix';
+      this.convertMode = NEWLINE_CONVERT_INDEX.DOS2UNIX;
     },
     set: function(checkpoint) {
       this.checkpoint = checkpoint;

@@ -67,7 +67,7 @@
 <script>
 import api from '_u/api';
 import Upload from '_c/upload/upload';
-import { NEWLINE_CONVERT } from '_u/constants';
+import { NEWLINE_CONVERT_INDEX, NEWLINE_CONVERT } from '_u/constants';
 
 export default {
   name: 'CheckpointsUpload',
@@ -79,7 +79,7 @@ export default {
         output: ''
       },
       fileList: [],
-      convertMode: 'dos2unix',
+      convertMode: NEWLINE_CONVERT_INDEX.DOS2UNIX,
       onUploading: false
     }
   },
@@ -90,7 +90,7 @@ export default {
     reset: function () {
       this.singleCheckpoint.input = '';
       this.singleCheckpoint.output = '';
-      this.convertMode = 'dos2unix';
+      this.convertMode = NEWLINE_CONVERT_INDEX.DOS2UNIX;
       this.clearFiles();
     },
     clearFiles: function () {
