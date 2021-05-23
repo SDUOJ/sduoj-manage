@@ -91,7 +91,7 @@
               Batch delete
             </Button>
             <Button
-              @click="uploadModal=true">
+              @click="openUploadModal">
               Uploads
             </Button>
           </ButtonGroup>
@@ -109,17 +109,18 @@
     <!--    upload modal-->
     <Modal
       title="Checkpoint Upload"
-      v-model="uploadModal"
       width="30%"
+      v-model="uploadModal"
       :loading="uploadModalLoading"
+      :mask-closable="false"
       @on-ok="onCheckpointUpload">
       <CheckpointsUpload ref="CheckpointsUpload"/>
     </Modal>
 
     <Modal
       title="Checkpoint Preview"
-      v-model="previewModal"
       width="30%"
+      v-model="previewModal"
       :loading="previewModalLoading"
       @on-ok="onCheckpointUpdate">
       <CheckpointPreview ref="CheckpointPreview"/>
@@ -334,6 +335,14 @@ export default {
         })
       });
     },
+    openUploadModal: function() {
+      this.$refs.CheckpointsUpload.reset();
+      this.uploadModal = true;
+    },
+    openPreviewModal: function() {
+      this.$refs.CheckpointPreview.reset();
+      this.previewModal = true;
+    },
     onPreview: function (row, column) {
       if (!['checkpointId', 'inputPreview', 'outputPreview'].includes(column.key)) {
         return;
@@ -342,7 +351,7 @@ export default {
       api.getCheckpointPreview(checkpointId)
         .then(ret => {
           this.$refs.CheckpointPreview.set(ret);
-          this.previewModal = true;
+          this.openPreviewModal();
         })
         .catch(err => {
           this.$Message.error(err.message);
