@@ -62,15 +62,15 @@
         </FormItem>
 
         <FormItem label="Student ID" prop="studentId">
-          <Input v-model="userInfo.studentId" :placeholder="userInfo.studentId" />
+          <Input v-model="userInfo.studentId" />
         </FormItem>
 
         <FormItem label="Phone" prop="phone">
-          <Input v-model="userInfo.phone" :placeholder="userInfo.phone" />
+          <Input v-model="userInfo.phone" />
         </FormItem>
 
         <FormItem label="Email" prop="email">
-          <Input v-model="userInfo.email" :placeholder="userInfo.email" />
+          <Input v-model="userInfo.email" />
         </FormItem>
 
         <FormItem label="Role">
@@ -90,7 +90,7 @@
       title="Password"
       :loading="loading"
       @on-ok="commitUserPassword">
-      <Form ref="passwdForm" :model="userInfo" :rules="userInfoRule" :label-width="80">
+      <Form ref="passwdForm" :model="userInfo" :rules="userInfoRule">
         <FormItem label="Username">
           <span>{{ userInfo.username }}</span>
         </FormItem>
@@ -139,9 +139,6 @@
 
         <FormItem label="Email" prop="email">
           <Input v-model="userInfo.email" />
-        </FormItem>
-        <FormItem label="Email Verify" prop="email">
-          <i-switch v-model="userInfo.emailVerified" :true-value="1" :false-value="0" />
         </FormItem>
 
         <FormItem label="Role">
@@ -207,11 +204,12 @@ export default {
     return {
       userTableColumns: [
         { type: 'selection', width: 60, align: 'center' },
-        { key: 'userId' },
+        { key: 'userId', maxWidth: 80 },
         { title: 'Username', key: 'username' },
         { title: 'Nickname', key: 'nickname' },
         { title: 'Sex', slot: 'gender', width: 80 },
         { title: 'Student ID', key: 'studentId', sortable: 'true' },
+        { title: 'SDU ID', key: 'sduId', sortable: 'true' },
         { title: 'Email', key: 'email' },
         { title: 'Roles', slot: 'role' },
         { title: '\b', slot: 'action' }
@@ -231,7 +229,6 @@ export default {
           { type: 'string', pattern: /[0-9]*/, min: 11, max: 16 }
         ],
         email: [
-          { required: true, massage: 'Email can not be empty', trigger: 'blur' },
           { type: 'email', message: 'Invalid email address' }
         ],
         password: [
@@ -275,8 +272,8 @@ export default {
       this.$refs.userInfoModal.validate(valid => {
         if (valid) {
           const data = { ...this.userInfo };
-          delete this.userInfo.password;
-          delete this.userInfo.passwordCheck;
+          delete data.password;
+          delete data.passwordCheck;
           api.updateUserInfo(data).then(_ => {
             this.$Message.success('Success');
             this.getUserList();
@@ -332,7 +329,6 @@ export default {
         studentId: '',
         phone: '',
         email: '',
-        emailVerified: 1,
         roles: [],
         password: '',
         passwordCheck: ''
@@ -374,7 +370,6 @@ export default {
         this.$Message.error('No data');
       } else {
         this.excelData.forEach(o => {
-          o.emailVerified = parseInt(o.emailVerified) || 1;
           o.gender = parseInt(o.gender) || 2;
         });
         api.addUsers(this.excelData).then(_ => {
@@ -420,7 +415,7 @@ export default {
         this.$Message.error('No selected users');
       } else {
         import('_u/excel').then(excel => {
-          const header = ['userId', 'username', 'nickname', 'email', 'phone', 'studentId', 'gender', 'emailVerified', 'roles'];
+          const header = ['userId', 'username', 'nickname', 'email', 'phone', 'studentId', 'gender', 'roles'];
           const data = this.selectedUsers.map(o => {
             return [
               o.userId,
@@ -430,7 +425,6 @@ export default {
               o.phone.toString(),
               o.studentId.toString(),
               o.gender,
-              o.emailVerified,
               (o.roles || []).join(',')
             ];
           })
