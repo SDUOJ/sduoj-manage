@@ -21,7 +21,7 @@ export default {
       if (isLt1M) {
         return true;
       }
-      this.$Message.warn('Please do not upload files larger than 1m in size.');
+      this.$Message.warn('Please do not upload files larger than 1MB.');
       return false;
     },
     handleSuccess: function({ results, header }) {
