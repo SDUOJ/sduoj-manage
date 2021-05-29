@@ -1,6 +1,11 @@
 <template>
   <div>
     <Card dis-hover title="User">
+      <Input slot="extra"
+             search
+             enter-button
+             style="width: 280px"
+             @on-search="getUserList"/>
       <Table
         :columns="userTableColumns"
         :data="userTableData"
@@ -477,11 +482,12 @@ export default {
         });
       }
     },
-    getUserList() {
+    getUserList(searchKey) {
       this.tableLoading = true;
       api.getUserList({
         pageNow: this.pageNow,
-        pageSize: this.pageSize
+        pageSize: this.pageSize,
+        searchKey
       }).then(ret => {
         this.total = parseInt(ret.totalPage) * this.pageSize;
         this.userTableData = ret.rows;
