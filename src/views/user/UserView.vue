@@ -490,7 +490,7 @@ export default {
       api.getUserList({
         pageNow: this.pageNow,
         pageSize: this.pageSize,
-        searchKey: this.$route.query.searchKey
+        searchKey: this.searchKey
       }).then(ret => {
         this.total = parseInt(ret.totalPage) * this.pageSize;
         this.userTableData = ret.rows;
