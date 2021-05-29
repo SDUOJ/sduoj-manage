@@ -81,10 +81,10 @@
             </FormItem>
 
             <FormItem label="Role">
-              <Select v-model="userInfo.roles" multiple>
-                <Option value="user">user</Option>
-                <Option value="admin">admin</Option>
+              <Select v-model="userInfo.roles" multiple transfer>
                 <Option value="superadmin">superadmin</Option>
+                <Option value="admin">admin</Option>
+                <Option value="user">user</Option>
               </Select>
             </FormItem>
           </TabPane>
@@ -159,10 +159,10 @@
             </FormItem>
 
             <FormItem label="Role">
-              <Select v-model="userInfo.roles" multiple>
-                <Option value="user">user</Option>
-                <Option value="admin">admin</Option>
+              <Select v-model="userInfo.roles" multiple transfer>
                 <Option value="superadmin">superadmin</Option>
+                <Option value="admin">admin</Option>
+                <Option value="user">user</Option>
               </Select>
             </FormItem>
 
