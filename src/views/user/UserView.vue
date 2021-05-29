@@ -5,7 +5,7 @@
              search
              enter-button
              style="width: 280px"
-             @on-search="getUserList"/>
+             @on-search="searchUser"/>
       <Table
         :columns="userTableColumns"
         :data="userTableData"
@@ -482,12 +482,15 @@ export default {
         });
       }
     },
-    getUserList(searchKey) {
+    searchUser: function(searchKey) {
+      this.searchKey = searchKey;
+    },
+    getUserList() {
       this.tableLoading = true;
       api.getUserList({
         pageNow: this.pageNow,
         pageSize: this.pageSize,
-        searchKey
+        searchKey: this.$route.query.searchKey
       }).then(ret => {
         this.total = parseInt(ret.totalPage) * this.pageSize;
         this.userTableData = ret.rows;
@@ -499,7 +502,15 @@ export default {
     }
   },
   computed: {
-    USER_ROLE: () => USER_ROLE
+    USER_ROLE: () => USER_ROLE,
+    searchKey: {
+      get: function() {
+        return this.$route.query.searchKey || '';
+      },
+      set: function(searchKey) {
+        this.$router.push({ query: { ...this.$route.query, searchKey } });
+      }
+    }
   },
   mounted: function () {
     this.getUserList();
