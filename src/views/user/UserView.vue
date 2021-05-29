@@ -49,37 +49,47 @@
       :loading="loading"
       @on-ok="commitUserInfo">
       <Form :model="userInfo" :rules="userInfoRule" ref="userInfoModal">
-        <FormItem label="Nickname" prop="nickname">
-          <Input v-model="userInfo.nickname" :placeholder="userInfo.nickname" />
-        </FormItem>
+        <Tabs v-model="tabName" :animated="false">
+          <TabPane :label="tabLabels.profile" name="profile">
+            <FormItem label="Nickname" prop="nickname">
+              <Input v-model="userInfo.nickname" :placeholder="userInfo.nickname" />
+            </FormItem>
 
-        <FormItem label="Sex" prop="gender">
-          <RadioGroup v-model="userInfo.gender">
-            <Radio :label='1'><Icon type="md-male"/></Radio>
-            <Radio :label='0'><Icon type="md-female"/></Radio>
-            <Radio :label='2'><Icon type="md-help"/></Radio>
-          </RadioGroup>
-        </FormItem>
+            <FormItem label="Sex" prop="gender">
+              <RadioGroup v-model="userInfo.gender">
+                <Radio :label='1'><Icon type="md-male"/></Radio>
+                <Radio :label='0'><Icon type="md-female"/></Radio>
+                <Radio :label='2'><Icon type="md-help"/></Radio>
+              </RadioGroup>
+            </FormItem>
 
-        <FormItem label="Student ID" prop="studentId">
-          <Input v-model="userInfo.studentId" />
-        </FormItem>
+            <FormItem label="Student ID" prop="studentId">
+              <Input v-model="userInfo.studentId" />
+            </FormItem>
 
-        <FormItem label="Phone" prop="phone">
-          <Input v-model="userInfo.phone" />
-        </FormItem>
+            <FormItem label="Phone" prop="phone">
+              <Input v-model="userInfo.phone" />
+            </FormItem>
 
-        <FormItem label="Email" prop="email">
-          <Input v-model="userInfo.email" />
-        </FormItem>
+            <FormItem label="Email" prop="email">
+              <Input v-model="userInfo.email" />
+            </FormItem>
 
-        <FormItem label="Role">
-          <Select v-model="userInfo.roles" multiple>
-            <Option value="user">user</Option>
-            <Option value="admin">admin</Option>
-            <Option value="superadmin">superadmin</Option>
-          </Select>
-        </FormItem>
+            <FormItem label="Role">
+              <Select v-model="userInfo.roles" multiple>
+                <Option value="user">user</Option>
+                <Option value="admin">admin</Option>
+                <Option value="superadmin">superadmin</Option>
+              </Select>
+            </FormItem>
+          </TabPane>
+          <TabPane :label="tabLabels.features" name="features">
+            <FormItem>
+              <Checkbox v-model="userInfo.features.banThirdParty" :true-value="1" :false-value="0">Disable Third Party Login</Checkbox>
+              <Checkbox v-model="userInfo.features.banEmailUpdate" :true-value="1" :false-value="0">Disable Email Update</Checkbox>
+            </FormItem>
+          </TabPane>
+        </Tabs>
       </Form>
     </Modal>
     <!-- 用户信息修改框 -->
@@ -113,49 +123,59 @@
       :loading="loading"
       @on-ok="commitAddUser">
       <Form ref="addUserModal" :model="userInfo" :rules="userInfoRule">
-        <FormItem label="Username" prop="username">
-          <Input v-model="userInfo.username" />
-        </FormItem>
+        <Tabs v-model="tabName" :animated="false">
+          <TabPane :label="tabLabels.profile" name="profile">
+            <FormItem label="Username" prop="username">
+              <Input v-model="userInfo.username" />
+            </FormItem>
 
-        <FormItem label="Nickname" prop="nickname">
-          <Input v-model="userInfo.nickname" />
-        </FormItem>
+            <FormItem label="Nickname" prop="nickname">
+              <Input v-model="userInfo.nickname" />
+            </FormItem>
 
-        <FormItem label="Sex" prop="gender">
-          <RadioGroup v-model="userInfo.gender">
-            <Radio :label="1"><Icon type="md-male"/></Radio>
-            <Radio :label="0"><Icon type="md-female"/></Radio>
-            <Radio :label="2"><Icon type="md-help"/></Radio>
-          </RadioGroup>
-        </FormItem>
+            <FormItem label="Sex" prop="gender">
+              <RadioGroup v-model="userInfo.gender">
+                <Radio :label="1"><Icon type="md-male"/></Radio>
+                <Radio :label="0"><Icon type="md-female"/></Radio>
+                <Radio :label="2"><Icon type="md-help"/></Radio>
+              </RadioGroup>
+            </FormItem>
 
-        <FormItem label="Student ID" prop="studentId">
-          <Input v-model="userInfo.studentId" />
-        </FormItem>
+            <FormItem label="Student ID" prop="studentId">
+              <Input v-model="userInfo.studentId" />
+            </FormItem>
 
-        <FormItem label="Phone" prop="phone">
-          <Input v-model="userInfo.phone" />
-        </FormItem>
+            <FormItem label="Phone" prop="phone">
+              <Input v-model="userInfo.phone" />
+            </FormItem>
 
-        <FormItem label="Email" prop="email">
-          <Input v-model="userInfo.email" />
-        </FormItem>
+            <FormItem label="Email" prop="email">
+              <Input v-model="userInfo.email" />
+            </FormItem>
 
-        <FormItem label="Role">
-          <Select v-model="userInfo.roles" multiple>
-            <Option value="user">user</Option>
-            <Option value="admin">admin</Option>
-            <Option value="superadmin">superadmin</Option>
-          </Select>
-        </FormItem>
+            <FormItem label="Role">
+              <Select v-model="userInfo.roles" multiple>
+                <Option value="user">user</Option>
+                <Option value="admin">admin</Option>
+                <Option value="superadmin">superadmin</Option>
+              </Select>
+            </FormItem>
 
-        <FormItem label="Password" prop="password">
-          <Input type="password" v-model="userInfo.password" />
-        </FormItem>
+            <FormItem label="Password" prop="password">
+              <Input type="password" v-model="userInfo.password" />
+            </FormItem>
 
-        <FormItem label="Confirm Password" prop="passwordCheck">
-          <Input type="password" v-model="userInfo.passwordCheck" />
-        </FormItem>
+            <FormItem label="Confirm Password" prop="passwordCheck">
+              <Input type="password" v-model="userInfo.passwordCheck" />
+            </FormItem>
+          </TabPane>
+          <TabPane :label="tabLabels.features" name="features">
+            <FormItem>
+              <Checkbox v-model="userInfo.features.banThirdParty" :true-value="1" :false-value="0">Disable Third Party Login</Checkbox>
+              <Checkbox v-model="userInfo.features.banEmailUpdate" :true-value="1" :false-value="0">Disable Email Update</Checkbox>
+            </FormItem>
+          </TabPane>
+        </Tabs>
       </Form>
     </Modal>
     <!-- 添加用户模态框 -->
@@ -245,14 +265,22 @@ export default {
       userPasswordModal: false,
       addUserModal: false,
       batchUserModal: false,
-      userInfo: {},
+      userInfo: {
+        features: {}
+      },
       loading: true,
-      tableLoading: false
+      tableLoading: false,
+      tabLabels: {
+        profile: 'Profile',
+        features: 'Features'
+      },
+      tabName: 'profile'
     }
   },
   methods: {
     onEditUser: function(row) {
       this.userInfo = { ...row };
+      this.tabName = 'profile';
       this.userInfoModal = true;
     },
     onChangePassword: function(row) {
@@ -330,9 +358,14 @@ export default {
         phone: '',
         email: '',
         roles: [],
+        features: {
+          banThirdParty: 0,
+          banEmailUpdate: 0
+        },
         password: '',
         passwordCheck: ''
-      }
+      };
+      this.tabName = 'profile';
       this.addUserModal = true;
     },
     // 添加用户的确认按钮
@@ -370,8 +403,15 @@ export default {
         this.$Message.error('No data');
       } else {
         this.excelData.forEach(o => {
+          o.features = {
+            banThirdParty: o.banThirdParty,
+            banEmailUpdate: o.banEmailUpdate
+          };
+          delete o.banThirdParty;
+          delete o.banEmailUpdate;
           o.gender = parseInt(o.gender) || 2;
         });
+
         api.addUsers(this.excelData).then(_ => {
           this.$Message.success('Success');
           this.getUserList();
