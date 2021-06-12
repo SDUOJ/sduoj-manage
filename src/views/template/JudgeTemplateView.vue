@@ -67,8 +67,8 @@
             </Select>
           </FormItem>
           <FormItem label="Script" prop="shellScript" required>
-            <div style="">
-              <CodeEditor :mode="templateInfo.type === JUDGE_TEMPLATE_TYPE.ADVANCED ? 'shell' : 'json'" :code.sync="templateInfo.shellScript" />
+            <div style="border: 1px solid #dcdee2; border-radius: 4px; padding: 1px">
+              <CodeEditor :mode="templateInfo.type === JUDGE_TEMPLATE_TYPE.ADVANCED ? 'shell' : 'text/json'" :code.sync="templateInfo.shellScript" />
             </div>
           </FormItem>
           <FormItem>
@@ -266,7 +266,7 @@ export default {
     // 获取评测模板列表
     getTemplateList: function() {
       this.tableLoading = true;
-      api.getTemplateList({
+      api.pageTemplateList({
         pageNow: this.pageNow,
         pageSize: this.pageSize,
         title: this.searchTitle
