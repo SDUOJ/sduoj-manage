@@ -18,6 +18,7 @@
 import { codemirror } from 'vue-codemirror-lite';
 // closebrackets
 import 'codemirror/addon/edit/closebrackets.js'
+import 'codemirror/addon/display/autorefresh.js';
 
 export default {
   components: {
@@ -34,7 +35,8 @@ export default {
         tabSize: 2,
         theme: 'default',
         mode: 'text/json',
-        lineNumbers: true
+        lineNumbers: true,
+        autoRefresh: true
       }
     }
   },
