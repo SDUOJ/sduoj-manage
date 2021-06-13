@@ -48,9 +48,7 @@
           </Select>
         </FormItem>
         <FormItem label="Script" prop="shellScript" required>
-          <div style="border: 1px solid #dcdee2; border-radius: 4px; padding: 1px">
-            <CodeEditor :mode="judgeTemplate.type === JUDGE_TEMPLATE_TYPE.ADVANCED ? 'shell' : 'json'" :code.sync="judgeTemplate.shellScript" />
-          </div>
+            <CodeEditor ref="CodeEditor" :mode="judgeTemplate.type === JUDGE_TEMPLATE_TYPE.ADVANCED ? 'shell' : 'application/json'" :code.sync="judgeTemplate.shellScript" />
         </FormItem>
         <FormItem>
           <div slot="label">
@@ -275,6 +273,13 @@ export default {
   },
   computed: {
     JUDGE_TEMPLATE_TYPE: () => JUDGE_TEMPLATE_TYPE
+  },
+  watch: {
+    jtModal: function(status) {
+      if (status) {
+        this.$refs.CodeEditor.refresh();
+      }
+    }
   }
 }
 </script>
