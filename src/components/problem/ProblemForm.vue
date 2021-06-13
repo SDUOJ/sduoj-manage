@@ -62,21 +62,21 @@
               <Radio :label="JUDGE_TEMPLATE_TYPE.ADVANCED">{{ JUDGE_TEMPLATE_PROPERTY[JUDGE_TEMPLATE_TYPE.ADVANCED].name }}</Radio>
             </RadioGroup>
           </FormItem>
-          <FormItem label="Judge Template" required v-if="problemReady">
-            <Select
-              transfer
-              multiple
-              filterable
-              v-model="problem.judgeTemplates"
-              :loading="judgeTemplateQueryLoading">
-              <Option v-for="template in judgeTemplateSet" :key="template.value" :value="template.value" :label="template.label">
-                <span>{{ template.label }}</span>
-                <span style="color: #ccc"> {{ template.comment }}</span>
-                <span style="float: right;color: #ccc; margin-right: 20px">{{ template.type }}</span>
-              </Option>
-            </Select>
-          </FormItem>
           <div v-if="jtType === JUDGE_TEMPLATE_TYPE.IO">
+            <FormItem label="Judge Template" required v-if="problemReady">
+              <Select
+                transfer
+                multiple
+                filterable
+                v-model="ioJudgeTemplates"
+                :loading="judgeTemplateQueryLoading">
+                <Option v-for="template in ioJudgeTemplateSet" :key="template.value" :value="template.value" :label="template.label">
+                  <span>{{ template.label }}</span>
+                  <span style="color: #ccc"> {{ template.comment }}</span>
+                  <span style="float: right;color: #ccc; margin-right: 20px">{{ template.type }}</span>
+                </Option>
+              </Select>
+            </FormItem>
             <FormItem label="Checker" required>
               <Select v-model="checker" transfer >
                 <Option value="custom">Customized Checker</Option>
@@ -99,7 +99,10 @@
             </div>
           </div>
           <div v-else-if="jtType === JUDGE_TEMPLATE_TYPE.ADVANCED">
-
+            <JudgeTemplateTable ref="JudgeTemplateTable" />
+            <div class="footer-tools">
+              <Button type="default" size="small" class="float-left footer-btn" @click="createJudgeTemplate">Add</Button>
+            </div>
           </div>
         </TabPane>
       </Tabs>
@@ -109,12 +112,16 @@
 
 <script>
 import CodeEditor from '_c/editor/CodeEditor';
+import JudgeTemplateTable from '_c/judge-template/JudgeTemplateTable';
 import api from '_u/api';
 import { JUDGE_TEMPLATE_PROPERTY, JUDGE_TEMPLATE_TYPE, PREDEFINED_CHECKERS } from '_u/constants';
 
 export default {
   name: 'ProblemForm',
-  components: { CodeEditor },
+  components: {
+    CodeEditor,
+    JudgeTemplateTable
+  },
   data: function() {
     return {
       problemColumnRules: {
@@ -127,7 +134,9 @@ export default {
       checker: PREDEFINED_CHECKERS[0].name,
       checkerCode: '',
       checkerConfig: '',
-      judgeTemplateSet: [],
+      ioJudgeTemplates: [],
+      adJudgeTemplates: [],
+      ioJudgeTemplateSet: [],
       judgeTemplateQueryLoading: false,
       tabName: 'basic',
       problemReady: false
@@ -140,7 +149,7 @@ export default {
     tabLabels: function () {
       const labels = {
         basic: 'Basic',
-        // ft: 'Function Template',
+        ft: 'Function Template',
         jt: 'Judge Template'
       }
       return  labels;
@@ -148,6 +157,21 @@ export default {
   },
   methods: {
     setProblem: function (problem) {
+      this.ioJudgeTemplates = [];
+      this.adJudgeTemplates = [];
+      if (problem.judgeTemplateListDTOList && problem.judgeTemplateListDTOList.length > 0) {
+        this.jtType = problem.judgeTemplateListDTOList[0].type;
+        if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
+          problem.judgeTemplates.forEach(o => {
+            this.ioJudgeTemplates.push(o);
+          });
+        } else {
+          problem.judgeTemplates.forEach(o => {
+            this.adJudgeTemplates.push(o);
+          });
+        }
+      }
+
       if (problem.checkerConfig) {
         if (problem.checkerConfig.spj === null) {
           // predefined checker
@@ -161,9 +185,11 @@ export default {
           this.checkerConfig = JSON.stringify(JSON.parse(problem.checkerConfig.spj), null, 2);
         }
       }
+
       if (this.problem.problemCode !== problem.problemCode) {
         this.tabName = 'basic';
       }
+
       this.problem = problem;
       this.queryJudgeTemplateList();
       this.problemReady = true;
@@ -174,14 +200,24 @@ export default {
         type: this.jtType,
         problemCode: this.problem.problemCode
       }).then(ret => {
-        this.judgeTemplateSet = ret.map(o => {
-          return {
-            value: o.id,
-            label: `${o.id}: ${o.title}`,
-            comment: o.comment,
-            type: JUDGE_TEMPLATE_PROPERTY[o.type].name
-          };
-        });
+        if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
+          this.ioJudgeTemplateSet = ret.map(o => {
+            return {
+              value: o.id,
+              label: `${o.id}: ${o.title}`,
+              comment: o.comment,
+              type: JUDGE_TEMPLATE_PROPERTY[o.type].name
+            };
+          });
+        } else {
+          ret.forEach(o => {
+            if (this.adJudgeTemplates.includes(o.id)) {
+              o._checked = true;  // 默认选中
+            }
+          });
+          this.$refs.JudgeTemplateTable.setJudgeTemplates(ret);
+        }
+
         this.judgeTemplateQueryLoading = false;
       }).catch(err => {
         this.$Message.error(err.message);
@@ -216,7 +252,7 @@ export default {
             isPublic: this.problem.isPublic,
             problemTitle: this.problem.problemTitle,
             source: this.problem.source,
-            judgeTemplates: this.problem.judgeTemplates,
+            judgeTemplates: this.jtType === JUDGE_TEMPLATE_TYPE.IO ? this.ioJudgeTemplates : this.adJudgeTemplates,
             managerGroups: this.problem.managerGroups,
             memoryLimit: parseInt(this.problem.memoryLimit),
             outputLimit: parseInt(this.problem.outputLimit),
@@ -240,6 +276,29 @@ export default {
           api[apiName](data).then(resolve).catch(reject);
         });
       });
+    },
+    createJudgeTemplate: function () {
+      this.$refs.JudgeTemplateTable.createJudgeTemplate(JUDGE_TEMPLATE_TYPE.ADVANCED, this.problem.problemCode);
+    }
+  },
+  watch: {
+    jtType: function (type) {
+      switch (type) {
+        case JUDGE_TEMPLATE_TYPE.IO:
+          break;
+        case JUDGE_TEMPLATE_TYPE.ADVANCED:
+          this.$nextTick(() => {
+            this.$refs.JudgeTemplateTable.on('after-update', this.queryJudgeTemplateList);
+            this.$refs.JudgeTemplateTable.on('on-selection', selection => {
+              this.adJudgeTemplates = selection.map(o => o.id);
+            });
+            this.$refs.JudgeTemplateTable.setColumns(['Selection', '#', 'Title', 'Comment', 'Actions']);
+            this.queryJudgeTemplateList();
+          })
+          break;
+        default:
+          break;
+      }
     }
   }
 }
