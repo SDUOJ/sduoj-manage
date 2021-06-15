@@ -35,7 +35,7 @@
 
 <script>
 import api from '_u/api';
-import JudgeTemplateTable from '_c/judge-template/JudgeTemplateTable';
+import JudgeTemplateTable from '_c/tables/JudgeTemplateTable';
 
 import { Page } from '_c/mixins';
 import { JUDGE_TEMPLATE_TYPE } from '_u/constants';

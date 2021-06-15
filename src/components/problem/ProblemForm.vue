@@ -11,8 +11,8 @@
 <template>
   <div>
     <Form :model="problem" :rules="problemColumnRules" ref="problem" label-position="top">
-      <Tabs v-model="tabName" :animated="false">
-        <TabPane :label="tabLabels.basic" name="basic">
+      <Tabs v-model="tabName" :animated="false" @on-click="openTabs">
+        <TabPane :label="tabLabels.basic" :name="tabLabels.basic">
           <FormItem label="Title" prop="problemTitle">
             <Input v-model="problem.problemTitle" />
           </FormItem>
@@ -55,7 +55,7 @@
             <Input v-model="problem.source" />
           </FormItem>
         </TabPane>
-        <TabPane :label="tabLabels.jt" name="Judge Template">
+        <TabPane :label="tabLabels.jt" :name="tabLabels.jt">
           <FormItem label="Type" required>
             <RadioGroup v-model="jtType">
               <Radio :label="JUDGE_TEMPLATE_TYPE.IO">{{ JUDGE_TEMPLATE_PROPERTY[JUDGE_TEMPLATE_TYPE.IO].name }}</Radio>
@@ -63,15 +63,17 @@
             </RadioGroup>
           </FormItem>
           <div v-if="jtType === JUDGE_TEMPLATE_TYPE.IO">
-            <FormItem label="Judge Template" required v-if="problemReady">
+            <FormItem label="Judge Template" required>
               <Select
                 transfer
                 multiple
                 filterable
                 v-model="ioJudgeTemplates"
+                v-if="problemReady"
                 :loading="judgeTemplateQueryLoading">
-                <Option v-for="template in ioJudgeTemplateSet" :key="template.value" :value="template.value" :label="template.label">
-                  <span>{{ template.label }}</span>
+                <Option v-for="template in judgeTemplateSet" :key="template.id"
+                        :value="template.id" :label="template.description">
+                  <span>{{ template.description }}</span>
                   <span style="color: #ccc"> {{ template.comment }}</span>
                   <span style="float: right;color: #ccc; margin-right: 20px">{{ template.type }}</span>
                 </Option>
@@ -87,14 +89,10 @@
             </FormItem>
             <div v-if="checker === 'custom'">
               <FormItem label="Source Code" required>
-                <div style="border: 1px solid #dcdee2; border-radius: 4px; padding: 1px">
-                  <CodeEditor mode="cpp" :code.sync="checkerCode" />
-                </div>
+                <CodeEditor mode="cpp" :code.sync="checkerCode" />
               </FormItem>
               <FormItem label="Config" required>
-                <div style="border: 1px solid #dcdee2; border-radius: 4px; padding: 1px">
-                  <CodeEditor mode="json" :code.sync="checkerConfig" />
-                </div>
+                <CodeEditor mode="json" :code.sync="checkerConfig" />
               </FormItem>
             </div>
           </div>
@@ -105,6 +103,41 @@
             </div>
           </div>
         </TabPane>
+        <TabPane :label="tabLabels.ft" :name="tabLabels.ft">
+          <FormItem label="Select one Judge Template">
+            <Select
+              transfer
+              style="width: 40%; margin-right: 5px;"
+              v-model="selectedJT"
+              :loading="judgeTemplateQueryLoading">
+              <Option v-for="template in selectableJudgeTemplateSet" :key="template.id"
+                      :value="template.id" :label="template.description">
+                <span>{{ template.description }}</span>
+                <span style="color: #ccc"> {{ template.comment }}</span>
+                <span style="float: right;color: #ccc; margin-right: 20px">{{ template.type }}</span>
+              </Option>
+            </Select>
+            <Button type="primary" @click="addFunctionTemplate">Select</Button>
+          </FormItem>
+          <Collapse accordion @on-change="openCollapse">
+            <Panel v-for="ft in functionTemplates" :key="ft.judgeTemplateId"
+                   :name="ft.judgeTemplateId">
+              <span>{{ judgeTemplateSetMap[ft.judgeTemplateId].description }}</span>
+              <div slot="content">
+                <FormItem>
+                  <Checkbox v-model="ft.isShowFunctionTemplate"
+                            :true-value="1" :false-value="0">Show Function Template</Checkbox>
+                </FormItem>
+                <FormItem label="Template Code">
+                  <CodeEditor ref="CodeEditor-func" mode="text" :code.sync="ft.functionTemplate" />
+                </FormItem>
+                <FormItem label="Initial Code">
+                  <CodeEditor ref="CodeEditor-init" mode="text" :code.sync="ft.initialTemplate" />
+                </FormItem>
+              </div>
+            </Panel>
+          </Collapse>
+        </TabPane>
       </Tabs>
     </Form>
   </div>
@@ -112,7 +145,7 @@
 
 <script>
 import CodeEditor from '_c/editor/CodeEditor';
-import JudgeTemplateTable from '_c/judge-template/JudgeTemplateTable';
+import JudgeTemplateTable from '_c/tables/JudgeTemplateTable';
 import api from '_u/api';
 import { JUDGE_TEMPLATE_PROPERTY, JUDGE_TEMPLATE_TYPE, PREDEFINED_CHECKERS } from '_u/constants';
 
@@ -136,7 +169,11 @@ export default {
       checkerConfig: '',
       ioJudgeTemplates: [],
       adJudgeTemplates: [],
-      ioJudgeTemplateSet: [],
+      judgeTemplateSet: [],
+      judgeTemplateSetMap: {},
+      selectedJT: '',
+      ioFunctionTemplates: [],
+      adFunctionTemplates: [],
       judgeTemplateQueryLoading: false,
       tabName: 'basic',
       problemReady: false
@@ -149,76 +186,108 @@ export default {
     tabLabels: function () {
       const labels = {
         basic: 'Basic',
-        ft: 'Function Template',
-        jt: 'Judge Template'
+        jt: 'Judge Templates',
+        ft: 'Function Templates'
       }
       return  labels;
+    },
+    functionTemplates: function () {
+      return this.jtType === JUDGE_TEMPLATE_TYPE.IO ? this.ioFunctionTemplates : this.adFunctionTemplates;
+    },
+    selectableJudgeTemplateSet: function () {
+      if (!this.problemReady) return [];
+      const selectedJudgeTemplateSet = this.functionTemplates.map(o => o.judgeTemplateId);
+      const selectableJudgeTemplateSet = [];
+      this.judgeTemplateSet.forEach(o => {
+        if (!selectedJudgeTemplateSet.includes(o.id)) {
+          selectableJudgeTemplateSet.push(o);
+        }
+      });
+      return selectableJudgeTemplateSet;
     }
   },
   methods: {
     setProblem: function (problem) {
-      this.ioJudgeTemplates = [];
-      this.adJudgeTemplates = [];
-      if (problem.judgeTemplateListDTOList && problem.judgeTemplateListDTOList.length > 0) {
-        this.jtType = problem.judgeTemplateListDTOList[0].type;
-        if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
-          problem.judgeTemplates.forEach(o => {
-            this.ioJudgeTemplates.push(o);
-          });
-        } else {
-          problem.judgeTemplates.forEach(o => {
-            this.adJudgeTemplates.push(o);
-          });
-        }
-      }
-
-      if (problem.checkerConfig) {
-        if (problem.checkerConfig.spj === null) {
-          // predefined checker
-          this.checker = problem.checkerConfig.source;
-          this.checkerCode = '';
-          this.checkerConfig = '';
-        } else {
-          // customized checker
-          this.checker = 'custom';
-          this.checkerCode = problem.checkerConfig.source;
-          this.checkerConfig = JSON.stringify(JSON.parse(problem.checkerConfig.spj), null, 2);
-        }
-      }
-
       if (this.problem.problemCode !== problem.problemCode) {
-        this.tabName = 'basic';
+        this.tabName = this.tabLabels.basic;
       }
 
       this.problem = problem;
-      this.queryJudgeTemplateList();
-      this.problemReady = true;
+      this.selectedJT = '';
+
+      this.queryJudgeTemplateList(ret => {
+        this.ioJudgeTemplates = [];
+        this.adJudgeTemplates = [];
+        this.ioFunctionTemplates = [];
+        this.adFunctionTemplates = [];
+        if (problem.judgeTemplateListDTOList && problem.judgeTemplateListDTOList.length > 0) {
+          this.jtType = problem.judgeTemplateListDTOList[0].type;
+          if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
+            problem.judgeTemplates.forEach(o => {
+              this.ioJudgeTemplates.push(o);
+            });
+            problem.functionTemplates.forEach(o => {
+              this.ioFunctionTemplates.push(o);
+            });
+          } else {
+            problem.judgeTemplates.forEach(o => {
+              this.adJudgeTemplates.push(o);
+            });
+            problem.functionTemplates.forEach(o => {
+              this.adFunctionTemplates.push(o);
+            });
+          }
+        }
+
+        if (problem.checkerConfig) {
+          if (problem.checkerConfig.spj === null) {
+            // predefined checker
+            this.checker = problem.checkerConfig.source;
+            this.checkerCode = '';
+            this.checkerConfig = '';
+          } else {
+            // customized checker
+            this.checker = 'custom';
+            this.checkerCode = problem.checkerConfig.source;
+            this.checkerConfig = JSON.stringify(JSON.parse(problem.checkerConfig.spj), null, 2);
+          }
+        }
+        this.problemReady = true;
+      });
     },
-    queryJudgeTemplateList: function() {
+    queryJudgeTemplateList: function(callback) {
       this.judgeTemplateQueryLoading = true;
       api.getJudgeTemplateList({
         type: this.jtType,
         problemCode: this.problem.problemCode
       }).then(ret => {
+        this.judgeTemplateQueryLoading = false;
+        this.judgeTemplateSet = [];
+        ret.forEach(o => {
+          const target = {
+            id: o.id,
+            title: o.title,
+            description: `${o.id}: ${o.title}`,
+            comment: o.comment,
+            type: JUDGE_TEMPLATE_PROPERTY[o.type].name
+          };
+          this.judgeTemplateSet.push(target);
+          this.$set(this.judgeTemplateSetMap, o.id, target);
+        });
+
+        callback && callback(ret);
+
         if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
-          this.ioJudgeTemplateSet = ret.map(o => {
-            return {
-              value: o.id,
-              label: `${o.id}: ${o.title}`,
-              comment: o.comment,
-              type: JUDGE_TEMPLATE_PROPERTY[o.type].name
-            };
-          });
         } else {
           ret.forEach(o => {
             if (this.adJudgeTemplates.includes(o.id)) {
               o._checked = true;  // 默认选中
             }
           });
-          this.$refs.JudgeTemplateTable.setJudgeTemplates(ret);
+          this.$nextTick(() => {
+            this.$refs.JudgeTemplateTable.setJudgeTemplates(ret);
+          });
         }
-
-        this.judgeTemplateQueryLoading = false;
       }).catch(err => {
         this.$Message.error(err.message);
       });
@@ -256,8 +325,9 @@ export default {
             managerGroups: this.problem.managerGroups,
             memoryLimit: parseInt(this.problem.memoryLimit),
             outputLimit: parseInt(this.problem.outputLimit),
-            timeLimit: parseInt(this.problem.timeLimit)
-          }
+            timeLimit: parseInt(this.problem.timeLimit),
+            functionTemplates: this.functionTemplates
+          };
 
           if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
             if (this.checker === 'custom') {
@@ -279,22 +349,62 @@ export default {
     },
     createJudgeTemplate: function () {
       this.$refs.JudgeTemplateTable.createJudgeTemplate(JUDGE_TEMPLATE_TYPE.ADVANCED, this.problem.problemCode);
+    },
+    addFunctionTemplate: function () {
+      let target = this.adFunctionTemplates;
+      if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
+        target = this.ioFunctionTemplates;
+      }
+      target.push({
+        judgeTemplateId: this.selectedJT,
+        isShowFunctionTemplate: 1,
+        functionTemplate: '',
+        initialTemplate: ''
+      });
+    },
+    refreshAllEditors: function() {
+      const editorFuncName = 'CodeEditor-func';
+      const editorInitName = 'CodeEditor-init';
+      this.$refs[editorFuncName] && this.$refs[editorFuncName].forEach(o => {
+        o.refresh();
+      });
+      this.$refs[editorInitName] && this.$refs[editorInitName].forEach(o => {
+        o.refresh();
+      });
+    },
+    openCollapse: function() {
+      this.refreshAllEditors();
+    },
+    openTabs: function(name) {
+      switch (name) {
+        case this.tabLabels.basic:
+          break;
+        case this.tabLabels.jt:
+          break;
+        case this.tabLabels.ft:
+          this.refreshAllEditors();
+          break;
+      };
     }
   },
   watch: {
     jtType: function (type) {
       switch (type) {
         case JUDGE_TEMPLATE_TYPE.IO:
+          // 刷新 Select 下拉框
+          this.problemReady = false;
+          this.queryJudgeTemplateList(() => {
+            this.problemReady = true;
+          });
           break;
         case JUDGE_TEMPLATE_TYPE.ADVANCED:
-          this.$nextTick(() => {
+          this.queryJudgeTemplateList(() => {
             this.$refs.JudgeTemplateTable.on('after-update', this.queryJudgeTemplateList);
             this.$refs.JudgeTemplateTable.on('on-selection', selection => {
               this.adJudgeTemplates = selection.map(o => o.id);
             });
             this.$refs.JudgeTemplateTable.setColumns(['Selection', '#', 'Title', 'Comment', 'Actions']);
-            this.queryJudgeTemplateList();
-          })
+          });
           break;
         default:
           break;
