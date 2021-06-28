@@ -362,6 +362,7 @@ export default {
           functionTemplate: '',
           initialTemplate: ''
         });
+        this.selectedJT = undefined;
       }
     },
     refreshAllEditors: function() {
