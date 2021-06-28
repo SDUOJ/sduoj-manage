@@ -129,10 +129,14 @@
                             :true-value="1" :false-value="0">Show Function Template</Checkbox>
                 </FormItem>
                 <FormItem label="Template Code">
-                  <CodeEditor ref="CodeEditor-func" mode="text" :code.sync="ft.functionTemplate" />
+                  <div class="limit">
+                    <CodeEditor ref="CodeEditor-func" mode="text" :code.sync="ft.functionTemplate" />
+                  </div>
                 </FormItem>
                 <FormItem label="Initial Code">
-                  <CodeEditor ref="CodeEditor-init" mode="text" :code.sync="ft.initialTemplate" />
+                  <div class="limit">
+                    <CodeEditor ref="CodeEditor-init" mode="text" :code.sync="ft.initialTemplate" />
+                  </div>
                 </FormItem>
               </div>
             </Panel>
@@ -171,7 +175,7 @@ export default {
       adJudgeTemplates: [],
       judgeTemplateSet: [],
       judgeTemplateSetMap: {},
-      selectedJT: '',
+      selectedJT: undefined,
       ioFunctionTemplates: [],
       adFunctionTemplates: [],
       judgeTemplateQueryLoading: false,
@@ -351,16 +355,14 @@ export default {
       this.$refs.JudgeTemplateTable.createJudgeTemplate(JUDGE_TEMPLATE_TYPE.ADVANCED, this.problem.problemCode);
     },
     addFunctionTemplate: function () {
-      let target = this.adFunctionTemplates;
-      if (this.jtType === JUDGE_TEMPLATE_TYPE.IO) {
-        target = this.ioFunctionTemplates;
+      if (this.selectedJT) {
+        this.functionTemplates.push({
+          judgeTemplateId: this.selectedJT,
+          isShowFunctionTemplate: 1,
+          functionTemplate: '',
+          initialTemplate: ''
+        });
       }
-      target.push({
-        judgeTemplateId: this.selectedJT,
-        isShowFunctionTemplate: 1,
-        functionTemplate: '',
-        initialTemplate: ''
-      });
     },
     refreshAllEditors: function() {
       const editorFuncName = 'CodeEditor-func';
@@ -414,6 +416,14 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+.limit /deep/ .CodeMirror {
+  height: auto;
+  max-height: 200px;
+}
 
+.limit /deep/ .CodeMirror-scroll {
+  height: auto;
+  max-height: 200px;
+}
 </style>
