@@ -89,10 +89,14 @@
             </FormItem>
             <div v-if="checker === 'custom'">
               <FormItem label="Source Code" required>
-                <CodeEditor mode="cpp" :code.sync="checkerCode" />
+                <div>
+                  <CodeEditor ref="CodeEditor-source" mode="cpp" :code.sync="checkerCode" />
+                </div>
               </FormItem>
               <FormItem label="Config" required>
-                <CodeEditor mode="json" :code.sync="checkerConfig" />
+                <div>
+                  <CodeEditor ref="CodeEditor-config" mode="json" :code.sync="checkerConfig" />
+                </div>
               </FormItem>
             </div>
           </div>
@@ -369,11 +373,13 @@ export default {
       const editorFuncName = 'CodeEditor-func';
       const editorInitName = 'CodeEditor-init';
       this.$refs[editorFuncName] && this.$refs[editorFuncName].forEach(o => {
-        o.refresh();
+        o && o.refresh();
       });
       this.$refs[editorInitName] && this.$refs[editorInitName].forEach(o => {
-        o.refresh();
+        o && o.refresh();
       });
+      this.$refs['CodeEditor-source'] && this.$refs['CodeEditor-source'].refresh();
+      this.$refs['CodeEditor-config'] && this.$refs['CodeEditor-config'].refresh();
     },
     openCollapse: function() {
       this.refreshAllEditors();
@@ -383,6 +389,7 @@ export default {
         case this.tabLabels.basic:
           break;
         case this.tabLabels.jt:
+          this.refreshAllEditors();
           break;
         case this.tabLabels.ft:
           this.refreshAllEditors();
