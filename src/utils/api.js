@@ -183,8 +183,11 @@ export default {
     return get('/manage/judgetemplate/query', { id });
   },
   // 查询多页评测模板
-  getTemplateList: function(params) {
+  pageTemplateList: function(params) {
     return get('/manage/judgetemplate/page', params);
+  },
+  getJudgeTemplateList: function(params) {
+    return get('/manage/judgetemplate/list', params);
   },
   // 创建评测模板
   createTemplate: function(data) {

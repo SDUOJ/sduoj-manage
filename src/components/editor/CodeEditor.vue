@@ -9,50 +9,87 @@
  -->
 
 <template>
-  <div style="line-height: normal; font-size: 16px">
-    <codemirror :value="code" :options="cmOptions" @input="onEditorCodeChange" />
+  <div class="codeEditor-box">
+    <textarea ref="editor" class="codeEditor" />
   </div>
 </template>
 
 <script>
-import { codemirror } from 'vue-codemirror-lite';
-// closebrackets
-import 'codemirror/addon/edit/closebrackets.js'
+import CodeMirror from 'codemirror'
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/javascript/javascript';
+import 'codemirror/mode/shell/shell';
+
+import 'codemirror/addon/edit/matchbrackets';
+import 'codemirror/addon/selection/active-line';
+import 'codemirror/addon/edit/closebrackets';
 
 export default {
-  components: {
-    codemirror
-  },
   props: {
     code: String,
     mode: String
   },
   data: function() {
     return {
+      editor: null,
       cmOptions: {
-        autoCloseBrackets: true,
+        mode: 'application/json',
+        cursorHeight: 1,
         tabSize: 2,
-        theme: 'default',
-        mode: 'text/json',
-        lineNumbers: true
+        smartIndent: true,        // 是否智能缩进
+        styleActiveLine: true,    // 当前行高亮
+        lineNumbers: true,        // 显示行号
+        lineWrapping: false,      // 自动换行
+        matchBrackets: true,      // 括号匹配显示
+        autoCloseBrackets: true,  // 输入和退格时成对
+        autoRefresh: true         // 自动刷新
       }
     }
   },
   methods: {
-    onEditorCodeChange: function(newCode) {
-      this.$emit('update:code', newCode)
+    initialize: function () {
+      this.editor = CodeMirror.fromTextArea(this.$refs.editor, this.cmOptions);
+      this.editor.setValue(this.code || '');
+      this.editor.refresh();
+      this.editor.on('change', cm => {
+        this.$emit && this.$emit('update:code', cm.getValue());
+      });
+    },
+    refresh: function () {
+      this.$nextTick && this.$nextTick(() => {
+        this.editor && this.editor.refresh();
+      });
     }
   },
   mounted: function() {
     this.cmOptions.mode = this.mode;
+    this.initialize();
   },
   watch: {
-    mode: function () {
-      this.cmOptions.mode = this.mode;
+    mode: function (mode) {
+      this.editor && this.editor.setOption('mode', mode);
+    },
+    code: function (val) {
+      const editorValue = this.editor.getValue();
+      if (val !== editorValue) {
+        this.editor.setValue(val);
+      }
     }
   }
 }
 </script>
 
 <style lang="less" scoped>
+.codeEditor-box {
+  border-radius: 4px;
+  border: 1px solid #dcdee2;
+  padding: 1px;
+}
+
+/deep/ .CodeMirror {
+  height: auto;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 </style>

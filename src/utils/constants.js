@@ -143,7 +143,7 @@ export const JUDGE_RESULT_TYPE = {
 
 export const JUDGE_TEMPLATE_TYPE = {
   IO: 0,
-  SPJ: 1,
+  SPJ: 1, // deprecated
   ADVANCED: 2
 }
 
@@ -237,3 +237,42 @@ export const NEWLINE_CONVERT = {
     description: 'Do not convert'
   }
 };
+
+export const PREDEFINED_CHECKERS = [
+  {
+    name: 'lcmp.cpp',
+    description: 'Lines, ignores whitespaces'
+  },
+  {
+    name: 'hcmp.cpp',
+    description: 'Single huge integer'
+  },
+  {
+    name: 'ncmp.cpp',
+    description: 'Single or more int64, ignores whitespaces'
+  },
+  {
+    name: 'nyesno.cpp',
+    description: 'Zero or more yes/no, case insensitive'
+  },
+  {
+    name: 'rcmp4.cpp',
+    description: 'Single or more double, max any error 1E-4'
+  },
+  {
+    name: 'rcmp6.cpp',
+    description: 'Single or more double, max any error 1E-6'
+  },
+  {
+    name: 'rcmp9.cpp',
+    description: 'Single or more double, max any error 1E-9'
+  },
+  {
+    name: 'wcmp.cpp',
+    description: 'Sequence of tokens'
+  },
+  {
+    name: 'yesno.cpp',
+    description: 'Single yes or no, case insensitive'
+  }
+];
