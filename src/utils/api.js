@@ -82,6 +82,16 @@ export default {
         }
       });
   },
+
+  /* 通过组号获取比赛列表 */
+  getContestListByGroupId: function(params) {
+    return get('/contest/list', params)
+  },
+
+  /* 通过组号获取组内学生 */
+  getStudentListByGroupId: function (params) {
+    return get('/group/query', params)
+  },
   // 查询用户列表
   getUserList: function (params) {
     return get('/manage/user/list', params);
@@ -176,6 +186,25 @@ export default {
   // 创建比赛
   createContest: function (data) {
     return post('/manage/contest/create', data);
+  },
+  // 综合报表
+  exportComprehensive: function (data) {
+    return new Promise((resolve, reject) => {
+      post('/manage/contest/exportComprehensiveReport', data, { responseType: 'blob' }).then(ret => {
+        resolve(ret);
+        const blob = new Blob([ret.data], { type: ret.headers['content-type'] });
+        const elink = document.createElement('a');
+        const filename = new Date().getTime().toString();
+        if ('download' in elink) {
+          elink.download = filename;
+          elink.href = URL.createObjectURL(blob);
+          elink.click();
+          URL.revokeObjectURL(elink.href);
+        } else {
+          navigator.msSaveBlob(blob, filename);
+        }
+      }, err => (reject(err)));
+    })
   },
   // ----------------- 评测模板相关 -------------------
   // 查询单个评测模板
