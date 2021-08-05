@@ -41,6 +41,11 @@ const routes = [
     component: () => import('@/views/group/GroupListView')
   },
   {
+    path: '/util',
+    name: 'util',
+    component: () => import('@/views/util-information/UtilView')
+  },
+  {
     path: '*',
     component: () => import('@/views/404/404View')
   }

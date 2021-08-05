@@ -36,6 +36,10 @@
         <Icon type="ios-contacts"></Icon>
         Group
       </MenuItem>
+      <MenuItem name="util" :to="{ name: 'util' }">
+        <Icon type="ios-settings" />
+        Util
+      </MenuItem>
     </Menu>
   </div>
 </template>
