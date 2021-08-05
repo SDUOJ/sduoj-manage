@@ -85,7 +85,8 @@
           <Card class="tag-card">
             <p class="prefix">已选择的学生:</p>
             <Tag v-for="item in selectedStudent" :key="item"
-                 type="border" color="primary">{{ item }}</Tag>
+                 closable type="border" @on-close="deleteSelectedTag(item)"
+                 color="primary">{{ item }}</Tag>
           </Card>
         </div>
 
@@ -324,6 +325,13 @@ export default {
         if (!this.$refs[newHandin[i] + ' tag'][0].isChecked) this.$refs[newHandin[i] + ' tag'][0].check()
       }
       this.selectedStudent = newHandin
+    },
+    deleteSelectedTag: function (username) {
+      if (indexof(this.allStudent, 'username', username) === -1) {
+        this.unselectStudent(username)
+        return;
+      }
+      this.$refs[username + ' tag'][0].check()
     },
 
     exportComprehensive: function () {
