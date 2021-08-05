@@ -155,6 +155,7 @@ import moment from 'moment';
 import { CONTEST_OPENNESS, CONTEST_MODE, CONTEST_PROBLEM_STATUS } from '_u/constants';
 import api from '_u/api.js';
 import { split } from '_u/split';
+import { indexof } from '_u/ObjectArrayIndexof';
 export default {
   components: {
     UtilMenuCard
@@ -240,9 +241,8 @@ export default {
     },
     getSearchContestList: function () {
       this.PageNow = 1;
-      if (this.contestConfigShow) this.getContestList();
-      else this.getStudentList();
-      this.changeModalWidth()
+      this.getContestList();
+      this.getStudentList();
     },
 
     changeModalWidth: function () {
@@ -268,6 +268,7 @@ export default {
     },
     getStudentList: function () {
       this.selectedStudent = [];
+      this.allStudent = [];
       api.getStudentListByGroupId({
         groupId: this.selectedGroupId
       }).then(ret => {
@@ -306,7 +307,7 @@ export default {
     changeMenuState: function (name) {
       this.contestConfigShow = (name === '1');
       this.studentConfigShow = !this.contestConfigShow
-      this.getSearchContestList()
+      this.changeModalWidth()
     },
 
     unselectStudent: function (username) {
@@ -317,10 +318,12 @@ export default {
       else this.unselectStudent(name)
     },
     addStudentHandin: function () {
-      const newHandin = Array.from(new Set((split(this.handInParticipants, /[\s,]+/))))
+      const newHandin = Array.from(new Set((split(this.handInParticipants, /[\s,]+/)).concat(this.selectedStudent)))
       for (let i = 0; i < newHandin.length; i++) {
-        this.$refs[newHandin[i] + ' tag'][0].check()
+        if (indexof(this.allStudent, 'username', newHandin[i]) === -1) continue;
+        if (!this.$refs[newHandin[i] + ' tag'][0].isChecked) this.$refs[newHandin[i] + ' tag'][0].check()
       }
+      this.selectedStudent = newHandin
     },
 
     exportComprehensive: function () {
