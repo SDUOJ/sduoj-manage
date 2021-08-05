@@ -11,15 +11,17 @@
 
     <Modal class-name="comprehensive" ref="comprehensiveDialog" v-model="comprehensive"
       title="Export the contest comprehensive report"
+      :styles="comprehensiveDialogStyles"
       class="tool-modal"
-      width="100%"
       @on-ok="exportComprehensive">
       <Input search enter-button
              placeholder="Enter groupId ..."
              @on-search="getSearchContestList"
              v-model="selectedGroupId"
-             class="group-input"
-             style="width: 20%" />
+             style="width: 30%" >
+        <span slot="prepend">Group Id</span>
+        <Button slot="append" icon="ios-return-right" ></Button>
+      </Input>
       <Menu mode="horizontal" active-name="1" @on-select="changeMenuState">
         <MenuItem name="1" key="1">配置比赛</MenuItem>
         <MenuItem name="2" key="2">配置学生</MenuItem>
@@ -50,14 +52,11 @@
           <template slot-scope="{ row }" slot="duration">
             <span>{{ row.gmtStart | getDuration(row.gmtEnd) }}</span>
           </template>
-          <template slot-scope="{ row }" slot="mode">
-            <span>{{ row.features.mode.toUpperCase() }}</span>
-          </template>
-          <template slot-scope="{ row }" slot="group">
-            <span v-if="row.managerGroupDTO">{{ `${row.managerGroupDTO.groupId} (${row.managerGroupDTO.title})` }}</span>
-          </template>
           <template slot-scope="{ row }" slot="action">
             <span class="clickable" @click="EditConfig(row)">Edit Config</span>
+          </template>
+          <template slot-scope="{ row }" slot="weight">
+            <Input style="width: 100px" v-model="recordWeight[row.contestId]" />
           </template>
         </Table>
 
@@ -78,26 +77,42 @@
       <div class="studentConfig" v-show="studentConfigShow">
         <div>
           <Card class="tag-card">
+            <p class="prefix">全部学生:</p>
+            <Tag v-for="item in allStudent" :key="item.userId" :name="item.username" :ref="item.username + ' tag'"
+                 color="primary" checkable @on-change="handleStudentSelectedChange">{{ item.username }}</Tag>
+          </Card>
+          <Divider />
+          <Card class="tag-card">
             <p class="prefix">已选择的学生:</p>
             <Tag v-for="item in selectedStudent" :key="item"
                  type="border" color="primary">{{ item }}</Tag>
           </Card>
-          <Divider />
-          <Card class="tag-card">
-            <p class="prefix">全部学生:</p>
-            <Tag v-for="item in allStudent" :key="item.userId" :name="item.username"
-                 color="primary" checkable @on-change="handleStudentSelectedChange">{{ item.username }}</Tag>
-          </Card>
         </div>
 
-        <Form>
-          <FormItem label="Participants">
-            <span class="hint-text">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
-            <Input v-model="handInParticipants" type="textarea" :autosize="{minRows: 3}"/>
-          </FormItem>
-        </Form>
-      </div>
+        <Tooltip content="手动增加" v-show="!extraTextVisible">
+          <Button size="default" icon="ios-add"
+                  @click="changeExtraVisible"
+                  type="primary"
+                  style="margin-left: 10px">
+          </Button>
+        </Tooltip>
 
+        <Button size="default" icon="ios-remove"
+                v-show="extraTextVisible"
+                style="margin-left: 10px"
+                type="primary"
+                @click="changeExtraVisible">
+        </Button>
+
+        <Modal  v-model="extraTextVisible" @on-ok="addStudentHandin">
+          <Form>
+            <FormItem label="Participants">
+              <span class="hint-text">Separate username by a TAB '\t', SPACE ' ', NEW LINE '\n' or COMMA ','</span>
+              <Input v-model="handInParticipants" type="textarea" :autosize="{minRows: 3}"/>
+            </FormItem>
+          </Form>
+        </Modal>
+      </div>
     </Modal>
 
     <Modal v-model="comprehensiveConfigDetailVisible"
@@ -105,13 +120,6 @@
            width="400px"
            @on-ok="pushComprehensiveConfig">
       <Form label-position="left" :label-width="100">
-        <FormItem label="比赛相对权重">
-          <Input v-model="weight" placeholder="请填写整数"></Input>
-        </FormItem>
-        <p class="timeline-prefix">添加详细配置，示例如下：</p>
-        <Timeline>
-          <TimelineItem v-for="item in exampleWeight" color="green" :key="item[0]">超出比赛结束时间 {{ item[0] }}s内 得分率: {{ item[1] }}</TimelineItem>
-        </Timeline>
         <FormItem label="超时时间">
           <Input v-model="timeCost" placeholder="请填写整数(ms)"></Input>
         </FormItem>
@@ -119,10 +127,17 @@
           <Input v-model="outTimeWeight" placeholder="请填写小数(<=1)"></Input>
           <Button type="success" class="add-config-btn" @click="addTimeWeight">添加配置</Button>
         </FormItem>
+
+        <Poptip>
+          添加详细配置, <a>example</a>
+          <Timeline slot="content">
+            <TimelineItem v-for="item in exampleWeight" color="green" :key="item[0]">超出比赛结束时间 {{ item[0] }}ms内 得分率: {{ item[1] }}</TimelineItem>
+          </Timeline>
+        </Poptip>
         <p class="timeline-prefix">你的配置：</p>
         <Timeline>
           <TimelineItem v-for="item in timeWeightDetail" color="green" :key="item[0]">
-            <p style="height: 20px; line-height: 20px">超出比赛结束时间 {{ item[0] }}s内 得分率: {{ item[1] }}
+            <p style="height: 20px; line-height: 20px">超出比赛结束时间 {{ item[0] }}ms内 得分率: {{ item[1] }}
               <Button shape="circle" icon="md-close" size="small" type="error"
                       style="float: right; margin-top: -5px; margin-right: 10px"
                       @click="deleteTimeConfig(item)"></Button></p>
@@ -160,10 +175,8 @@ export default {
         { title: 'Title', slot: 'title', minWidth: 150 },
         { title: 'Start', key: 'gmtStart', sortable: 'custom', width: 200, slot: 'time' },
         { title: 'Duration', sortable: 'custom', slot: 'duration' },
-        { title: 'Mode', key: 'mode', sortable: 'custom', slot: 'mode' },
-        { title: 'Participants', key: 'participantNum', width: 140, sortable: 'custom' },
-        { title: 'Manager Group', slot: 'group', minWidth: 100 },
-        { title: '\b', slot: 'action' }
+        { title: '\b', slot: 'action' },
+        { title: 'Weight', slot: 'weight' }
       ],
       contests: [],
       contest: {
@@ -181,8 +194,8 @@ export default {
       tableLoading: false,
       total: 0,
       PageNow: 1,
-      PageSize: 7,
-      pageSizeOpts: [5, 7, 10],
+      PageSize: 10,
+      pageSizeOpts: [10, 30, 50],
 
       contestConfigShow: true,
       studentConfigShow: false,
@@ -201,6 +214,7 @@ export default {
       timeWeightDetail: [
         [0, 1]
       ],
+      recordWeight: [],
 
       /* 学生配置 */
       handInParticipants: '',
@@ -209,7 +223,11 @@ export default {
 
       /* Dialog Visible variable */
       comprehensive: false,
-      comprehensiveConfigDetailVisible: false
+      comprehensiveConfigDetailVisible: false,
+      extraTextVisible: false,
+      comprehensiveDialogStyles: {
+        width: '70%'
+      }
     }
   },
   methods: {
@@ -224,6 +242,12 @@ export default {
       this.PageNow = 1;
       if (this.contestConfigShow) this.getContestList();
       else this.getStudentList();
+      this.changeModalWidth()
+    },
+
+    changeModalWidth: function () {
+      if (this.contestConfigShow) this.comprehensiveDialogStyles.width = '70%'
+      else this.comprehensiveDialogStyles.width = '50%'
     },
 
     getContestList: function () {
@@ -235,7 +259,7 @@ export default {
         groupId: this.selectedGroupId
       }).then(ret => {
         this.contests = ret.rows;
-        this.total = ret.total * ret.totalPage
+        this.total = this.PageSize * ret.totalPage
       }).catch(err => {
         this.$Message.error(err.message);
       }).finally(() => {
@@ -265,9 +289,6 @@ export default {
     EditConfig: function (row) {
       this.configSelectContest = row.contestId
       this.weight = ''
-      this.timeWeightDetail = [
-        ['0', 1]
-      ]
       this.timeCost = ''
       this.outTimeWeight = ''
       this.changeComprehensiveConfigDetailVisible()
@@ -278,7 +299,7 @@ export default {
     pushComprehensiveConfig: function () {
       this.contestConfig[this.configSelectContest] = {
         contestId: this.configSelectContest,
-        weight: this.weight,
+        weight: this.recordWeight[this.configSelectContest],
         timeoutScoreRatio: this.timeWeightDetail
       }
     },
@@ -295,6 +316,12 @@ export default {
       if (checked) this.selectedStudent.push(name);
       else this.unselectStudent(name)
     },
+    addStudentHandin: function () {
+      const newHandin = Array.from(new Set((split(this.handInParticipants, /[\s,]+/))))
+      for (let i = 0; i < newHandin.length; i++) {
+        this.$refs[newHandin[i] + ' tag'][0].check()
+      }
+    },
 
     exportComprehensive: function () {
       const contestList = [];
@@ -302,13 +329,15 @@ export default {
         contestList.push(this.contestConfig[item])
       })
       const data = {
-        usernameList: Array.from(new Set((split(this.handInParticipants, /[\s,]+/)).concat(this.selectedStudent))),
+        usernameList: this.selectedStudent,
         contestList: contestList
       };
       api.exportComprehensive(data).catch(err => {
         this.$Message.error(err.message);
       })
-      console.log(data)
+    },
+    changeExtraVisible: function () {
+      this.extraTextVisible = !this.extraTextVisible
     },
 
     addTimeWeight: function () {
@@ -342,6 +371,8 @@ export default {
     CONTEST_MODE: () => CONTEST_MODE,
     CONTEST_PROBLEM_STATUS: () => CONTEST_PROBLEM_STATUS,
     moment: () => moment
+  },
+  watch: {
   }
 }
 </script>
@@ -354,7 +385,7 @@ export default {
 }
 
 .timeline-prefix {
-  margin: 5px 5px 20px;
+  margin: 30px 5px 20px;
   line-height: 1;
   color: cornflowerblue;
 }
