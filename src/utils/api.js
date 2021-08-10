@@ -286,5 +286,10 @@ export default {
   },
   queryGroupTitle: function (params) {
     return get('/manage/group/listByTitle', params);
+  },
+
+  /* ********* notice ********* */
+  queryNotice: function (params) {
+    return get('/notice/page')
   }
 }
