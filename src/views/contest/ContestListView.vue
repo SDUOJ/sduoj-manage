@@ -137,12 +137,14 @@
               <Checkbox v-model="contest.features.contestRunning.displayRank" :true-value="1" :false-value="0">Show Rank</Checkbox>
               <Checkbox v-model="contest.features.contestRunning.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
               <Checkbox v-model="contest.features.contestRunning.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
+              <Checkbox v-model="contest.features.contestRunning.allowToSubmit" :true-value="1" :false-value="0">Allow to Submit</Checkbox>
             </FormItem>
             <FormItem label="After Finished">
               <Checkbox v-model="contest.features.contestEnd.displayPeerSubmission" :true-value="1" :false-value="0">Show Peer Submission</Checkbox>
               <Checkbox v-model="contest.features.contestEnd.displayRank" :true-value="1" :false-value="0">Show Rank</Checkbox>
               <Checkbox v-model="contest.features.contestEnd.displayJudgeScore" :true-value="1" :false-value="0">Show Judge Score</Checkbox>
               <Checkbox v-model="contest.features.contestEnd.displayCheckpointResult" :true-value="1" :false-value="0">Show Checkpoint Results</Checkbox>
+              <Checkbox v-model="contest.features.contestEnd.allowToSubmit" :true-value="1" :false-value="0">Allow to Submit</Checkbox>
             </FormItem>
 
             <FormItem label="Participants">
@@ -376,13 +378,15 @@ export default {
             displayPeerSubmission: 1,
             displayRank: 1,
             displayJudgeScore: 1,
-            displayCheckpointResult: 1
+            displayCheckpointResult: 1,
+            allowToSubmit: 1
           },
           contestEnd: {
             displayPeerSubmission: 1,
             displayRank: 1,
             displayJudgeScore: 1,
-            displayCheckpointResult: 1
+            displayCheckpointResult: 1,
+            allowToSubmit: 1
           }
         },
         managerGroupDTO: {},
