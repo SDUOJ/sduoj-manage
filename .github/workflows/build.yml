@@ -23,8 +23,8 @@ jobs:
       - run: npm run build
 
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v2.5.0
-        env:
-          ACTIONS_DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-          PUBLISH_BRANCH: release
-          PUBLISH_DIR: dist
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: release
+          publish_dir: ./dist
