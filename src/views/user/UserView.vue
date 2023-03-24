@@ -92,6 +92,7 @@
             <FormItem>
               <Checkbox v-model="userInfo.features.banThirdParty" :true-value="1" :false-value="0">Disable Third Party Login</Checkbox>
               <Checkbox v-model="userInfo.features.banEmailUpdate" :true-value="1" :false-value="0">Disable Email Update</Checkbox>
+              <Checkbox v-model="userInfo.features.banInfoUpdate" :true-value="1" :false-value="0">Disable Info Update</Checkbox>
             </FormItem>
           </TabPane>
         </Tabs>
@@ -178,6 +179,7 @@
             <FormItem>
               <Checkbox v-model="userInfo.features.banThirdParty" :true-value="1" :false-value="0">Disable Third Party Login</Checkbox>
               <Checkbox v-model="userInfo.features.banEmailUpdate" :true-value="1" :false-value="0">Disable Email Update</Checkbox>
+              <Checkbox v-model="userInfo.features.banInfoUpdate" :true-value="1" :false-value="0">Disable Info Update</Checkbox>
             </FormItem>
           </TabPane>
         </Tabs>
@@ -365,7 +367,8 @@ export default {
         roles: [],
         features: {
           banThirdParty: 0,
-          banEmailUpdate: 0
+          banEmailUpdate: 0,
+          banInfoUpdate: 0
         },
         password: '',
         passwordCheck: ''
@@ -410,10 +413,12 @@ export default {
         this.excelData.forEach(o => {
           o.features = {
             banThirdParty: o.banThirdParty,
-            banEmailUpdate: o.banEmailUpdate
+            banEmailUpdate: o.banEmailUpdate,
+            banInfoUpdate: o.banInfoUpdate
           };
           delete o.banThirdParty;
           delete o.banEmailUpdate;
+          delete o.banInfoUpdate;
           o.gender = parseInt(o.gender) || 2;
         });
 
