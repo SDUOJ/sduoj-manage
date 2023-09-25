@@ -185,10 +185,7 @@ export default {
       this.judgeTemplate.acceptFileExtensions.push(val);
     },
     handleDownload: function(zipFileId) {
-      api.zipDownload([{
-        id: zipFileId,
-        downloadFilename: `${Date.now()}.zip`
-      }])
+      api.download(zipFileId)
         .then(_ => {
           this.callbacks['after-donwload']  && this.callbacks['after-download']();
         })

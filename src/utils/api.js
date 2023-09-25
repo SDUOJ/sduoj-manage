@@ -243,6 +243,36 @@ export default {
   checkMD5: function(md5) {
     return get('/filesys/queryByMd5', { md5 });
   },
+  download: function(fileId) {
+    return new Promise((resolve, reject) => {
+      axios.get('filesys/download/' + fileId + '/source', { responseType: 'blob' })
+        .then(response => {
+          resolve(response);
+
+          const contentDisposition = response.headers['content-disposition'];
+          const regex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          const matches = regex.exec(contentDisposition);
+          const filename = matches !== null
+            ? matches[1].replace(/['"]/g, '')
+            : new Date().getTime().toString();
+
+          const blob = new Blob([response.data], { type: response.headers['content-type'] });
+          const elink = document.createElement('a');
+
+          if ('download' in elink) {
+            elink.download = filename;
+            elink.href = URL.createObjectURL(blob);
+            elink.click();
+            URL.revokeObjectURL(elink.href);
+          } else {
+            navigator.msSaveBlob(blob, filename);
+          }
+        })
+        .catch(error => {
+          reject(error);
+        });
+    })
+  },
   // 以zip包下载多个文件
   zipDownload: function(data) {
     return new Promise((resolve, reject) => {
